@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Generated metadata (refreshed via tools/fetch_nim_metadata.ts --cards)
+models/metadata.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment (never commit API keys)
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary scrape data
+Tools/nvidia_scrape_raw.txt
+Tools/nvidia_nim_models.txt
+Tools/nvidia_nim_models_by_category.txt

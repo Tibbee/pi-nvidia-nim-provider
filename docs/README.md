@@ -11,8 +11,7 @@
 - [2. Architecture & Design Decisions](#2-architecture--design-decisions)
   - [2.1 Why `openai-completions` Not `streamSimple`](#21-why-openai-completions-not-streamsimple)
   - [2.2 Family-Based Compat Configuration](#22-family-based-compat-configuration)
-  - [2.3 Static + Optional Dynamic Model Discovery](#23-static--optional-dynamic-model-discovery)
-- [3. Directory Structure](#3-directory-structure)
+  - [3. Directory Structure](#3-directory-structure)
 - [4. Model Curation](#4-model-curation)
   - [4.1 Included Models (~80 LLMs)](#41-included-models)
   - [4.2 Excluded Categories](#42-excluded-categories)
@@ -64,14 +63,13 @@ Models are grouped by **family** (e.g., `deepseek`, `qwen`, `mistral`, `llama`).
 
 This is defined in `config/model-families.ts` with 30+ families covering ~80 models.
 
-### 2.3 Static + Optional Dynamic Model Discovery
+### 2.3 Static Model List
 
 | Mode | How | When |
 |------|-----|------|
-| **Static** (default) | Hand-curated model list with verified metadata | Startup — no API calls, instant |
-| **Dynamic** (opt-in) | `NIM_DYNAMIC_MODELS=1` fetches `/v1/models` at startup, filters with allowlists, applies family defaults | When you want newly-released models automatically |
+| **Static** | Hand-curated model list with verified metadata | Startup — no API calls, instant |
 
-Dynamic mode falls back to static if the API call fails.
+Model list is maintained via the `tools/fetch_nim_metadata.ts` metadata gathering tool and manual curation.
 
 ---
 
@@ -90,10 +88,9 @@ NvidiaProvider/
 │   └── vision-models.ts              # ~7 vision/multimodal models
 ├── config/
 │   ├── model-families.ts             # 30+ families with compat + thinking format classification
-│   └── defaults.ts                   # NIM_BASE_URL, LLM_PATTERNS, EXCLUDE_PATTERNS
+│   └── defaults.ts                   # NIM_BASE_URL, NIM_API_KEY_ENV
 ├── tools/
 │   ├── fetch_nim_metadata.ts         # Comprehensive metadata fetcher (API + optional Tavily)
-│   └── fetch_nim_models.ts           # Basic model ID fetcher (superseded)
 └── docs/
     └── README.md                     # This file
 ```
@@ -364,7 +361,6 @@ pi.on("before_provider_request", (event, ctx) => {
 | **Phase 3** | Family compat configuration (`model-families.ts`, `defaults.ts`) | ✅ Complete (30+ families) |
 | **Phase 4** | `before_provider_request` handler | ✅ Complete (6 thinking formats) |
 | **Phase 5** | Model metadata gathering | ⚠️ Partial (`fetch_nim_metadata.ts` works but needs improvement) |
-| **Phase 6** | Optional dynamic model discovery | ✅ Complete (`NIM_DYNAMIC_MODELS=1`) |
 
 ### What's Missing
 
@@ -372,7 +368,6 @@ pi.on("before_provider_request", (event, ctx) => {
 |------|--------|-------|
 | Cost data research | ❌ Not done | All costs set to $0 (free tier). Update if paid tiers appear. |
 | `fetch_nim_metadata.ts` improvements | ⚠️ Needs work | Only 13/87 context windows detected. Reasoning detection misses many models. |
-| Delete redundant files | ❌ Not done | `Tools/extract_models_by_category.py`, `Tools/fetch_nim_models.ts`, old `.txt` files should be removed |
 
 ### Extra Features (Not in Original Plan)
 
@@ -416,7 +411,6 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 | 8 | **GPT-OSS reasoning effort** | `gpt-oss-120b` | P2 |
 | 9 | **Vision models** | `llama-3.2-11b-vision`, `gemma-3-27b-it` | P2 |
 | 10 | **Non-NVIDIA regression** | Any OpenRouter/OpenAI model | **P0** |
-| 11 | **Dynamic discovery** | `NIM_DYNAMIC_MODELS=1` | P2 |
 | 12 | **Error handling** | Invalid model, no API key | P2 |
 | 13 | **Tool calling** | `deepseek-v4-flash`, `qwen3-coder-480b` | P1 |
 
@@ -458,7 +452,6 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 ### Medium Priority
 
 - [ ] **Improve `fetch_nim_metadata.ts`** — Context window detection only works for 13/87 models. Reasoning detection misses many. Label extraction from Tavily output is broken.
-- [ ] **Delete redundant files** — `Tools/extract_models_by_category.py`, `Tools/fetch_nim_models.ts`, old `.txt` generated files.
 
 ### Low Priority / Future
 
@@ -476,7 +469,6 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NVIDIA_API_KEY` | Yes | API key from https://build.nvidia.com/ |
-| `NIM_DYNAMIC_MODELS` | No | Set to `1` to enable dynamic model discovery at startup |
 | `TAVILY_API_KEY` | No | Only needed for `fetch_nim_metadata.ts` full mode |
 
 ### Running the Extension
@@ -485,8 +477,6 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 # Basic usage
 pi -e E:/Morka/Programming/TypeJavaScript/NvidiaProvider
 
-# With dynamic model discovery
-NIM_DYNAMIC_MODELS=1 pi -e E:/Morka/Programming/TypeJavaScript/NvidiaProvider
 
 # List models
 pi --list-models -e E:/Morka/Programming/TypeJavaScript/NvidiaProvider | grep nvidia-nim
@@ -525,7 +515,7 @@ The previous extension at `~/.pi/agent/extensions/nvidiaNim.ts` had these bugs t
 | 5 | Kimi K2 / StepFun same problem as DeepSeek V3 | Thinking never activated | Same handler fix |
 | 6 | `console.log` on every startup/request | Noise in production | Removed |
 | 7 | Flat Sets/Records for classification | Hard to maintain when NVIDIA adds models | Regex-based family patterns |
-| 8 | Always fetches `/v1/models` on startup | 1-2s startup latency | Made opt-in via `NIM_DYNAMIC_MODELS=1` |
+| 8 | Always fetches `/v1/models` on startup | 1-2s startup latency | Removed dynamic discovery entirely — static list only |
 
 ---
 

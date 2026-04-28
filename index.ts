@@ -60,88 +60,11 @@
  * ## Environment Variables
  *
  * - `NVIDIA_API_KEY` -- Required. Your NVIDIA NIM API key.
- * - `NIM_DYNAMIC_MODELS` -- Set to "1" to fetch models from API at startup.
  */
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { STATIC_MODELS, classifyThinkingFormat } from "./models/registry";
-import { findFamily } from "./config/model-families";
-import {
-  NIM_BASE_URL,
-  NIM_API_KEY_ENV,
-  LLM_PATTERNS,
-  EXCLUDE_PATTERNS,
-} from "./config/defaults";
-
-// -- Dynamic Model Discovery ------------------------------------------------
-
-interface NimApiModel {
-  id: string;
-  object: string;
-  owned_by: string;
-}
-
-function isLLM(modelId: string): boolean {
-  const matchesInclude = LLM_PATTERNS.some((p) => p.test(modelId));
-  if (!matchesInclude) return false;
-  const matchesExclude = EXCLUDE_PATTERNS.some((p) => p.test(modelId));
-  return !matchesExclude;
-}
-
-function makeDisplayName(modelId: string): string {
-  const parts = modelId.split("/");
-  const name = parts[parts.length - 1];
-  return name
-    .replace(/-/g, " ")
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-async function fetchDynamicModels(apiKey: string) {
-  const response = await fetch(`${NIM_BASE_URL}/models`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-    signal: AbortSignal.timeout(10000),
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `NVIDIA NIM API returned ${response.status} ${response.statusText}`
-    );
-  }
-
-  const data = (await response.json()) as { data: NimApiModel[] };
-
-  // Filter and deduplicate
-  const seen = new Set<string>();
-  const llmModels = data.data.filter((m) => {
-    if (seen.has(m.id)) return false;
-    seen.add(m.id);
-    return isLLM(m.id);
-  });
-
-  // Add models not in static list with sensible defaults
-  const staticIds = new Set(STATIC_MODELS.map((m) => m.id));
-  const newModels = llmModels
-    .filter((m) => !staticIds.has(m.id))
-    .map((m) => {
-      const family = findFamily(m.id);
-      return {
-        id: m.id,
-        name: makeDisplayName(m.id),
-        reasoning: false,
-        input: ["text" as const],
-        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-        contextWindow: 32768,
-        maxTokens: 8192,
-        compat: family?.compat ?? {
-          supportsDeveloperRole: false,
-          maxTokensField: "max_tokens",
-        },
-      };
-    });
-
-  return [...STATIC_MODELS, ...newModels];
-}
+import { NIM_BASE_URL, NIM_API_KEY_ENV } from "./config/defaults";
 
 // -- Thinking Format Handlers -----------------------------------------------
 
@@ -311,28 +234,13 @@ function handleCustomThinkingFormat(
 // -- Extension Entry Point --------------------------------------------------
 
 export default async function (pi: ExtensionAPI) {
-  const apiKey = process.env[NIM_API_KEY_ENV];
-
-  // Determine model list: static or dynamic
-  let models = STATIC_MODELS;
-  if (process.env.NIM_DYNAMIC_MODELS === "1" && apiKey) {
-    try {
-      models = await fetchDynamicModels(apiKey);
-    } catch (err) {
-      // Fall back to static models if dynamic fetch fails
-      console.error(
-        `[nvidia-nim] Dynamic model fetch failed, using static list: ${err}`
-      );
-    }
-  }
-
-  // Register the provider
+  // Register the provider with static model list
   pi.registerProvider("nvidia-nim", {
     baseUrl: NIM_BASE_URL,
     apiKey: NIM_API_KEY_ENV,
     api: "openai-completions",
     authHeader: true,
-    models,
+    models: STATIC_MODELS,
   });
 
   // -- before_provider_request handler ------------------------------------
@@ -356,7 +264,7 @@ export default async function (pi: ExtensionAPI) {
     if (!modelId) return;
 
     // Find the model in our list to get its compat
-    const modelConfig = models.find((m) => m.id === modelId);
+    const modelConfig = STATIC_MODELS.find((m) => m.id === modelId);
     if (!modelConfig) return; // Not a nvidia-nim model
 
     // Classify the thinking format for this model

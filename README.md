@@ -6,7 +6,6 @@ A [pi](https://pi.dev) extension that connects [NVIDIA NIM](https://build.nvidia
 
 - **50+ curated models** — DeepSeek V4, Qwen3 Coder, GLM-5.1, Llama 4, Kimi K2, and more
 - **Correct thinking/reasoning support** — Per-family compat with custom `before_provider_request` handlers for models that use non-standard thinking formats
-- **Dynamic model discovery** — Opt-in fetch from NVIDIA NIM API at startup (`NIM_DYNAMIC_MODELS=1`)
 - **Zero cost tracking** — All models set to $0 (NVIDIA NIM free tier)
 - **No custom streaming** — Uses pi's built-in `openai-completions` handler, avoiding conflicts with other providers
 
@@ -58,7 +57,7 @@ index.ts                          # Extension entry point + before_provider_requ
 │   └── vision-models.ts          # Vision/multimodal models
 ├── config/
 │   ├── model-families.ts         # Per-family compat + thinking format classification
-│   └── defaults.ts               # Base URL, API key env, filter patterns
+│   └── defaults.ts               # Base URL, API key env
 └── tools/
-    └── fetch_nim_models.ts       # Standalone model fetcher script
+    └── fetch_nim_metadata.ts       # Standalone metadata fetcher script
 ```

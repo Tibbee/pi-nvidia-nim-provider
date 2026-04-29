@@ -295,19 +295,21 @@ function parseKtoNumber(value: string): number | undefined {
 
 /**
  * Parse the structured Input section from a non-infer docs page.
- * Matches both HTML-tagged and plain text formats:
+ * Matches multiple formats:
  *   <strong>Input Type(s):</strong> Text, Image, Video<br/>
  *   Input Types: Text, Image
+ *   Input Type(s): Text, Text+Image
+ *   Input Types: Text, Text+Image, Video
  * Returns whether Image or Video is listed.
  */
 function parseStructuredVisionSupport(html: string): boolean | undefined {
   // Try HTML-tagged format
   const m1 = html.match(/<strong>Input Type(?:s|\(s\))?:\s*<\/strong>\s*([^<]+)/i);
-  if (m1 && /\b(?:Image|Video)\b/i.test(m1[1])) return true;
+  if (m1 && /Image|Video/i.test(m1[1])) return true;
 
-  // Try plain text format: "Input Types: Text, Image" or "Input Type(s): Text, Image"
+  // Try plain text format: "Input Types: Text, Image" or "Input Type(s): Text, Text+Image"
   const m2 = html.match(/Input Type\(?s\)?:\s*([^\n<]+)/i);
-  if (m2 && /\b(?:Image|Video)\b/i.test(m2[1])) return true;
+  if (m2 && /Image|Video/i.test(m2[1])) return true;
 
   return undefined;
 }
@@ -457,6 +459,12 @@ const schemas = findSchemas(ssrProps);
     // Structured data from non-infer page takes priority where available
     if (structuredVision !== undefined) meta.supportsVision = structuredVision;
     if (structuredCtx !== undefined) meta.contextWindow = structuredCtx;
+
+    // Gemma 3 family supports vision (Text+Image input) - set if not detected from HTML
+    // Use !meta.supportsVision (covers undefined, false, null) since HTML parser sometimes returns false
+    if (!meta.supportsVision && /gemma-3/i.test(modelId)) {
+      meta.supportsVision = true;
+    }
 
     // Apply fallbacks - only if no value was set
     const familyFallback = getYardstickFallback(modelId);

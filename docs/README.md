@@ -8,6 +8,8 @@
 ## Table of Contents
 
 - [1. Overview](#1-overview)
+  - [1.5 Quick Start](#15-quick-start)
+  - [1.6 Thinking/Reasoning Formats](#16-thinkingreasoning-formats)
 - [2. Architecture & Design Decisions](#2-architecture--design-decisions)
   - [2.1 Why `openai-completions` Not `streamSimple`](#21-why-openai-completions-not-streamsimple)
   - [2.2 Family-Based Compat Configuration](#22-family-based-compat-configuration)
@@ -45,6 +47,32 @@ https://integrate.api.nvidia.com/v1
 **Key design insight:** NVIDIA NIM exposes an OpenAI-compatible API, so we use pi's built-in `openai-completions` streaming handler — no custom streaming implementation needed. This avoids a critical bug in the previous extension where a custom `streamSimple` handler broke other providers (like OpenRouter).
 
 **Key architectural decision:** Model-specific quirks (thinking formats, extra body parameters, compat flags) are handled through pi's `compat` system and a `before_provider_request` event hook, not custom streaming code.
+
+### 1.5 Quick Start
+
+1. **Get an NVIDIA API key** from [build.nvidia.com](https://build.nvidia.com/)
+2. **Set the environment variable:**
+   ```bash
+   export NVIDIA_API_KEY="nvapi-..."
+   ```
+3. **Run pi with the extension:**
+   ```bash
+   pi -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider
+   ```
+4. **Select a model** in pi with `/model` or `Ctrl+P`
+
+### 1.6 Thinking/Reasoning Formats
+
+NVIDIA NIM models use different `chat_template_kwargs` structures for thinking. This extension handles all of them:
+
+| Format | Models | Mechanism |
+|--------|--------|-----------|
+| `qwen-chat-template` | Qwen3, GLM, Phi-4-Mini-Flash, Magistral, Seed, Nemotron-Nano-9B | Pi handles natively via `thinkingFormat: "qwen-chat-template"` |
+| `deepseek-v4` | DeepSeek V4 Flash/Pro | `chat_template_kwargs: { reasoning_effort: "none"\|"high"\|"max" }` via before_provider_request |
+| `deepseek-nim` | DeepSeek V3.x, R1, Kimi K2 Thinking, K2.5, Nemotron Ultra/Super | `chat_template_kwargs: { thinking: true/false }` via before_provider_request |
+| `stepfun-parallel` | Step 3.5 Flash | `chat_template_kwargs: { parallel_reasoning_mode: "none"\|"low"\|"medium"\|"heavy" }` via before_provider_request |
+| `minimax-inline` | MiniMax M2.x | Always thinks inline with `<antha>` tags, no kwargs control, `requiresThinkingAsText: true` |
+| `reasoning-effort` | GPT-OSS 120B/20B | Standard OpenAI `reasoning_effort` with `minimal→low` mapping, pi handles natively |
 
 ---
 

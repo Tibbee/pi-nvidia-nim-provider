@@ -20,6 +20,15 @@ const DELAY_MS = 300;
 
 const verbose = process.argv.includes("--verbose");
 const fetchCards = process.argv.includes("--cards");
+const singleModel = process.argv.find(arg => 
+  arg.startsWith("--model=") || arg.startsWith("-m=") || arg.startsWith("--model-name=")
+)?.replace(/^--?model[=-]?/, "");
+const outputFile = process.argv.find(arg => 
+  arg.startsWith("--output=") || arg.startsWith("-o=")
+)?.replace(/^--?output[=-]?/, "") || OUTPUT_FILE;
+
+// Add a test mode - can run on a single model for debugging
+// Usage: --model=stepfun-ai/step-3.5-flash or -m=stepfun-ai/step-3.5-flash
 
 // ── Metadata types ─────────────────────────────────────────────────────────
 
@@ -80,7 +89,7 @@ function getYardstickFallback(modelId: string): { contextWindow?: number, maxOut
     { re: /dbrx/i, ctx: 32768, out: 4096 },
     { re: /solar-10\.7b/i, ctx: 4096, out: 4096 },
     { re: /seed-oss/i, ctx: 131072, out: 8192 },
-    { re: /step-3\.5/i, ctx: 131072, out: 262144 },
+    { re: /step-3\.5/i, ctx: 256000, out: 262144 },
     { re: /minimax/i, ctx: 131072, out: 16384 },
     { re: /gpt-oss/i, ctx: 131072, out: 4096 },
     { re: /zamba/i, ctx: 4096, out: 4096 },
@@ -123,6 +132,11 @@ async function fetchModelIds(apiKey: string): Promise<{ id: string; owned_by: st
 function parseContextWindow(text: string): number | undefined {
   const patterns: { re: RegExp; transform: (m: RegExpMatchArray) => number }[] = [
     {
+      // Match "max_tokens: 1 to 262144" first - this gives us the max output limit
+      re: /max_tokens\s*:\s*(\d+)\s+to/i,
+      transform: (m) => parseInt(m[1], 10),
+    },
+    {
       re: /input\s+context\s+length\s*[:=]?\s*(\d[\d,]*)\s*tokens?/i,
       transform: (m) => parseInt(m[1].replace(/,/g, ""), 10),
     },
@@ -133,7 +147,22 @@ function parseContextWindow(text: string): number | undefined {
     {
       re: /(\d[\d,]*)-token\s+context/i,
       transform: (m) => parseInt(m[1].replace(/,/g, ""), 10),
-    }
+    },
+    {
+      // New: Match "Input Context Length (ISL): 256K" from model card
+      re: /Input Context Length(?:\s*\(ISL\))?:\s*(\d+)\s*K/i,
+      transform: (m) => parseInt(m[1], 10) * 1024,
+    },
+    {
+      // New: Match "Maximum context length up to 256k tokens"
+      re: /Maximum context length(?: up to)?\s*(\d+(?:\.\d+)?)\s*[kKmMgG]?\s*tokens?/i,
+      transform: (m) => {
+        const num = parseFloat(m[1]);
+        if (/[mM]/.test(m[0])) return Math.round(num * 1024 * 1024);
+        if (/[kK]/.test(m[0])) return Math.round(num * 1024);
+        return Math.round(num);
+      },
+    },
   ];
 
   let maxCtx = 0;
@@ -148,8 +177,15 @@ function parseContextWindow(text: string): number | undefined {
   return maxCtx > 0 ? maxCtx : undefined;
 }
 
+const MIN_REASONABLE_MAX_OUTPUT = 256;
+
 function parseMaxOutputTokens(text: string): number | undefined {
   const patterns: { re: RegExp; transform: (m: RegExpMatchArray) => number }[] = [
+    {
+      // Match: "max_tokens: 1 to 262144" or "max_tokens 1 to 262144" - the HTML parameter table
+      re: /max_tokens\s*:\s*\d+\s+to\s+(\d+)/i,
+      transform: (m) => parseInt(m[1], 10),
+    },
     {
       re: /max_tokens.*?maximum.*?(\d+)/i,
       transform: (m) => parseInt(m[1], 10),
@@ -170,8 +206,8 @@ function parseMaxOutputTokens(text: string): number | undefined {
     let match;
     while ((match = globalRe.exec(text)) !== null) {
         const val = transform(match);
-        // Sanity: NIM outputs are almost never > 32k. 128k in text is almost always mislabeled input context.
-        if (!isNaN(val) && val > 0 && val <= 32768 && val > maxOut) {
+        // Accept only reasonable values (>= 256 tokens). 1-255 is almost always wrong.
+        if (!isNaN(val) && val >= MIN_REASONABLE_MAX_OUTPUT && val > maxOut) {
             maxOut = val;
         }
     }
@@ -180,8 +216,8 @@ function parseMaxOutputTokens(text: string): number | undefined {
 }
 
 function detectVisionSupport(text: string, modelId: string): boolean {
-  // Check 1: Model ID contains "image" or "vision"
-  if (/image/i.test(modelId) || /vision/i.test(modelId)) return true;
+  // Check 1: Model ID contains "image", "vision", or "omni"
+  if (/ image /i.test(modelId) || /vision/i.test(modelId) || /omni/i.test(modelId)) return true;
 
   // Check 2: Look for explicit JSON-like type declaration in API spec
   // (e.g. "type": "image" in OpenAPI schema). Avoids matching CSS like
@@ -243,11 +279,11 @@ function parseKtoNumber(value: string): number | undefined {
 
 /**
  * Parse the structured Input section from a non-infer docs page.
- * Looks for <strong>Input Types:</strong> Text, Image, Video<br/>
+ * Matches: <strong>Input Type(s):</strong> Text, Image, Video<br/>
  * Returns whether Image or Video is listed.
  */
 function parseStructuredVisionSupport(html: string): boolean | undefined {
-  const m = html.match(/<strong>Input Types:<\/strong>\s*([^<]+)</);
+  const m = html.match(/<strong>Input Type(?:s|\(s\))?:\s*<\/strong>\s*([^<]+)</i);
   if (!m) return undefined;
   const types = m[1];
   return /\b(?:Image|Video)\b/i.test(types);
@@ -257,11 +293,18 @@ function parseStructuredVisionSupport(html: string): boolean | undefined {
  * Parse the Input Context Length from the structured Input section.
  * Matches: <strong>Input Context Length (ISL):</strong> 256K</p>
  *          <strong>Input Context Length:</strong> 256K tokens</p>
+ *          Maximum context length up to 256k tokens
  */
 function parseStructuredContextWindow(html: string): number | undefined {
-  const m = html.match(/<strong>Input Context Length(?:\s*\(ISL\))?:<\/strong>\s*([^<]+)</);
-  if (!m) return undefined;
-  return parseKtoNumber(m[1]);
+  // Primary: <strong> label
+  const m = html.match(/<strong>Input Context Length(?:\s*\(ISL\))?:<\/strong>\s*([^<]+)</i);
+  if (m) return parseKtoNumber(m[1]);
+
+  // Secondary: "Maximum context length up to Xk tokens"
+  const m2 = html.match(/Maximum context length up to\s*(\d+(?:\.\d+)?\s*[kKMB]?)\s*tokens/i);
+  if (m2) return parseKtoNumber(m2[1]);
+
+  return undefined;
 }
 
 async function fetchModelData(modelId: string, owned_by: string): Promise<ModelMetadata> {
@@ -280,7 +323,9 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
       baseSlug.replace(/\./g, "-"),
       baseSlug.replace(/\./g, "_"),
       // Special GLM Case: dash before version removed (z-ai-glm-5.1 -> z-ai-glm5.1)
-      baseSlug.replace(/-(\d)/g, "$1") 
+      baseSlug.replace(/-(\d)/g, "$1"),
+      // Alternative - replace dots only between org/model parts
+      baseSlug.replace(/\./g, (match, offset, string) => offset < string.indexOf('/') ? "-" : "_"),
     ];
 
     let combinedHtmlStr = "";
@@ -313,20 +358,19 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
                   return null;
                 }
                 
-                const schemas = findSchemas(ssrProps);
-                if (schemas) {
-                  for (const schema of Object.values(schemas) as any[]) {
-                    const mtProp = schema?.properties?.max_tokens;
-                    if (!mtProp) continue;
-                    const limit: number = mtProp.maximum ?? (mtProp.anyOf as any[])?.find((s: any) => s.maximum != null)?.maximum;
-                    if (limit != null && isFinite(limit) && limit > 0 && limit < 10_000_000) {
-                      // technical schema values ALWAYS override marketing regex matches
-                      if (!meta.maxOutputTokens || limit <= 32768) {
-                        meta.maxOutputTokens = limit;
-                      }
-                    }
-                  }
-                }
+const schemas = findSchemas(ssrProps);
+                 if (schemas) {
+                   for (const schema of Object.values(schemas) as any[]) {
+                     const mtProp = schema?.properties?.max_tokens;
+                     if (!mtProp) continue;
+                     const limit: number = mtProp.maximum ?? (mtProp.anyOf as any[])?.find((s: any) => s.maximum != null)?.maximum;
+                     // Reject suspiciously low values - they're almost always wrong ( schema artifact )
+                     // Accept only values >= 256 (most LLMs should generate at least 256 tokens)
+                     if (limit != null && isFinite(limit) && limit >= MIN_REASONABLE_MAX_OUTPUT) {
+                       meta.maxOutputTokens = limit;
+                     }
+                   }
+                 }
              } catch(e) {}
           }
           break; // Found working page
@@ -365,11 +409,16 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     meta.supportsReasoning = detectReasoningSupport(combinedHtmlStr);
     meta.thinkingFormat = detectThinkingFormat(modelId, combinedHtmlStr);
 
+    // If a thinking format was identified (via ID or HTML), the model implicitly supports reasoning
+    if (meta.thinkingFormat) {
+      meta.supportsReasoning = true;
+    }
+
     // Structured data from non-infer page takes priority where available
     if (structuredVision !== undefined) meta.supportsVision = structuredVision;
     if (structuredCtx !== undefined) meta.contextWindow = structuredCtx;
 
-    // Apply fallbacks
+    // Apply fallbacks - only if no value was set
     const familyFallback = getYardstickFallback(modelId);
     const manualFallback = FALLBACK_LIMITS_MAP[modelId];
 
@@ -377,10 +426,12 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
       meta.contextWindow = manualFallback?.contextWindow ?? familyFallback.contextWindow;
     }
     
-    if (meta.maxOutputTokens == null || meta.maxOutputTokens > 32768) {
+    if (meta.maxOutputTokens == null) {
+       // Only apply fallback if we have no value at all
        const fallbackValue = manualFallback?.maxOutputTokens ?? familyFallback.maxOutputTokens;
        if (fallbackValue != null) meta.maxOutputTokens = fallbackValue;
     }
+    // Note: We no longer reject high maxOutputTokens - new regex captures up to 262144 correctly
 
     if (verbose) {
        console.log(`  ✓ ${modelId}: ctx=${meta.contextWindow ?? "?"} maxOut=${meta.maxOutputTokens ?? "?"} reason=${meta.supportsReasoning} format=${meta.thinkingFormat ?? "none"}`);
@@ -394,8 +445,41 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
 
 async function main() {
   try {
-    const models = await fetchModelIds(NVIDIA_API_KEY!);
-    console.log(`Found ${models.length} models. Fetching technical metadata...`);
+    let models: { id: string; owned_by: string }[];
+    
+    if (singleModel) {
+      // Test mode: fetch just ONE model
+      console.log(`Testing single model: ${singleModel}`);
+      const org = singleModel.split('/')[0];
+      models = [{ id: singleModel, owned_by: org }];
+      console.log(`Found 1 unique model. Fetching technical metadata...`);
+      
+      const meta = await fetchModelData(singleModel, org);
+      
+      // Write single result
+      const output = outputFile.includes('.json') 
+        ? outputFile 
+        : `test-${singleModel.replace(/\//g, '-')}.json`;
+      fs.writeFileSync(output, JSON.stringify([meta], null, 2));
+      console.log(`\nWritten to: ${output}`);
+      console.log(`  contextWindow: ${meta.contextWindow ?? '?'}`);
+      console.log(`  maxOutputTokens: ${meta.maxOutputTokens ?? '?'}`);
+      console.log(`  supportsReasoning: ${meta.supportsReasoning}`);
+      console.log(`  thinkingFormat: ${meta.thinkingFormat ?? 'none'}`);
+      return;
+    }
+    
+    // Full fetch mode
+    const rawModels = await fetchModelIds(NVIDIA_API_KEY!);
+    
+    // Deduplicate models by ID
+    const modelMap = new Map();
+    for (const m of rawModels) {
+      modelMap.set(m.id, m);
+    }
+    models = Array.from(modelMap.values());
+
+    console.log(`Found ${models.length} unique models. Fetching technical metadata...`);
 
     const results: ModelMetadata[] = [];
     for (let i = 0; i < models.length; i += BATCH_SIZE) {
@@ -412,7 +496,7 @@ async function main() {
       }
     }
 
-    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(results, null, 2));
+    fs.writeFileSync(outputFile, JSON.stringify(results, null, 2));
     console.log(`\nWritten ${results.length} models to: ${OUTPUT_FILE}`);
 
     // Summary

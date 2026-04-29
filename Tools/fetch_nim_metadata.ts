@@ -183,17 +183,16 @@ function detectVisionSupport(text: string, modelId: string): boolean {
   // Check 1: Model ID contains "image" or "vision"
   if (/image/i.test(modelId) || /vision/i.test(modelId)) return true;
 
-  // Check 2: Look for explicit input type documentation in API spec
-  // This is more reliable than "multimodal" which appears in sidebar links
+  // Check 2: Look for explicit JSON-like type declaration in API spec
+  // (e.g. "type": "image" in OpenAPI schema). Avoids matching CSS like
+  // Input[type=search] or sidebar nav cross-references to other models.
   if (/"type"s*:s*"image"/i.test(text)) return true;
-  if (/input.*?type.*?image/i.test(text)) return true;
 
-  // Note: Removed "multimodal" check to avoid false positives from sidebar
-  // Models that support vision will have "image" in input type
+  // The structured Input Types section from the non-infer page (parsed separately)
+  // is more reliable and takes priority over this fallback heuristic.
 
   return false;
 }
-
 function detectReasoningSupport(text: string): boolean {
   if (/reasoning\s+model/i.test(text)) return true;
   if (/thinking\s+mode/i.test(text)) return true;
@@ -227,6 +226,42 @@ function detectThinkingFormat(modelId: string, text: string): string | undefined
   if (/reasoning_content/.test(text) && !/thinkingFormat/.test(text)) return "deepseek-nim";
   
   return undefined;
+}
+
+// ── Parsers for structured Input/Output sections (non-infer pages) ───────────
+
+function parseKtoNumber(value: string): number | undefined {
+  const trimmed = value.trim();
+  const mK = trimmed.match(/^(\d+(?:\.\d+)?)\s*K$/i);
+  if (mK) return Math.round(parseFloat(mK[1]) * 1024);
+  const mM = trimmed.match(/^(\d+(?:\.\d+)?)\s*M$/i);
+  if (mM) return Math.round(parseFloat(mM[1]) * 1024 * 1024);
+  const mNum = trimmed.match(/^(\d+)$/);
+  if (mNum) return parseInt(mNum[1], 10);
+  return undefined;
+}
+
+/**
+ * Parse the structured Input section from a non-infer docs page.
+ * Looks for <strong>Input Types:</strong> Text, Image, Video<br/>
+ * Returns whether Image or Video is listed.
+ */
+function parseStructuredVisionSupport(html: string): boolean | undefined {
+  const m = html.match(/<strong>Input Types:<\/strong>\s*([^<]+)</);
+  if (!m) return undefined;
+  const types = m[1];
+  return /\b(?:Image|Video)\b/i.test(types);
+}
+
+/**
+ * Parse the Input Context Length from the structured Input section.
+ * Matches: <strong>Input Context Length (ISL):</strong> 256K</p>
+ *          <strong>Input Context Length:</strong> 256K tokens</p>
+ */
+function parseStructuredContextWindow(html: string): number | undefined {
+  const m = html.match(/<strong>Input Context Length(?:\s*\(ISL\))?:<\/strong>\s*([^<]+)</);
+  if (!m) return undefined;
+  return parseKtoNumber(m[1]);
 }
 
 async function fetchModelData(modelId: string, owned_by: string): Promise<ModelMetadata> {
@@ -299,6 +334,29 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
       } catch (e) {}
     }
 
+    // ── Also try the non-infer page for structured Input/Output sections ──
+    // This page (e.g. .../google-gemma-4-31b-it) contains labelled fields like:
+    //   <strong>Input Types:</strong> Text, Image, Video<br/>
+    //   <strong>Input Context Length (ISL):</strong> 256K
+    // These are more reliable than regex heuristics on the -infer page.
+    let structuredHtml = "";
+    for (const slug of slugVariations) {
+      const url = `${DOCS_BASE_URL}/${slug}`;
+      try {
+        const response = await fetch(url);
+        if (response.ok) {
+          structuredHtml = await response.text();
+          meta.card_fetched = true;
+          break;
+        }
+      } catch (e) {}
+    }
+
+    // Parse structured Input/Output sections (non-infer page)
+    const structuredVision = parseStructuredVisionSupport(structuredHtml);
+    const structuredCtx = parseStructuredContextWindow(structuredHtml);
+
+    // Regex-based parsing from -infer page (existing behavior)
     meta.contextWindow = parseContextWindow(combinedHtmlStr);
     const textOutputTokens = parseMaxOutputTokens(combinedHtmlStr);
     if (!meta.maxOutputTokens) meta.maxOutputTokens = textOutputTokens;
@@ -306,6 +364,10 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     meta.supportsVision = detectVisionSupport(combinedHtmlStr, modelId);
     meta.supportsReasoning = detectReasoningSupport(combinedHtmlStr);
     meta.thinkingFormat = detectThinkingFormat(modelId, combinedHtmlStr);
+
+    // Structured data from non-infer page takes priority where available
+    if (structuredVision !== undefined) meta.supportsVision = structuredVision;
+    if (structuredCtx !== undefined) meta.contextWindow = structuredCtx;
 
     // Apply fallbacks
     const familyFallback = getYardstickFallback(modelId);

@@ -5,9 +5,6 @@ node_modules/
 # Build output
 dist/
 
-# Generated metadata (refreshed via tools/fetch_nim_metadata.ts --cards)
-models/metadata.json
-
 # OS files
 .DS_Store
 Thumbs.db

@@ -180,9 +180,17 @@ function parseMaxOutputTokens(text: string): number | undefined {
 }
 
 function detectVisionSupport(text: string, modelId: string): boolean {
-  if (/\bimage\b/i.test(modelId) || /vision/i.test(modelId)) return true;
-  if (/input\s+type.*?image/i.test(text)) return true;
-  if (/\bmultimodal\b/i.test(text) && !/not\s+multimodal/i.test(text)) return true;
+  // Check 1: Model ID contains "image" or "vision"
+  if (/image/i.test(modelId) || /vision/i.test(modelId)) return true;
+
+  // Check 2: Look for explicit input type documentation in API spec
+  // This is more reliable than "multimodal" which appears in sidebar links
+  if (/"type"s*:s*"image"/i.test(text)) return true;
+  if (/input.*?type.*?image/i.test(text)) return true;
+
+  // Note: Removed "multimodal" check to avoid false positives from sidebar
+  // Models that support vision will have "image" in input type
+
   return false;
 }
 

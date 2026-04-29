@@ -42,7 +42,7 @@ const METADATA_MAP: Map<string, MetadataEntry> = new Map(
  * - "reasoning-effort" → "reasoning-effort" (family pattern)
  * - "none" or undefined → undefined (no thinking)
  */
-function mapThinkingFormatToCompat(
+export function mapThinkingFormatToCompat(
   thinkingFormat: string | undefined
 ): { thinkingFormat?: string; requiresThinkingAsText?: boolean; supportsReasoningEffort?: boolean } {
   switch (thinkingFormat) {

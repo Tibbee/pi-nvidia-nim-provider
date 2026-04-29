@@ -47,17 +47,15 @@ The previous `nvidiaNim.ts` extension had critical bugs that are fixed here:
 ## Architecture
 
 ```
-index.ts                          # Extension entry point + before_provider_request
+NvidiaProvider/
+├── index.ts                          # Extension entry point + before_provider_request
 ├── models/
-│   ├── types.ts                  # NimModelConfig type
-│   ├── registry.ts               # Combines models, applies family compat, deduplicates
-│   ├── chat-models.ts            # Chat/instruction models
-│   ├── coding-models.ts          # Code/agentic/reasoning models
-│   ├── reasoning-models.ts       # Dedicated reasoning/thinking models
-│   └── vision-models.ts          # Vision/multimodal models
+│   ├── types.ts                      # NimModelConfig type
+│   ├── registry.ts                   # Loads from metadata.json, applies family compat, deduplicates
+│   └── metadata.json                 # ~87 models with discovered metadata
 ├── config/
-│   ├── model-families.ts         # Per-family compat + thinking format classification
-│   └── defaults.ts               # Base URL, API key env
+│   ├── model-families.ts             # Per-family compat + thinking format classification
+│   └── defaults.ts                   # Base URL, API key env
 └── tools/
-    └── fetch_nim_metadata.ts       # Standalone metadata fetcher script
+    └── fetch_nim_metadata.ts        # Standalone metadata fetcher script
 ```

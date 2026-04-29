@@ -63,8 +63,15 @@ function getYardstickFallback(modelId: string): { contextWindow?: number, maxOut
     { re: /phi-4/i, ctx: 131072, out: 4096 },
     { re: /phi-3\.5/i, ctx: 131072, out: 4096 },
     { re: /phi-3.*128k/i, ctx: 131072, out: 4096 },
-    { re: /mistral-large/i, ctx: 131072, out: 8192 },
+    { re: /mistral-medium-3\.5-128b/i, ctx: 262144, out: 32768 },
+    { re: /mistral-medium-3/i, ctx: 131072, out: 32768 },
     { re: /mistral-small/i, ctx: 131072, out: 8192 },
+    { re: /devstral/i, ctx: 262144, out: 16384 },
+    { re: /magistral/i, ctx: 131072, out: 8192 },
+    { re: /mistral-large/i, ctx: 131072, out: 8192 },
+    { re: /mistral-nemo/i, ctx: 131072, out: 8192 },
+    { re: /ministral/i, ctx: 131072, out: 8192 },
+    { re: /codestral/i, ctx: 32768, out: 4096 },
     { re: /mistral-nemo/i, ctx: 131072, out: 8192 },
     { re: /ministral/i, ctx: 131072, out: 8192 },
     { re: /codestral/i, ctx: 32768, out: 4096 },
@@ -78,8 +85,11 @@ function getYardstickFallback(modelId: string): { contextWindow?: number, maxOut
     { re: /jamba-1\.5/i, ctx: 262144, out: 8192 },
     { re: /granite-3/i, ctx: 131072, out: 8192 },
     { re: /qwen3/i, ctx: 262144, out: 8192 },
+    { re: /qwen2\.5-coder/i, ctx: 131072, out: 4096 },
+    { re: /qwen2/i, ctx: 32768, out: 4096 },
     { re: /glm-5/i, ctx: 200000, out: 32768 },
     { re: /glm/i, ctx: 128000, out: 8192 },
+    { re: /stockmark/i, ctx: 32768, out: 8192 },
     { re: /palmyra/i, ctx: 32768, out: 4096 },
     { re: /nemotron-4-340b/i, ctx: 4096, out: 4096 },
     { re: /nemotron-3-super/i, ctx: 1000000, out: 32768 },
@@ -187,6 +197,11 @@ function parseMaxOutputTokens(text: string): number | undefined {
       transform: (m) => parseInt(m[1], 10),
     },
     {
+      // Match: "1 to 32768" (appears in infer page parameter descriptions)
+      re: /max_tokens.*?(\d+)\s+to\s+(\d+)/i,
+      transform: (m) => parseInt(m[2], 10),
+    },
+    {
       re: /max_tokens.*?maximum.*?(\d+)/i,
       transform: (m) => parseInt(m[1], 10),
     },
@@ -235,6 +250,7 @@ function detectReasoningSupport(text: string): boolean {
   if (/reasoning_content/i.test(text)) return true;
   if (/chat_template_kwargs/i.test(text)) return true;
   if (/\bthink(?:ing)?\s*(?:mode|trace|step)/i.test(text)) return true;
+  if (/reasoning_effort/i.test(text)) return true;
   return false;
 }
 
@@ -279,30 +295,54 @@ function parseKtoNumber(value: string): number | undefined {
 
 /**
  * Parse the structured Input section from a non-infer docs page.
- * Matches: <strong>Input Type(s):</strong> Text, Image, Video<br/>
+ * Matches both HTML-tagged and plain text formats:
+ *   <strong>Input Type(s):</strong> Text, Image, Video<br/>
+ *   Input Types: Text, Image
  * Returns whether Image or Video is listed.
  */
 function parseStructuredVisionSupport(html: string): boolean | undefined {
-  const m = html.match(/<strong>Input Type(?:s|\(s\))?:\s*<\/strong>\s*([^<]+)</i);
-  if (!m) return undefined;
-  const types = m[1];
-  return /\b(?:Image|Video)\b/i.test(types);
+  // Try HTML-tagged format
+  const m1 = html.match(/<strong>Input Type(?:s|\(s\))?:\s*<\/strong>\s*([^<]+)/i);
+  if (m1 && /\b(?:Image|Video)\b/i.test(m1[1])) return true;
+
+  // Try plain text format: "Input Types: Text, Image" or "Input Type(s): Text, Image"
+  const m2 = html.match(/Input Type\(?s\)?:\s*([^\n<]+)/i);
+  if (m2 && /\b(?:Image|Video)\b/i.test(m2[1])) return true;
+
+  return undefined;
 }
 
 /**
  * Parse the Input Context Length from the structured Input section.
- * Matches: <strong>Input Context Length (ISL):</strong> 256K</p>
- *          <strong>Input Context Length:</strong> 256K tokens</p>
- *          Maximum context length up to 256k tokens
+ * Handles multiple formats:
+ *   <strong>Input Context Length (ISL):</strong> 256K
+ *   Input Context Length (ISL): 262,144 (256k)
+ *   Maximum context length up to 256k tokens
  */
 function parseStructuredContextWindow(html: string): number | undefined {
-  // Primary: <strong> label
-  const m = html.match(/<strong>Input Context Length(?:\s*\(ISL\))?:<\/strong>\s*([^<]+)</i);
-  if (m) return parseKtoNumber(m[1]);
+  // Primary: <strong> label with K suffix
+  const m1 = html.match(/<strong>Input Context Length(?:\s*\(ISL\))?:<\/strong>\s*(\d+)\s*K/i);
+  if (m1) return parseKtoNumber(m1[1] + "K");
+
+  // Format: "Input Context Length (ISL): 262,144 (256k)"
+  const m2 = html.match(/Input Context Length(?:\s*\(ISL\))?:\s*(\d[\d,]*)\s*\(([^)]+)\)/i);
+  if (m2) {
+    // Try to extract number from the parenthetical like "(256k)"
+    const parenthetical = m2[2];
+    const kMatch = parenthetical.match(/(\d+(?:\.\d+)?)\s*k/i);
+    if (kMatch) return parseKtoNumber(kMatch[1] + "K");
+    // Fallback: use the main number without comma
+    const mainNum = parseInt(m2[1].replace(/,/g, ""), 10);
+    if (!isNaN(mainNum)) return mainNum;
+  }
+
+  // Format: "Input Context Length (ISL): 262144" (no comma, no parenthetical)
+  const m3 = html.match(/Input Context Length(?:\s*\(ISL\))?:\s*(\d{5,})/i);
+  if (m3) return parseInt(m3[1], 10);
 
   // Secondary: "Maximum context length up to Xk tokens"
-  const m2 = html.match(/Maximum context length up to\s*(\d+(?:\.\d+)?\s*[kKMB]?)\s*tokens/i);
-  if (m2) return parseKtoNumber(m2[1]);
+  const m4 = html.match(/Maximum context length(?: up to)?\s*(\d+(?:\.\d+)?\s*[kK]?)\s*tokens?/i);
+  if (m4) return parseKtoNumber(m4[1]);
 
   return undefined;
 }

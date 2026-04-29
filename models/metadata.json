@@ -2,7 +2,7 @@
   {
     "id": "01-ai/yi-large",
     "owned_by": "01-ai",
-    "discovered_at": "2026-04-29T21:34:44.936Z",
+    "discovered_at": "2026-04-29T22:05:41.140Z",
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -11,24 +11,24 @@
   {
     "id": "abacusai/dracarys-llama-3.1-70b-instruct",
     "owned_by": "abacusai",
-    "discovered_at": "2026-04-29T21:34:44.938Z",
+    "discovered_at": "2026-04-29T22:05:41.141Z",
     "card_fetched": true,
     "contextWindow": 131072,
     "maxOutputTokens": 1024,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "adept/fuyu-8b",
     "owned_by": "adept",
-    "discovered_at": "2026-04-29T21:34:44.938Z",
+    "discovered_at": "2026-04-29T22:05:41.142Z",
     "supportsVision": false,
     "supportsReasoning": false
   },
   {
     "id": "ai21labs/jamba-1.5-large-instruct",
     "owned_by": "ai21labs",
-    "discovered_at": "2026-04-29T21:34:44.939Z",
+    "discovered_at": "2026-04-29T22:05:41.143Z",
     "contextWindow": 262144,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -37,7 +37,7 @@
   {
     "id": "aisingapore/sea-lion-7b-instruct",
     "owned_by": "aisingapore",
-    "discovered_at": "2026-04-29T21:34:44.939Z",
+    "discovered_at": "2026-04-29T22:05:41.143Z",
     "card_fetched": true,
     "supportsVision": false,
     "supportsReasoning": false
@@ -45,7 +45,7 @@
   {
     "id": "baai/bge-m3",
     "owned_by": "baai",
-    "discovered_at": "2026-04-29T21:34:46.342Z",
+    "discovered_at": "2026-04-29T22:05:42.403Z",
     "card_fetched": true,
     "supportsVision": false,
     "supportsReasoning": false
@@ -53,25 +53,25 @@
   {
     "id": "bigcode/starcoder2-15b",
     "owned_by": "bigcode",
-    "discovered_at": "2026-04-29T21:34:46.342Z",
+    "discovered_at": "2026-04-29T22:05:42.403Z",
     "supportsVision": false,
     "supportsReasoning": false
   },
   {
     "id": "bytedance/seed-oss-36b-instruct",
     "owned_by": "bytedance",
-    "discovered_at": "2026-04-29T21:34:46.343Z",
+    "discovered_at": "2026-04-29T22:05:42.404Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
-    "contextWindow": 131072,
-    "supportsVision": false,
+    "contextWindow": 524288,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "databricks/dbrx-instruct",
     "owned_by": "databricks",
-    "discovered_at": "2026-04-29T21:34:46.343Z",
+    "discovered_at": "2026-04-29T22:05:42.404Z",
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -80,7 +80,7 @@
   {
     "id": "deepseek-ai/deepseek-coder-6.7b-instruct",
     "owned_by": "deepseek-ai",
-    "discovered_at": "2026-04-29T21:34:46.343Z",
+    "discovered_at": "2026-04-29T22:05:42.404Z",
     "contextWindow": 16384,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -89,84 +89,84 @@
   {
     "id": "deepseek-ai/deepseek-v3.1-terminus",
     "owned_by": "deepseek-ai",
-    "discovered_at": "2026-04-29T21:34:47.525Z",
+    "discovered_at": "2026-04-29T22:05:43.653Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
     "contextWindow": 131072,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "deepseek-nim"
   },
   {
     "id": "deepseek-ai/deepseek-v3.2",
     "owned_by": "deepseek-ai",
-    "discovered_at": "2026-04-29T21:34:47.525Z",
+    "discovered_at": "2026-04-29T22:05:43.653Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
     "contextWindow": 131072,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "deepseek-nim"
   },
   {
     "id": "deepseek-ai/deepseek-v4-flash",
     "owned_by": "deepseek-ai",
-    "discovered_at": "2026-04-29T21:34:47.525Z",
+    "discovered_at": "2026-04-29T22:05:43.653Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
     "contextWindow": 1000000,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "deepseek-v4"
   },
   {
     "id": "deepseek-ai/deepseek-v4-pro",
     "owned_by": "deepseek-ai",
-    "discovered_at": "2026-04-29T21:34:47.525Z",
+    "discovered_at": "2026-04-29T22:05:43.653Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
     "contextWindow": 1000000,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "deepseek-v4"
   },
   {
     "id": "google/codegemma-1.1-7b",
     "owned_by": "google",
-    "discovered_at": "2026-04-29T21:34:47.525Z",
+    "discovered_at": "2026-04-29T22:05:43.654Z",
     "supportsVision": false,
     "supportsReasoning": false
   },
   {
     "id": "google/codegemma-7b",
     "owned_by": "google",
-    "discovered_at": "2026-04-29T21:34:48.839Z",
+    "discovered_at": "2026-04-29T22:05:44.540Z",
     "card_fetched": true,
     "maxOutputTokens": 1024,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "google/deplot",
     "owned_by": "google",
-    "discovered_at": "2026-04-29T21:34:48.839Z",
+    "discovered_at": "2026-04-29T22:05:44.541Z",
     "supportsVision": false,
     "supportsReasoning": false
   },
   {
     "id": "google/gemma-2-2b-it",
     "owned_by": "google",
-    "discovered_at": "2026-04-29T21:34:48.839Z",
+    "discovered_at": "2026-04-29T22:05:44.541Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
     "contextWindow": 8192,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "google/gemma-2b",
     "owned_by": "google",
-    "discovered_at": "2026-04-29T21:34:48.839Z",
+    "discovered_at": "2026-04-29T22:05:44.541Z",
     "contextWindow": 8192,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -175,7 +175,7 @@
   {
     "id": "google/gemma-3-12b-it",
     "owned_by": "google",
-    "discovered_at": "2026-04-29T21:34:48.839Z",
+    "discovered_at": "2026-04-29T22:05:44.541Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -184,7 +184,7 @@
   {
     "id": "google/gemma-3-27b-it",
     "owned_by": "google",
-    "discovered_at": "2026-04-29T21:34:50.020Z",
+    "discovered_at": "2026-04-29T22:05:45.720Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
     "contextWindow": 131072,
@@ -194,7 +194,7 @@
   {
     "id": "google/gemma-3-4b-it",
     "owned_by": "google",
-    "discovered_at": "2026-04-29T21:34:50.020Z",
+    "discovered_at": "2026-04-29T22:05:45.721Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -203,7 +203,7 @@
   {
     "id": "google/gemma-3n-e2b-it",
     "owned_by": "google",
-    "discovered_at": "2026-04-29T21:34:50.020Z",
+    "discovered_at": "2026-04-29T22:05:45.721Z",
     "card_fetched": true,
     "maxOutputTokens": 8192,
     "contextWindow": 131072,
@@ -213,7 +213,7 @@
   {
     "id": "google/gemma-3n-e4b-it",
     "owned_by": "google",
-    "discovered_at": "2026-04-29T21:34:50.020Z",
+    "discovered_at": "2026-04-29T22:05:45.721Z",
     "card_fetched": true,
     "maxOutputTokens": 8192,
     "contextWindow": 131072,
@@ -223,7 +223,7 @@
   {
     "id": "google/gemma-4-31b-it",
     "owned_by": "google",
-    "discovered_at": "2026-04-29T21:34:50.021Z",
+    "discovered_at": "2026-04-29T22:05:45.721Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
     "contextWindow": 262144,
@@ -234,14 +234,14 @@
   {
     "id": "google/recurrentgemma-2b",
     "owned_by": "google",
-    "discovered_at": "2026-04-29T21:34:51.400Z",
+    "discovered_at": "2026-04-29T22:05:47.592Z",
     "supportsVision": false,
     "supportsReasoning": false
   },
   {
     "id": "ibm/granite-3.0-3b-a800m-instruct",
     "owned_by": "ibm",
-    "discovered_at": "2026-04-29T21:34:51.400Z",
+    "discovered_at": "2026-04-29T22:05:47.593Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -250,7 +250,7 @@
   {
     "id": "ibm/granite-3.0-8b-instruct",
     "owned_by": "ibm",
-    "discovered_at": "2026-04-29T21:34:51.401Z",
+    "discovered_at": "2026-04-29T22:05:47.593Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -259,7 +259,7 @@
   {
     "id": "ibm/granite-34b-code-instruct",
     "owned_by": "ibm",
-    "discovered_at": "2026-04-29T21:34:51.401Z",
+    "discovered_at": "2026-04-29T22:05:47.593Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -268,21 +268,21 @@
   {
     "id": "ibm/granite-8b-code-instruct",
     "owned_by": "ibm",
-    "discovered_at": "2026-04-29T21:34:51.401Z",
+    "discovered_at": "2026-04-29T22:05:47.593Z",
     "supportsVision": false,
     "supportsReasoning": false
   },
   {
     "id": "meta/codellama-70b",
     "owned_by": "meta",
-    "discovered_at": "2026-04-29T21:34:52.710Z",
+    "discovered_at": "2026-04-29T22:05:48.935Z",
     "supportsVision": false,
     "supportsReasoning": false
   },
   {
     "id": "meta/llama-3.1-405b-instruct",
     "owned_by": "meta",
-    "discovered_at": "2026-04-29T21:34:52.710Z",
+    "discovered_at": "2026-04-29T22:05:48.935Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -291,7 +291,7 @@
   {
     "id": "meta/llama-3.1-70b-instruct",
     "owned_by": "meta",
-    "discovered_at": "2026-04-29T21:34:52.711Z",
+    "discovered_at": "2026-04-29T22:05:48.935Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -300,7 +300,7 @@
   {
     "id": "meta/llama-3.1-8b-instruct",
     "owned_by": "meta",
-    "discovered_at": "2026-04-29T21:34:52.711Z",
+    "discovered_at": "2026-04-29T22:05:48.936Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -309,7 +309,7 @@
   {
     "id": "meta/llama-3.2-11b-vision-instruct",
     "owned_by": "meta",
-    "discovered_at": "2026-04-29T21:34:52.711Z",
+    "discovered_at": "2026-04-29T22:05:48.936Z",
     "card_fetched": true,
     "maxOutputTokens": 8192,
     "contextWindow": 131072,
@@ -319,7 +319,7 @@
   {
     "id": "meta/llama-3.2-1b-instruct",
     "owned_by": "meta",
-    "discovered_at": "2026-04-29T21:34:53.999Z",
+    "discovered_at": "2026-04-29T22:05:50.052Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
     "contextWindow": 131072,
@@ -329,7 +329,7 @@
   {
     "id": "meta/llama-3.2-3b-instruct",
     "owned_by": "meta",
-    "discovered_at": "2026-04-29T21:34:54.000Z",
+    "discovered_at": "2026-04-29T22:05:50.053Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
     "contextWindow": 131072,
@@ -339,7 +339,7 @@
   {
     "id": "meta/llama-3.2-90b-vision-instruct",
     "owned_by": "meta",
-    "discovered_at": "2026-04-29T21:34:54.000Z",
+    "discovered_at": "2026-04-29T22:05:50.053Z",
     "card_fetched": true,
     "maxOutputTokens": 8192,
     "contextWindow": 131072,
@@ -349,7 +349,7 @@
   {
     "id": "meta/llama-3.3-70b-instruct",
     "owned_by": "meta",
-    "discovered_at": "2026-04-29T21:34:54.000Z",
+    "discovered_at": "2026-04-29T22:05:50.053Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
     "contextWindow": 131072,
@@ -359,7 +359,7 @@
   {
     "id": "meta/llama-4-maverick-17b-128e-instruct",
     "owned_by": "meta",
-    "discovered_at": "2026-04-29T21:34:54.000Z",
+    "discovered_at": "2026-04-29T22:05:50.053Z",
     "card_fetched": true,
     "maxOutputTokens": 8192,
     "contextWindow": 131072,
@@ -369,15 +369,16 @@
   {
     "id": "meta/llama-guard-4-12b",
     "owned_by": "meta",
-    "discovered_at": "2026-04-29T21:34:55.442Z",
+    "discovered_at": "2026-04-29T22:05:51.384Z",
     "card_fetched": true,
+    "maxOutputTokens": 9223372036854776000,
     "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "meta/llama2-70b",
     "owned_by": "meta",
-    "discovered_at": "2026-04-29T21:34:55.443Z",
+    "discovered_at": "2026-04-29T22:05:51.384Z",
     "card_fetched": true,
     "contextWindow": 4096,
     "maxOutputTokens": 1024,
@@ -387,14 +388,14 @@
   {
     "id": "microsoft/kosmos-2",
     "owned_by": "microsoft",
-    "discovered_at": "2026-04-29T21:34:55.443Z",
+    "discovered_at": "2026-04-29T22:05:51.385Z",
     "supportsVision": false,
     "supportsReasoning": false
   },
   {
     "id": "microsoft/phi-3-vision-128k-instruct",
     "owned_by": "microsoft",
-    "discovered_at": "2026-04-29T21:34:55.443Z",
+    "discovered_at": "2026-04-29T22:05:51.385Z",
     "contextWindow": 131072,
     "maxOutputTokens": 4096,
     "supportsVision": true,
@@ -403,7 +404,7 @@
   {
     "id": "microsoft/phi-3.5-moe-instruct",
     "owned_by": "microsoft",
-    "discovered_at": "2026-04-29T21:34:55.443Z",
+    "discovered_at": "2026-04-29T22:05:51.385Z",
     "contextWindow": 131072,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -412,18 +413,18 @@
   {
     "id": "microsoft/phi-4-mini-instruct",
     "owned_by": "microsoft",
-    "discovered_at": "2026-04-29T21:34:56.345Z",
+    "discovered_at": "2026-04-29T22:05:52.477Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
     "contextWindow": 131072,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "microsoft/phi-4-multimodal-instruct",
     "owned_by": "microsoft",
-    "discovered_at": "2026-04-29T21:34:56.346Z",
+    "discovered_at": "2026-04-29T22:05:52.478Z",
     "card_fetched": true,
     "maxOutputTokens": 8192,
     "contextWindow": 131072,
@@ -433,29 +434,29 @@
   {
     "id": "minimaxai/minimax-m2.5",
     "owned_by": "minimaxai",
-    "discovered_at": "2026-04-29T21:34:56.346Z",
+    "discovered_at": "2026-04-29T22:05:52.478Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
     "contextWindow": 131072,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "minimax-inline"
   },
   {
     "id": "minimaxai/minimax-m2.7",
     "owned_by": "minimaxai",
-    "discovered_at": "2026-04-29T21:34:56.346Z",
+    "discovered_at": "2026-04-29T22:05:52.478Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
     "contextWindow": 131072,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "minimax-inline"
   },
   {
     "id": "mistralai/codestral-22b-instruct-v0.1",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:34:56.346Z",
+    "discovered_at": "2026-04-29T22:05:52.478Z",
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -464,27 +465,29 @@
   {
     "id": "mistralai/devstral-2-123b-instruct-2512",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:34:57.552Z",
+    "discovered_at": "2026-04-29T22:05:53.401Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
-    "supportsVision": false,
+    "contextWindow": 262144,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "mistralai/magistral-small-2506",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:34:57.552Z",
+    "discovered_at": "2026-04-29T22:05:53.401Z",
     "card_fetched": true,
     "maxOutputTokens": 40960,
-    "supportsVision": false,
+    "contextWindow": 131072,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "deepseek-nim"
   },
   {
     "id": "mistralai/ministral-14b-instruct-2512",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:34:57.552Z",
+    "discovered_at": "2026-04-29T22:05:53.402Z",
     "card_fetched": true,
     "maxOutputTokens": 8192,
     "contextWindow": 131072,
@@ -494,7 +497,7 @@
   {
     "id": "mistralai/mistral-7b-instruct-v0.3",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:34:57.552Z",
+    "discovered_at": "2026-04-29T22:05:53.402Z",
     "contextWindow": 32768,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -503,7 +506,7 @@
   {
     "id": "mistralai/mistral-large",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:34:57.552Z",
+    "discovered_at": "2026-04-29T22:05:53.402Z",
     "card_fetched": true,
     "contextWindow": 131072,
     "maxOutputTokens": 1024,
@@ -513,7 +516,7 @@
   {
     "id": "mistralai/mistral-large-2-instruct",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:34:58.886Z",
+    "discovered_at": "2026-04-29T22:05:54.745Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -522,7 +525,7 @@
   {
     "id": "mistralai/mistral-large-3-675b-instruct-2512",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:34:58.887Z",
+    "discovered_at": "2026-04-29T22:05:54.746Z",
     "card_fetched": true,
     "maxOutputTokens": 8192,
     "contextWindow": 131072,
@@ -532,18 +535,20 @@
   {
     "id": "mistralai/mistral-medium-3-instruct",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:34:58.887Z",
+    "discovered_at": "2026-04-29T22:05:54.746Z",
     "card_fetched": true,
     "maxOutputTokens": 8192,
-    "supportsVision": false,
+    "contextWindow": 131072,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "mistralai/mistral-medium-3.5-128b",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:34:58.887Z",
+    "discovered_at": "2026-04-29T22:05:54.746Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
+    "contextWindow": 262144,
     "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "reasoning-effort"
@@ -551,7 +556,7 @@
   {
     "id": "mistralai/mistral-nemotron",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:34:58.887Z",
+    "discovered_at": "2026-04-29T22:05:54.746Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
     "contextWindow": 131072,
@@ -561,7 +566,7 @@
   {
     "id": "mistralai/mistral-small-4-119b-2603",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:35:00.396Z",
+    "discovered_at": "2026-04-29T22:05:55.757Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
     "contextWindow": 131072,
@@ -572,7 +577,7 @@
   {
     "id": "mistralai/mixtral-8x22b-instruct-v0.1",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:35:00.396Z",
+    "discovered_at": "2026-04-29T22:05:55.757Z",
     "contextWindow": 65536,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -581,7 +586,7 @@
   {
     "id": "mistralai/mixtral-8x22b-v0.1",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:35:00.396Z",
+    "discovered_at": "2026-04-29T22:05:55.758Z",
     "contextWindow": 65536,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -590,7 +595,7 @@
   {
     "id": "mistralai/mixtral-8x7b-instruct-v0.1",
     "owned_by": "mistralai",
-    "discovered_at": "2026-04-29T21:35:00.396Z",
+    "discovered_at": "2026-04-29T22:05:55.758Z",
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -599,42 +604,42 @@
   {
     "id": "moonshotai/kimi-k2-instruct",
     "owned_by": "moonshotai",
-    "discovered_at": "2026-04-29T21:35:00.397Z",
+    "discovered_at": "2026-04-29T22:05:55.758Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
     "contextWindow": 131072,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "moonshotai/kimi-k2-instruct-0905",
     "owned_by": "moonshotai",
-    "discovered_at": "2026-04-29T21:35:01.664Z",
+    "discovered_at": "2026-04-29T22:05:57.927Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
-    "contextWindow": 204800,
-    "supportsVision": false,
+    "contextWindow": 262144,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "deepseek-nim"
   },
   {
     "id": "moonshotai/kimi-k2-thinking",
     "owned_by": "moonshotai",
-    "discovered_at": "2026-04-29T21:35:01.664Z",
+    "discovered_at": "2026-04-29T22:05:57.927Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
     "contextWindow": 262144,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "deepseek-nim"
   },
   {
     "id": "moonshotai/kimi-k2.5",
     "owned_by": "moonshotai",
-    "discovered_at": "2026-04-29T21:35:01.665Z",
+    "discovered_at": "2026-04-29T22:05:57.927Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
-    "contextWindow": 204800,
+    "contextWindow": 262144,
     "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "deepseek-nim"
@@ -642,7 +647,7 @@
   {
     "id": "nv-mistralai/mistral-nemo-12b-instruct",
     "owned_by": "nv-mistralai",
-    "discovered_at": "2026-04-29T21:35:01.665Z",
+    "discovered_at": "2026-04-29T22:05:57.927Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -651,21 +656,21 @@
   {
     "id": "nvidia/ai-synthetic-video-detector",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:01.665Z",
+    "discovered_at": "2026-04-29T22:05:57.927Z",
     "supportsVision": false,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/cosmos-reason2-8b",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:03.919Z",
+    "discovered_at": "2026-04-29T22:06:00.349Z",
     "supportsVision": false,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/embed-qa-4",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:03.920Z",
+    "discovered_at": "2026-04-29T22:06:00.349Z",
     "card_fetched": true,
     "supportsVision": false,
     "supportsReasoning": false
@@ -673,15 +678,15 @@
   {
     "id": "nvidia/gliner-pii",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:03.920Z",
+    "discovered_at": "2026-04-29T22:06:00.349Z",
     "card_fetched": true,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/ising-calibration-1-35b-a3b",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:03.920Z",
+    "discovered_at": "2026-04-29T22:06:00.349Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
     "supportsVision": true,
@@ -691,27 +696,27 @@
   {
     "id": "nvidia/llama-3.1-nemoguard-8b-content-safety",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:03.920Z",
+    "discovered_at": "2026-04-29T22:06:00.349Z",
     "card_fetched": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/llama-3.1-nemoguard-8b-topic-control",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:05.568Z",
+    "discovered_at": "2026-04-29T22:06:01.266Z",
     "card_fetched": true,
     "contextWindow": 131072,
     "maxOutputTokens": 1024,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/llama-3.1-nemotron-51b-instruct",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:05.569Z",
+    "discovered_at": "2026-04-29T22:06:01.266Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -720,7 +725,7 @@
   {
     "id": "nvidia/llama-3.1-nemotron-70b-instruct",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:05.569Z",
+    "discovered_at": "2026-04-29T22:06:01.266Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -729,7 +734,7 @@
   {
     "id": "nvidia/llama-3.1-nemotron-nano-8b-v1",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:05.569Z",
+    "discovered_at": "2026-04-29T22:06:01.267Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
     "contextWindow": 131072,
@@ -739,28 +744,28 @@
   {
     "id": "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:05.569Z",
+    "discovered_at": "2026-04-29T22:06:01.267Z",
     "card_fetched": true,
     "maxOutputTokens": 2048,
     "contextWindow": 131072,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:07.285Z",
+    "discovered_at": "2026-04-29T22:06:02.537Z",
     "card_fetched": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "deepseek-nim"
   },
   {
     "id": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:07.285Z",
+    "discovered_at": "2026-04-29T22:06:02.538Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
     "contextWindow": 131072,
@@ -771,7 +776,7 @@
   {
     "id": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:07.285Z",
+    "discovered_at": "2026-04-29T22:06:02.538Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -780,17 +785,17 @@
   {
     "id": "nvidia/llama-3.2-nemoretriever-300m-embed-v1",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:07.285Z",
+    "discovered_at": "2026-04-29T22:06:02.538Z",
     "card_fetched": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/llama-3.2-nv-embedqa-1b-v1",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:07.285Z",
+    "discovered_at": "2026-04-29T22:06:02.538Z",
     "card_fetched": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
@@ -800,7 +805,7 @@
   {
     "id": "nvidia/llama-3.2-nv-embedqa-1b-v2",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:08.385Z",
+    "discovered_at": "2026-04-29T22:06:03.734Z",
     "card_fetched": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
@@ -810,7 +815,7 @@
   {
     "id": "nvidia/llama-3.3-nemotron-super-49b-v1",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:08.385Z",
+    "discovered_at": "2026-04-29T22:06:03.735Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
     "contextWindow": 131072,
@@ -821,7 +826,7 @@
   {
     "id": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:08.385Z",
+    "discovered_at": "2026-04-29T22:06:03.735Z",
     "card_fetched": true,
     "maxOutputTokens": 65536,
     "contextWindow": 131072,
@@ -832,15 +837,15 @@
   {
     "id": "nvidia/llama-nemotron-embed-1b-v2",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:08.385Z",
+    "discovered_at": "2026-04-29T22:06:03.735Z",
     "card_fetched": true,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/llama-nemotron-embed-vl-1b-v2",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:08.385Z",
+    "discovered_at": "2026-04-29T22:06:03.735Z",
     "card_fetched": true,
     "supportsVision": true,
     "supportsReasoning": false
@@ -848,7 +853,7 @@
   {
     "id": "nvidia/llama3-chatqa-1.5-70b",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:09.600Z",
+    "discovered_at": "2026-04-29T22:06:05.331Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -857,7 +862,7 @@
   {
     "id": "nvidia/mistral-nemo-minitron-8b-8k-instruct",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:09.600Z",
+    "discovered_at": "2026-04-29T22:06:05.331Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -866,7 +871,7 @@
   {
     "id": "nvidia/nemoretriever-parse",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:09.600Z",
+    "discovered_at": "2026-04-29T22:06:05.331Z",
     "card_fetched": true,
     "maxOutputTokens": 8192,
     "supportsVision": true,
@@ -875,27 +880,27 @@
   {
     "id": "nvidia/nemotron-3-content-safety",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:09.600Z",
+    "discovered_at": "2026-04-29T22:06:05.331Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "deepseek-nim"
   },
   {
     "id": "nvidia/nemotron-3-nano-30b-a3b",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:09.600Z",
+    "discovered_at": "2026-04-29T22:06:05.331Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:13.062Z",
+    "discovered_at": "2026-04-29T22:06:06.182Z",
     "card_fetched": true,
     "maxOutputTokens": 65536,
     "contextWindow": 262144,
@@ -906,18 +911,18 @@
   {
     "id": "nvidia/nemotron-3-super-120b-a12b",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:13.062Z",
+    "discovered_at": "2026-04-29T22:06:06.183Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
-    "contextWindow": 1048576,
-    "supportsVision": false,
+    "contextWindow": 1000000,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "nvidia/nemotron-4-340b-instruct",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:13.062Z",
+    "discovered_at": "2026-04-29T22:06:06.183Z",
     "contextWindow": 4096,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -926,7 +931,7 @@
   {
     "id": "nvidia/nemotron-4-340b-reward",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:13.062Z",
+    "discovered_at": "2026-04-29T22:06:06.183Z",
     "contextWindow": 4096,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -935,27 +940,27 @@
   {
     "id": "nvidia/nemotron-content-safety-reasoning-4b",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:13.062Z",
+    "discovered_at": "2026-04-29T22:06:06.183Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
     "contextWindow": 131072,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/nemotron-mini-4b-instruct",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:16.251Z",
+    "discovered_at": "2026-04-29T22:06:07.226Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
     "contextWindow": 4096,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/nemotron-nano-12b-v2-vl",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:16.251Z",
+    "discovered_at": "2026-04-29T22:06:07.227Z",
     "card_fetched": true,
     "maxOutputTokens": 8192,
     "contextWindow": 4096,
@@ -965,7 +970,7 @@
   {
     "id": "nvidia/nemotron-nano-3-30b-a3b",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:16.251Z",
+    "discovered_at": "2026-04-29T22:06:07.227Z",
     "contextWindow": 4096,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -974,7 +979,7 @@
   {
     "id": "nvidia/nemotron-parse",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:16.251Z",
+    "discovered_at": "2026-04-29T22:06:07.227Z",
     "card_fetched": true,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -984,14 +989,14 @@
   {
     "id": "nvidia/neva-22b",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:16.251Z",
+    "discovered_at": "2026-04-29T22:06:07.227Z",
     "supportsVision": false,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/nv-embed-v1",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:17.043Z",
+    "discovered_at": "2026-04-29T22:06:08.474Z",
     "card_fetched": true,
     "supportsVision": false,
     "supportsReasoning": false
@@ -999,7 +1004,7 @@
   {
     "id": "nvidia/nv-embedcode-7b-v1",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:17.043Z",
+    "discovered_at": "2026-04-29T22:06:08.474Z",
     "card_fetched": true,
     "supportsVision": false,
     "supportsReasoning": false
@@ -1007,7 +1012,7 @@
   {
     "id": "nvidia/nv-embedqa-e5-v5",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:17.043Z",
+    "discovered_at": "2026-04-29T22:06:08.474Z",
     "card_fetched": true,
     "supportsVision": false,
     "supportsReasoning": false
@@ -1015,7 +1020,7 @@
   {
     "id": "nvidia/nv-embedqa-mistral-7b-v2",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:17.043Z",
+    "discovered_at": "2026-04-29T22:06:08.474Z",
     "contextWindow": 32768,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -1024,15 +1029,15 @@
   {
     "id": "nvidia/nvclip",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:17.043Z",
+    "discovered_at": "2026-04-29T22:06:08.474Z",
     "card_fetched": true,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/nvidia-nemotron-nano-9b-v2",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:17.730Z",
+    "discovered_at": "2026-04-29T22:06:09.203Z",
     "card_fetched": true,
     "contextWindow": 4096,
     "maxOutputTokens": 4096,
@@ -1042,54 +1047,55 @@
   {
     "id": "nvidia/riva-translate-4b-instruct",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:17.730Z",
+    "discovered_at": "2026-04-29T22:06:09.203Z",
     "supportsVision": false,
     "supportsReasoning": false
   },
   {
     "id": "nvidia/riva-translate-4b-instruct-v1.1",
     "owned_by": "nvidia",
-    "discovered_at": "2026-04-29T21:35:17.730Z",
+    "discovered_at": "2026-04-29T22:06:09.203Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "openai/gpt-oss-120b",
     "owned_by": "openai",
-    "discovered_at": "2026-04-29T21:35:17.730Z",
+    "discovered_at": "2026-04-29T22:06:09.203Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
-    "contextWindow": 131072,
-    "supportsVision": false,
+    "contextWindow": 128000,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "reasoning-effort"
   },
   {
     "id": "openai/gpt-oss-20b",
     "owned_by": "openai",
-    "discovered_at": "2026-04-29T21:35:17.730Z",
+    "discovered_at": "2026-04-29T22:06:09.203Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
-    "contextWindow": 131072,
-    "supportsVision": false,
+    "contextWindow": 128000,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "reasoning-effort"
   },
   {
     "id": "qwen/qwen2.5-coder-32b-instruct",
     "owned_by": "qwen",
-    "discovered_at": "2026-04-29T21:35:19.446Z",
+    "discovered_at": "2026-04-29T22:06:10.643Z",
     "card_fetched": true,
     "maxOutputTokens": 4000,
-    "supportsVision": false,
+    "contextWindow": 131072,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "qwen/qwen3-coder-480b-a35b-instruct",
     "owned_by": "qwen",
-    "discovered_at": "2026-04-29T21:35:19.446Z",
+    "discovered_at": "2026-04-29T22:06:10.643Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
     "contextWindow": 262144,
@@ -1100,29 +1106,29 @@
   {
     "id": "qwen/qwen3-next-80b-a3b-instruct",
     "owned_by": "qwen",
-    "discovered_at": "2026-04-29T21:35:19.446Z",
+    "discovered_at": "2026-04-29T22:06:10.643Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
     "contextWindow": 262144,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "qwen/qwen3-next-80b-a3b-thinking",
     "owned_by": "qwen",
-    "discovered_at": "2026-04-29T21:35:19.446Z",
+    "discovered_at": "2026-04-29T22:06:10.643Z",
     "card_fetched": true,
     "maxOutputTokens": 4096,
     "contextWindow": 262144,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "qwen/qwen3.5-122b-a10b",
     "owned_by": "qwen",
-    "discovered_at": "2026-04-29T21:35:19.446Z",
+    "discovered_at": "2026-04-29T22:06:10.643Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
     "contextWindow": 262144,
@@ -1133,7 +1139,7 @@
   {
     "id": "qwen/qwen3.5-397b-a17b",
     "owned_by": "qwen",
-    "discovered_at": "2026-04-29T21:35:20.098Z",
+    "discovered_at": "2026-04-29T22:06:11.428Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
     "contextWindow": 262144,
@@ -1144,16 +1150,16 @@
   {
     "id": "sarvamai/sarvam-m",
     "owned_by": "sarvamai",
-    "discovered_at": "2026-04-29T21:35:20.099Z",
+    "discovered_at": "2026-04-29T22:06:11.428Z",
     "card_fetched": true,
     "maxOutputTokens": 16384,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "snowflake/arctic-embed-l",
     "owned_by": "snowflake",
-    "discovered_at": "2026-04-29T21:35:20.099Z",
+    "discovered_at": "2026-04-29T22:06:11.428Z",
     "card_fetched": true,
     "supportsVision": false,
     "supportsReasoning": false
@@ -1161,26 +1167,28 @@
   {
     "id": "stepfun-ai/step-3.5-flash",
     "owned_by": "stepfun-ai",
-    "discovered_at": "2026-04-29T21:35:20.099Z",
+    "discovered_at": "2026-04-29T22:06:11.428Z",
     "card_fetched": true,
     "maxOutputTokens": 262144,
     "contextWindow": 256000,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "stepfun-parallel"
   },
   {
     "id": "stockmark/stockmark-2-100b-instruct",
     "owned_by": "stockmark",
-    "discovered_at": "2026-04-29T21:35:20.099Z",
+    "discovered_at": "2026-04-29T22:06:11.428Z",
     "card_fetched": true,
-    "supportsVision": false,
+    "contextWindow": 32768,
+    "maxOutputTokens": 8192,
+    "supportsVision": true,
     "supportsReasoning": false
   },
   {
     "id": "upstage/solar-10.7b-instruct",
     "owned_by": "upstage",
-    "discovered_at": "2026-04-29T21:35:21.409Z",
+    "discovered_at": "2026-04-29T22:06:12.302Z",
     "card_fetched": true,
     "contextWindow": 4096,
     "maxOutputTokens": 1024,
@@ -1190,7 +1198,7 @@
   {
     "id": "writer/palmyra-creative-122b",
     "owned_by": "writer",
-    "discovered_at": "2026-04-29T21:35:21.409Z",
+    "discovered_at": "2026-04-29T22:06:12.302Z",
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -1199,7 +1207,7 @@
   {
     "id": "writer/palmyra-fin-70b-32k",
     "owned_by": "writer",
-    "discovered_at": "2026-04-29T21:35:21.409Z",
+    "discovered_at": "2026-04-29T22:06:12.302Z",
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -1208,7 +1216,7 @@
   {
     "id": "writer/palmyra-med-70b",
     "owned_by": "writer",
-    "discovered_at": "2026-04-29T21:35:21.409Z",
+    "discovered_at": "2026-04-29T22:06:12.302Z",
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -1217,7 +1225,7 @@
   {
     "id": "writer/palmyra-med-70b-32k",
     "owned_by": "writer",
-    "discovered_at": "2026-04-29T21:35:21.409Z",
+    "discovered_at": "2026-04-29T22:06:12.302Z",
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsVision": false,
@@ -1226,29 +1234,29 @@
   {
     "id": "z-ai/glm-5.1",
     "owned_by": "z-ai",
-    "discovered_at": "2026-04-29T21:35:22.630Z",
+    "discovered_at": "2026-04-29T22:06:13.616Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
     "contextWindow": 200000,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "z-ai/glm4.7",
     "owned_by": "z-ai",
-    "discovered_at": "2026-04-29T21:35:22.631Z",
+    "discovered_at": "2026-04-29T22:06:13.616Z",
     "card_fetched": true,
     "maxOutputTokens": 32768,
     "contextWindow": 128000,
-    "supportsVision": false,
+    "supportsVision": true,
     "supportsReasoning": true,
     "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "z-ai/glm5",
     "owned_by": "z-ai",
-    "discovered_at": "2026-04-29T21:35:22.631Z",
+    "discovered_at": "2026-04-29T22:06:13.616Z",
     "contextWindow": 128000,
     "maxOutputTokens": 8192,
     "supportsVision": false,
@@ -1258,7 +1266,7 @@
   {
     "id": "zyphra/zamba2-7b-instruct",
     "owned_by": "zyphra",
-    "discovered_at": "2026-04-29T21:35:22.631Z",
+    "discovered_at": "2026-04-29T22:06:13.616Z",
     "contextWindow": 4096,
     "maxOutputTokens": 4096,
     "supportsVision": false,

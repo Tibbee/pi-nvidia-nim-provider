@@ -81,16 +81,13 @@ NvidiaProvider/
 ├── package.json                      # Pi package manifest
 ├── models/
 │   ├── types.ts                      # NimModelConfig type + NimThinkingFormat enum
-│   ├── registry.ts                   # Combines all models, applies family compat
-│   ├── chat-models.ts                # ~30 chat/instruction models
-│   ├── coding-models.ts              # ~20 coding/agentic models
-│   ├── reasoning-models.ts           # ~25 reasoning models
-│   └── vision-models.ts              # ~7 vision/multimodal models
+│   ├── registry.ts                   # Loads from metadata.json, applies family compat
+│   └── metadata.json                 # ~87 models with discovered metadata
 ├── config/
 │   ├── model-families.ts             # 30+ families with compat + thinking format classification
 │   └── defaults.ts                   # NIM_BASE_URL, NIM_API_KEY_ENV
 ├── tools/
-│   ├── fetch_nim_metadata.ts         # Comprehensive metadata fetcher (API + optional Tavily)
+│   └── fetch_nim_metadata.ts         # Comprehensive metadata fetcher (API + docs scraping)
 └── docs/
     └── README.md                     # This file
 ```
@@ -357,7 +354,7 @@ pi.on("before_provider_request", (event, ctx) => {
 | Phase | Description | Status |
 |-------|-------------|--------|
 | **Phase 1** | Core extension structure (`package.json`, `index.ts`) | ✅ Complete |
-| **Phase 2** | Model registry (`types.ts`, `registry.ts`, 4 model files) | ✅ Complete (~80 models) |
+| **Phase 2** | Model registry (`types.ts`, `registry.ts`, `metadata.json`) | ✅ Complete (~87 models from NIM API) |
 | **Phase 3** | Family compat configuration (`model-families.ts`, `defaults.ts`) | ✅ Complete (30+ families) |
 | **Phase 4** | `before_provider_request` handler | ✅ Complete (6 thinking formats) |
 | **Phase 5** | Model metadata gathering | ⚠️ Partial (`fetch_nim_metadata.ts` works but needs improvement) |
@@ -378,7 +375,7 @@ pi.on("before_provider_request", (event, ctx) => {
 | `minimax-inline` format | MiniMax M2.x `<antha>` tag handling |
 | GLM-5.1 `clear_thinking` | Extra injection beyond pi's native handling |
 | Mistral `requiresToolResultName` | Tool result messages must include `name` field |
-| Tavily-optional fetcher | `fetch_nim_metadata.ts` works without Tavily API key |
+| Documentation scraper | `fetch_nim_metadata.ts` scrapes NVIDIA docs pages directly, no external API needed |
 
 ---
 
@@ -451,13 +448,13 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 
 ### Medium Priority
 
-- [ ] **Improve `fetch_nim_metadata.ts`** — Context window detection only works for 13/87 models. Reasoning detection misses many. Label extraction from Tavily output is broken.
+- [ ] **Improve `fetch_nim_metadata.ts`** — Context window detection only works for 13/87 models. Reasoning detection misses many.
 
 ### Low Priority / Future
 
 - [ ] **Cost data** — Research paid tier pricing if available.
 - [ ] **Automated testing** — Script that verifies `before_provider_request` output for each thinking format.
-- [ ] **Model card caching** — Cache Tavily results to avoid re-fetching.
+- [ ] **Model card caching** — Cache documentation page results to avoid re-fetching.
 - [ ] **GitHub repo** — Create public repo and push.
 
 ---
@@ -469,26 +466,25 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NVIDIA_API_KEY` | Yes | API key from https://build.nvidia.com/ |
-| `TAVILY_API_KEY` | No | Only needed for `fetch_nim_metadata.ts` full mode |
 
 ### Running the Extension
 
 ```bash
 # Basic usage
-pi -e E:/Morka/Programming/TypeJavaScript/NvidiaProvider
+pi -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider
 
 
 # List models
-pi --list-models -e E:/Morka/Programming/TypeJavaScript/NvidiaProvider | grep nvidia-nim
+pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nvidia-nim
 ```
 
 ### Fetching Metadata
 
 ```bash
-# Basic mode (no Tavily)
+# Basic mode
 npx tsx tools/fetch_nim_metadata.ts --output models/metadata.json
 
-# Full mode (with Tavily model card scraping)
+# Full mode (with documentation page scraping)
 npx tsx tools/fetch_nim_metadata.ts --cards --verbose --output models/metadata.json
 ```
 

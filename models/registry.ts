@@ -5,7 +5,7 @@
 import type { NimModelConfig } from "./types";
 import metadataJson from "./metadata.json";
 import { applyFamilyCompat, classifyThinkingFormat } from "../config/model-families";
-import { mapThinkingFormatToCompat } from "./metadata";
+import { buildReasoningEffortThinkingLevelMap, mapThinkingFormatToCompat } from "./metadata";
 
 interface MetadataEntry {
   id: string;
@@ -14,6 +14,9 @@ interface MetadataEntry {
   maxOutputTokens?: number;
   supportsVision?: boolean;
   supportsReasoning?: boolean;
+  reasoningBudget?: number;
+  reasoningEffortValues?: string[];
+  reasoningEffortDefault?: string;
   thinkingFormat?: string;
   discovered_at: string;
   card_fetched?: boolean;
@@ -25,7 +28,11 @@ interface MetadataEntry {
  */
 function metadataToModelConfig(entry: MetadataEntry): NimModelConfig {
   const thinkingCompat = mapThinkingFormatToCompat(entry.thinkingFormat);
-  
+  const thinkingLevelMap =
+    entry.thinkingFormat === "reasoning-effort"
+      ? buildReasoningEffortThinkingLevelMap(entry.reasoningEffortValues)
+      : undefined;
+
   const input: ("text" | "image")[] = ["text"];
   if (entry.supportsVision) {
     input.push("image");
@@ -39,6 +46,8 @@ function metadataToModelConfig(entry: MetadataEntry): NimModelConfig {
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
     contextWindow: entry.contextWindow ?? 131072,
     maxTokens: entry.maxOutputTokens ?? 4096,
+    reasoningBudget: entry.reasoningBudget,
+    thinkingLevelMap,
     compat: {
       ...thinkingCompat,
     },

@@ -55,6 +55,8 @@ interface ModelMetadata {
   // Reasoning / thinking
   supportsReasoning?: boolean;
   thinkingFormat?: string;
+  reasoningEffortValues?: string[];
+  reasoningEffortDefault?: string;
 
   // Tool calling
   supportsToolCalling?: boolean;
@@ -75,6 +77,9 @@ interface ModelMetadata {
   recommendedTemperature?: number;
   recommendedTopP?: number;
   recommendedTopK?: number;
+
+  // Internal reasoning budget (for NIM reasoning models)
+  reasoningBudget?: number;
 
   // Architecture
   totalParams?: number;   // billions
@@ -246,6 +251,10 @@ function parseMaxOutputTokens(text: string): number | undefined {
       transform: (m) => parseInt(m[1].replace(/,/g, ""), 10),
     },
     {
+      re: /context\s+length(?:\s+up\s+to)?\s*(\d[\d,]*)\s*tokens?/i,
+      transform: (m) => parseInt(m[1].replace(/,/g, ""), 10),
+    },
+    {
       re: /practical\s+limit[^]*?(\d[\d,]*)\s*tokens?/i,
       transform: (m) => parseInt(m[1].replace(/,/g, ""), 10),
     },
@@ -263,6 +272,34 @@ function parseMaxOutputTokens(text: string): number | undefined {
     }
   }
   return maxOut > 0 ? maxOut : undefined;
+}
+
+function parseReasoningBudget(text: string): number | undefined {
+  const re = /reasoning_budget[\s\S]{0,500}?-1\s+to\s+(\d[\d,]*)/gi;
+  let maxBudget = 0;
+  let match;
+  while ((match = re.exec(text)) !== null) {
+    const val = parseInt(match[1].replace(/,/g, ""), 10);
+    if (!isNaN(val) && val > maxBudget) maxBudget = val;
+  }
+  return maxBudget > 0 ? maxBudget : undefined;
+}
+
+function parseReasoningEffortValues(html: string): { values?: string[]; defaultValue?: string } {
+  const selectMatch = html.match(/<select[^>]*id="[^"]*reasoning_effort[^"]*"[^>]*>([\s\S]*?)<\/select>/i);
+  if (!selectMatch) return {};
+
+  const selectHtml = selectMatch[1];
+  const values = Array.from(selectHtml.matchAll(/<option\b[^>]*value="([^"]*)"[^>]*>/gi))
+    .map((m) => m[1].trim().toLowerCase())
+    .filter(Boolean);
+  const uniqueValues = Array.from(new Set(values));
+  const selected = selectHtml.match(/<option\b[^>]*value="([^"]*)"[^>]*selected[^>]*>/i)?.[1]?.trim().toLowerCase();
+
+  return {
+    values: uniqueValues.length > 0 ? uniqueValues : undefined,
+    defaultValue: selected ?? uniqueValues[0],
+  };
 }
 
 // ── Parsers: modalities ────────────────────────────────────────────────────
@@ -540,9 +577,13 @@ function parseStructuredContextWindow(html: string): number | undefined {
   const m3 = html.match(/Input Context Length(?:\s*\(ISL\))?:\s*(\d[\d,]{4,})/i);
   if (m3) return parseInt(m3[1].replace(/,/g, ""), 10);
 
-  // Format 4: prose — "Maximum context length up to 256k tokens"
-  const m4 = html.match(/Maximum context length(?: up to)?\s*(\d+(?:\.\d+)?\s*[kK]?)\s*tokens?/i);
-  if (m4) return parseKtoNumber(m4[1]);
+  // Format 4: generic prose — "Context length up to 204,800 tokens"
+  const m4 = html.match(/Context length(?: up to)?\s*(\d[\d,]*)\s*tokens?/i);
+  if (m4) return parseInt(m4[1].replace(/,/g, ""), 10);
+
+  // Format 5: prose — "Maximum context length up to 256k tokens"
+  const m5 = html.match(/Maximum context length(?: up to)?\s*(\d+(?:\.\d+)?\s*[kK]?)\s*tokens?/i);
+  if (m5) return parseKtoNumber(m5[1]);
 
   return undefined;
 }
@@ -702,6 +743,10 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   meta.supportsReasoning = detectReasoningSupport(combinedHtmlStr);
   meta.thinkingFormat = meta.thinkingFormat ?? detectThinkingFormat(modelId, combinedHtmlStr);
   if (meta.thinkingFormat) meta.supportsReasoning = true;
+  meta.reasoningBudget = parseReasoningBudget(combinedHtmlStr);
+  const reasoningEffort = parseReasoningEffortValues(combinedHtmlStr);
+  meta.reasoningEffortValues = reasoningEffort.values;
+  meta.reasoningEffortDefault = reasoningEffort.defaultValue;
 
   // ── Tool calling (HTML fallback if schema didn't set it) ──────────────────
   meta.supportsToolCalling = meta.supportsToolCalling ?? detectToolCalling(combinedHtmlStr, modelId);
@@ -821,6 +866,8 @@ async function main() {
       console.log(`  recommendedTemperature:  ${meta.recommendedTemperature ?? "?"}`);
       console.log(`  recommendedTopP:         ${meta.recommendedTopP ?? "?"}`);
       console.log(`  recommendedTopK:         ${meta.recommendedTopK ?? "?"}`);
+      console.log(`  reasoningBudget:         ${meta.reasoningBudget ?? "?"}`);
+      console.log(`  reasoningEffort:         ${meta.reasoningEffortValues?.join(", ") ?? "?"}`);
       return;
     }
 
@@ -862,6 +909,8 @@ async function main() {
       withReasoning: results.filter(r => r.supportsReasoning).length,
       withVision: results.filter(r => r.supportsVision).length,
       withThinking: results.filter(r => r.thinkingFormat).length,
+      withReasoningBudget: results.filter(r => r.reasoningBudget != null).length,
+      withReasoningEffortValues: results.filter(r => r.reasoningEffortValues?.length).length,
       isMoE: results.filter(r => r.isMoE).length,
     };
 
@@ -876,6 +925,7 @@ async function main() {
     console.log(`With reasoning:          ${summary.withReasoning}`);
     console.log(`With vision:             ${summary.withVision}`);
     console.log(`With thinking format:    ${summary.withThinking}`);
+    console.log(`With reasoning budget:    ${summary.withReasoningBudget}`);
     console.log(`MoE models:              ${summary.isMoE}`);
 
     console.log("\nCategory distribution:");

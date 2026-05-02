@@ -26,6 +26,12 @@ export interface NimModelConfig {
   contextWindow: number;
   /** Maximum output tokens. */
   maxTokens: number;
+  /** Maximum internal reasoning budget tokens, when supported by the model. */
+  reasoningBudget?: number;
+  /** Allowed reasoning_effort values exposed by the modelcard (e.g. ["none", "high"]). */
+  reasoningEffortValues?: string[];
+  /** Default reasoning_effort value from the modelcard. */
+  reasoningEffortDefault?: string;
   /** Model-specific thinking levels and provider mappings used by pi. */
   thinkingLevelMap?: Partial<
     Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh", string | null>
@@ -51,6 +57,9 @@ export interface NimModelConfig {
  * - "minimax-inline" — always thinks inline with antha tags, no kwargs control
  * - "reasoning-effort" — standard OpenAI reasoning_effort (with optional mapping)
  * - "none" — no thinking/reasoning support
+ *
+ * Some Nemotron models also use a raw `reasoning_budget` request field; the
+ * scraper stores that as `reasoningBudget` on the model config.
  */
 export type NimThinkingFormat =
   | "qwen-chat-template"

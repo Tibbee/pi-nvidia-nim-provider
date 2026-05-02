@@ -4,6 +4,8 @@
  * The metadata.json contains:
  * - id, contextWindow, maxOutputTokens
  * - supportsVision, supportsReasoning
+ * - reasoningBudget (for Nemotron-style reasoning caps)
+ * - reasoningEffortValues / reasoningEffortDefault (for reasoning-effort models)
  * - thinkingFormat (from the scraper)
  */
 import type { NimModelConfig } from "./types";
@@ -15,6 +17,9 @@ interface MetadataEntry {
   maxOutputTokens?: number;
   supportsVision?: boolean;
   supportsReasoning?: boolean;
+  reasoningBudget?: number;
+  reasoningEffortValues?: string[];
+  reasoningEffortDefault?: string;
   thinkingFormat?: string;
   discovered_at: string;
   card_fetched?: boolean;
@@ -74,6 +79,48 @@ export function mapThinkingFormatToCompat(
   }
 }
 
+const REASONING_EFFORT_ORDER = ["none", "low", "medium", "high", "max"] as const;
+
+function reasoningEffortRank(value: string): number | undefined {
+  const idx = REASONING_EFFORT_ORDER.indexOf(value as (typeof REASONING_EFFORT_ORDER)[number]);
+  return idx === -1 ? undefined : idx;
+}
+
+/**
+ * Build a pi thinkingLevelMap from allowed reasoning_effort values.
+ * Chooses the nearest supported provider value at or above the requested pi level.
+ */
+export function buildReasoningEffortThinkingLevelMap(
+  values?: string[]
+): NimModelConfig["thinkingLevelMap"] | undefined {
+  if (!values?.length) return undefined;
+
+  const uniqueValues = Array.from(
+    new Set(values.map((v) => v.trim().toLowerCase()).filter(Boolean))
+  );
+  const supported = uniqueValues
+    .filter((v): v is (typeof REASONING_EFFORT_ORDER)[number] =>
+      reasoningEffortRank(v) !== undefined
+    )
+    .sort((a, b) => (reasoningEffortRank(a)! - reasoningEffortRank(b)!));
+
+  if (supported.length === 0) return undefined;
+
+  const pick = (desiredRank: number): string | null => {
+    const candidate = supported.find((value) => reasoningEffortRank(value)! >= desiredRank);
+    return candidate ?? supported[supported.length - 1] ?? null;
+  };
+
+  const map: Partial<Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh", string | null>> = {};
+  map.off = supported.includes("none") ? "none" : null;
+  map.minimal = pick(1);
+  map.low = pick(1);
+  map.medium = pick(2);
+  map.high = pick(3);
+  map.xhigh = pick(4);
+  return map;
+}
+
 /**
  * Merge metadata into a model config.
  * Metadata values override static values (but static values are fallback).
@@ -87,6 +134,10 @@ export function applyMetadata(
   if (!metadata) return model;
 
   const thinkingCompat = mapThinkingFormatToCompat(metadata.thinkingFormat);
+  const reasoningThinkingMap =
+    metadata.thinkingFormat === "reasoning-effort"
+      ? buildReasoningEffortThinkingLevelMap(metadata.reasoningEffortValues)
+      : undefined;
 
   // Determine input modalities from metadata
   const input: ("text" | "image")[] = ["text"];
@@ -106,7 +157,9 @@ export function applyMetadata(
     // Use metadata values if available, otherwise keep model value
     contextWindow: metadata.contextWindow ?? model.contextWindow,
     maxTokens: metadata.maxOutputTokens ?? model.maxTokens,
+    reasoningBudget: metadata.reasoningBudget ?? model.reasoningBudget,
     reasoning: metadata.supportsReasoning ?? model.reasoning,
+    thinkingLevelMap: reasoningThinkingMap ?? model.thinkingLevelMap,
     input,
     compat,
   };

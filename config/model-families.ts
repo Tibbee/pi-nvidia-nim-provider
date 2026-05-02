@@ -13,6 +13,8 @@ export interface ModelFamily {
   compat: NonNullable<NimModelConfig["compat"]>;
   /** Model-level thinking map applied to all models in this family. */
   thinkingLevelMap?: NimModelConfig["thinkingLevelMap"];
+  /** Optional internal reasoning budget applied to this family. */
+  reasoningBudget?: number;
 }
 
 /**
@@ -325,6 +327,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       supportsReasoningEffort: false,
       maxTokensField: "max_tokens",
     },
+    reasoningBudget: 32768,
   },
 
   // -- Google Gemma --------------------------------------------------------
@@ -544,6 +547,9 @@ export function applyFamilyCompat(
           ...(family.thinkingLevelMap ?? {}),
           ...(model.thinkingLevelMap ?? {}),
         };
+      }
+      if (family.reasoningBudget != null || model.reasoningBudget != null) {
+        providerModel.reasoningBudget = model.reasoningBudget ?? family.reasoningBudget;
       }
     }
     return providerModel;

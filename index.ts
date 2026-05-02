@@ -65,6 +65,7 @@
  */
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { NimModelConfig } from "./models/types";
 import { STATIC_MODELS, classifyThinkingFormat } from "./models/registry";
 import { NIM_BASE_URL, NIM_API_KEY_ENV } from "./config/defaults";
 
@@ -113,6 +114,14 @@ function getReasoningEffort(
     return effort;
   }
   return undefined;
+}
+
+function hasEnabledThinking(payload: Record<string, unknown>): boolean {
+  const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
+  if (kwargs?.enable_thinking === true) return true;
+  if (kwargs?.thinking === true) return true;
+  if (isDeepSeekThinkingEnabled(payload)) return true;
+  return getReasoningEffort(payload) != null;
 }
 
 /**
@@ -247,7 +256,7 @@ export default async function (pi: ExtensionAPI) {
     if (!modelId) return;
 
     // Find the model in our list to get its compat
-    const modelConfig = STATIC_MODELS.find((m) => m.id === modelId);
+    const modelConfig = STATIC_MODELS.find((m) => m.id === modelId) as NimModelConfig | undefined;
     if (!modelConfig) return; // Not a nvidia-nim model
 
     // Classify the thinking format for this model
@@ -256,9 +265,13 @@ export default async function (pi: ExtensionAPI) {
       modelConfig.compat as Record<string, unknown> | undefined
     );
 
+    const reasoningBudget = modelConfig.reasoningBudget;
+    const thinkingEnabled = hasEnabledThinking(payload);
+    let modified = false;
+
     // Handle custom thinking formats
     const result = handleCustomThinkingFormat(payload, format);
-    if (result) return result;
+    if (result) modified = true;
 
     // -- GLM-5.1 extra: clear_thinking: false --------------------------------
     // Pi's qwen-chat-template already injects chat_template_kwargs.enable_thinking
@@ -273,11 +286,16 @@ export default async function (pi: ExtensionAPI) {
           ...kwargs,
           clear_thinking: false,
         };
-        return payload;
+        modified = true;
       }
     }
 
+    if (reasoningBudget != null && thinkingEnabled) {
+      payload.reasoning_budget = reasoningBudget;
+      modified = true;
+    }
+
     // No modifications needed
-    return undefined;
+    return modified ? payload : undefined;
   });
 }

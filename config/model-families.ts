@@ -1,64 +1,16 @@
-/**
- * A model family groups related NVIDIA NIM models that share
- * the same compat flags and thinking format handling.
- */
 import type { NimModelConfig } from "../models/types";
 
 export interface ModelFamily {
-  /** Unique family name. */
   name: string;
-  /** Regex tested against model ID (e.g., "deepseek-ai/deepseek-v4-flash"). */
   pattern: RegExp;
-  /** Compat flags applied to all models in this family. */
   compat: NonNullable<NimModelConfig["compat"]>;
-  /** Model-level thinking map applied to all models in this family. */
   thinkingLevelMap?: NimModelConfig["thinkingLevelMap"];
-  /** Optional internal reasoning budget applied to this family. */
   reasoningBudget?: number;
 }
 
-/**
- * All supported NVIDIA NIM model families, ordered by specificity
- * (more specific patterns first to avoid partial matches).
- *
- * Key insights from real NIM API testing:
- *
- * - NVIDIA NIM does NOT use the standard OpenAI/DeepSeek thinking formats.
- *   Instead, thinking is controlled via chat_template_kwargs with different
- *   structures per model family.
- *
- * - pi's built-in thinkingFormat: "qwen-chat-template" natively injects
- *   chat_template_kwargs: { enable_thinking: true/false, preserve_thinking: true }
- *   which works for Qwen, GLM, Phi, and Magistral models on NIM.
- *
- * - pi's built-in thinkingFormat: "deepseek" sends:
- *   params.thinking = { type: "enabled"/"disabled" }
- *   params.reasoning_effort = mapped_value
- *   NIM expects these inside chat_template_kwargs instead, so
- *   before_provider_request converts them.
- *
- * - DeepSeek V4 on NIM requires BOTH chat_template_kwargs fields:
- *   { thinking: true/false, reasoning_effort: "none"|"high"|"max" }
- *   This is different from the standard DeepSeek API format.
- *
- * - DeepSeek V3/Kimi/Nemotron use chat_template_kwargs: { thinking: true/false }
- *   Also NOT covered by pi, handled via before_provider_request.
- *
- * - StepFun uses chat_template_kwargs: { parallel_reasoning_mode: "none"|"low"|"medium"|"heavy" }
- *   Custom format, handled via before_provider_request.
- *
- * - MiniMax M2 always thinks inline with <antha> tags in content.
- *   No kwargs control. requiresThinkingAsText prevents tag leakage.
- *
- * - GPT-OSS uses model-level thinkingLevelMap (minimal->low) and pi handles
- *   reasoning_effort natively.
- */
+// Ordered specific → general; first match wins.
 export const MODEL_FAMILIES: ModelFamily[] = [
-  // -- DeepSeek V4 (Flash/Pro) ---------------------------------------------
-  // Uses: chat_template_kwargs: { thinking: true/false, reasoning_effort: "none"|"high"|"max" }
-  // BOTH fields are required on NIM (verified from official NIM Python snippet).
-  // We use thinkingFormat: "deepseek" so pi sends thinking + reasoning_effort,
-  // then before_provider_request converts all of it into chat_template_kwargs.
+  // DeepSeek V4 needs thinking + effort in chat_template_kwargs.
   {
     name: "deepseek-v4",
     pattern: /^deepseek-ai\/deepseek-v4/,
@@ -77,10 +29,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- DeepSeek V3 / R1 ----------------------------------------------------
-  // Uses: chat_template_kwargs: { thinking: true/false }
-  // We use thinkingFormat: "deepseek" so pi sends thinking + reasoning_effort,
-  // then before_provider_request converts them into chat_template_kwargs.thinking
   {
     name: "deepseek-v3",
     pattern: /^deepseek-ai\/deepseek-(v3|r1)/,
@@ -91,9 +39,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Qwen3 Coder ---------------------------------------------------------
-  // Uses: chat_template_kwargs: { enable_thinking: true/false }
-  // Pi's "qwen-chat-template" handles this natively.
+  // Qwen/GLM use qwen-chat-template natively.
   {
     name: "qwen3-coder",
     pattern: /^qwen\/qwen3-coder/,
@@ -104,7 +50,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Qwen3 Next ----------------------------------------------------------
   {
     name: "qwen3-next",
     pattern: /^qwen\/qwen3-next/,
@@ -115,7 +60,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Qwen3.5 -------------------------------------------------------------
   {
     name: "qwen3.5",
     pattern: /^qwen\/qwen3\.5/,
@@ -126,7 +70,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Qwen3 base ----------------------------------------------------------
   {
     name: "qwen3",
     pattern: /^qwen\/qwen3-/,
@@ -137,7 +80,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Qwen QwQ ------------------------------------------------------------
   {
     name: "qwq",
     pattern: /^qwen\/qwq/,
@@ -148,8 +90,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Qwen2.5 Coder -------------------------------------------------------
-  // Non-reasoning code completion model
   {
     name: "qwen2.5-coder",
     pattern: /^qwen\/qwen2\.5-coder/,
@@ -159,7 +99,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Qwen2 ---------------------------------------------------------------
   {
     name: "qwen2",
     pattern: /^qwen\/qwen2/,
@@ -169,10 +108,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- GLM (Zhipu AI) ------------------------------------------------------
-  // Uses: chat_template_kwargs: { enable_thinking: true/false }
-  // Pi's "qwen-chat-template" handles this natively.
-  // Note: GLM-5.1 also needs clear_thinking: false, handled via before_provider_request.
+  // GLM-5.1 also needs clear_thinking: false.
   {
     name: "glm",
     pattern: /^z-ai\/glm/,
@@ -183,10 +119,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- MiniMax M2 ----------------------------------------------------------
-  // Always thinks inline with <antha> tags in content field.
-  // No chat_template_kwargs to control it.
-  // requiresThinkingAsText prevents raw tags in conversation history.
+  // MiniMax M2 thinks inline via <antha> tags.
   {
     name: "minimax-m2",
     pattern: /^minimaxai\/minimax-m2/,
@@ -197,9 +130,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Kimi K2 Thinking ----------------------------------------------------
-  // Uses: chat_template_kwargs: { thinking: true/false }
-  // Same format as DeepSeek V3 on NIM. Handled via before_provider_request.
+  // Kimi/Nemotron deepseek-style thinking.
   {
     name: "kimi-thinking",
     pattern: /^moonshotai\/kimi-k2-thinking/,
@@ -210,8 +141,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Kimi K2.5 -----------------------------------------------------------
-  // Uses: chat_template_kwargs: { thinking: true/false }
   {
     name: "kimi-k2.5",
     pattern: /^moonshotai\/kimi-k2\.5/,
@@ -222,7 +151,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Kimi K2 (non-thinking) ----------------------------------------------
   {
     name: "kimi",
     pattern: /^moonshotai\/kimi/,
@@ -232,8 +160,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- GPT-OSS (OpenAI open-source) ----------------------------------------
-  // Supports standard reasoning_effort but NIM rejects "minimal".
+  // GPT-OSS maps minimal → low.
   {
     name: "gpt-oss",
     pattern: /^openai\/gpt-oss/,
@@ -245,9 +172,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     thinkingLevelMap: { minimal: "low" },
   },
 
-  // -- StepFun (Parallel Thinking / PaCoRe) --------------------------------
-  // Uses: chat_template_kwargs: { parallel_reasoning_mode: "none"|"low"|"medium"|"heavy" }
-  // Custom format, NOT covered by pi. before_provider_request remaps reasoning_effort.
+  // StepFun remaps reasoning_effort to parallel_reasoning_mode.
   {
     name: "stepfun",
     pattern: /^stepfun-ai\//,
@@ -258,7 +183,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- ByteDance Seed ------------------------------------------------------
   {
     name: "seed",
     pattern: /^bytedance\//,
@@ -269,8 +193,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- NVIDIA Nemotron thinking (Nano 9B) ----------------------------------
-  // Uses: chat_template_kwargs: { enable_thinking: true/false }
+  // Nemotron Nano uses qwen-chat-template.
   {
     name: "nvidia-nemotron-nano-thinking",
     pattern: /^nvidia\/nvidia-nemotron-nano/,
@@ -281,8 +204,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- NVIDIA Nemotron (Ultra/Super - thinking via chat_template_kwargs) ---
-  // Nemotron Ultra/Super use chat_template_kwargs: { thinking: true/false }
+  // Nemotron Ultra/Super use deepseek-style thinking.
   {
     name: "nemotron-thinking",
     pattern: /^nvidia\/llama-3\.\d-nemotron-(ultra|super)/,
@@ -293,7 +215,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Meta Llama ----------------------------------------------------------
   {
     name: "llama",
     pattern: /^meta\/llama/,
@@ -304,9 +225,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Mistral family ------------------------------------------------------
-  // requiresToolResultName: Mistral API requires tool result messages to have a name field
-  // requiresThinkingAsText: prevents mirroring of thinking blocks back to Mistral
+  // Mistral needs tool result names and thinking-as-text.
   {
     name: "mistral",
     pattern: /^mistralai\//,
@@ -318,7 +237,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- NVIDIA Nemotron (non-reasoning) -------------------------------------
   {
     name: "nemotron",
     pattern: /^nvidia\/.*nemotron/,
@@ -330,7 +248,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     reasoningBudget: 32768,
   },
 
-  // -- Google Gemma --------------------------------------------------------
   {
     name: "gemma",
     pattern: /^google\/gemma/,
@@ -341,7 +258,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Microsoft Phi -------------------------------------------------------
   {
     name: "phi",
     pattern: /^microsoft\/phi/,
@@ -351,7 +267,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Abacus AI (Dracarys) ------------------------------------------------
   {
     name: "dracarys",
     pattern: /^abacusai\//,
@@ -362,7 +277,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Sarvam AI -----------------------------------------------------------
   {
     name: "sarvam",
     pattern: /^sarvamai\//,
@@ -372,7 +286,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Upstage Solar -------------------------------------------------------
   {
     name: "solar",
     pattern: /^upstage\//,
@@ -383,7 +296,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Stockmark -----------------------------------------------------------
   {
     name: "stockmark",
     pattern: /^stockmark\//,
@@ -394,7 +306,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Writer (Palmyra) ----------------------------------------------------
   {
     name: "writer",
     pattern: /^writer\//,
@@ -405,7 +316,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- IBM Granite ---------------------------------------------------------
   {
     name: "granite",
     pattern: /^ibm\/granite/,
@@ -416,7 +326,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- AI21 Jamba ----------------------------------------------------------
   {
     name: "jamba",
     pattern: /^ai21labs\//,
@@ -427,7 +336,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- 01.AI Yi ------------------------------------------------------------
   {
     name: "yi",
     pattern: /^01-ai\//,
@@ -438,7 +346,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Mixtral -------------------------------------------------------------
   {
     name: "mixtral",
     pattern: /^mistralai\/mixtral/,
@@ -450,7 +357,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Databricks DBRX -----------------------------------------------------
   {
     name: "dbrx",
     pattern: /^databricks\//,
@@ -461,7 +367,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Zamba ---------------------------------------------------------------
   {
     name: "zamba",
     pattern: /^zyphra\//,
@@ -472,7 +377,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- NVIDIA base (chatQA, etc.) ------------------------------------------
   {
     name: "nvidia-base",
     pattern: /^nvidia\//,
@@ -483,7 +387,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // -- Catch-all for unmatched LLMs ----------------------------------------
   {
     name: "default",
     pattern: /.*/,
@@ -494,32 +397,23 @@ export const MODEL_FAMILIES: ModelFamily[] = [
   },
 ];
 
-/**
- * Find the first matching model family for a given model ID.
- * Families are checked in order -- first match wins.
- */
+// First matching family wins.
 export function findFamily(modelId: string): ModelFamily | undefined {
   return MODEL_FAMILIES.find((f) => f.pattern.test(modelId));
 }
 
-/**
- * Classify a model's thinking format based on its family.
- * Used by before_provider_request to determine handler logic.
- */
+// Resolve the internal handler format for a model.
 export function classifyThinkingFormat(
   modelId: string,
   compat: Record<string, unknown> | undefined
 ): string {
-  // Check explicit thinkingFormat from compat (set by family or per-model)
   const tf = compat?.thinkingFormat as string | undefined;
   if (tf === "qwen-chat-template") return "qwen-chat-template";
   if (tf === "deepseek") {
-    // Distinguish between V4 (needs thinking + reasoning_effort) and V3 (needs thinking only)
     if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
     return "deepseek-nim";
   }
 
-  // Family-based classification for models without explicit thinkingFormat
   if (/^moonshotai\/kimi-k2-thinking/.test(modelId)) return "deepseek-nim";
   if (/^moonshotai\/kimi-k2\.5/.test(modelId)) return "deepseek-nim";
   if (/^nvidia\/llama-3\.\d-nemotron-(ultra|super)/.test(modelId))
@@ -529,11 +423,7 @@ export function classifyThinkingFormat(
   return "none";
 }
 
-/**
- * Apply family-based compat to a list of models.
- * Merges family compat with any model-level compat (model-level wins on conflict).
- * Strips internal fields from the output.
- */
+// Merge family compat into each model.
 export function applyFamilyCompat(
   models: NimModelConfig[]
 ): NimModelConfig[] {

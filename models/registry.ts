@@ -1,11 +1,7 @@
-/**
- * Model Registry — loads models directly from metadata.json
- * and applies family compat for thinking format handling.
- */
+// Builds the static NIM model list from metadata + family compat.
 import type { NimModelConfig } from "./types";
 import metadataJson from "./metadata.json";
 import { applyFamilyCompat, classifyThinkingFormat } from "../config/model-families";
-import { buildReasoningEffortThinkingLevelMap, mapThinkingFormatToCompat } from "./metadata";
 
 interface MetadataEntry {
   id: string;
@@ -22,97 +18,177 @@ interface MetadataEntry {
   card_fetched?: boolean;
 }
 
-/**
- * Convert a metadata entry to NimModelConfig.
- * Uses metadata values and applies thinking format mapping.
- */
+const REASONING_EFFORT_ORDER = ["none", "low", "medium", "high", "max"] as const;
+type ReasoningEffort = (typeof REASONING_EFFORT_ORDER)[number];
+
+function reasoningEffortRank(value: string): number | undefined {
+  const idx = REASONING_EFFORT_ORDER.indexOf(value as ReasoningEffort);
+  return idx === -1 ? undefined : idx;
+}
+
+// Map scraper thinking labels to pi compat flags.
+export function mapThinkingFormatToCompat(
+  thinkingFormat: string | undefined
+): Record<string, unknown> {
+  switch (thinkingFormat) {
+    case "qwen-chat-template":
+      return { thinkingFormat: "qwen-chat-template" };
+    case "deepseek-v4":
+    case "deepseek-nim":
+      return { thinkingFormat: "deepseek" };
+    case "stepfun-parallel":
+      return { supportsReasoningEffort: true };
+    case "minimax-inline":
+      return { requiresThinkingAsText: true };
+    case "reasoning-effort":
+      return { thinkingFormat: "reasoning-effort", supportsReasoningEffort: true };
+    case "none":
+    case undefined:
+    default:
+      return {};
+  }
+}
+
+// Convert allowed provider effort values into pi thinking levels.
+export function buildReasoningEffortThinkingLevelMap(
+  values?: string[]
+): NimModelConfig["thinkingLevelMap"] | undefined {
+  if (!values?.length) return undefined;
+
+  const supported = Array.from(
+    new Set(values.map((value) => value.trim().toLowerCase()).filter(Boolean))
+  )
+    .filter((value): value is ReasoningEffort => reasoningEffortRank(value) !== undefined)
+    .sort((a, b) => reasoningEffortRank(a)! - reasoningEffortRank(b)!);
+
+  if (supported.length === 0) return undefined;
+
+  const pick = (desiredRank: number): string | null => {
+    const candidate = supported.find((value) => reasoningEffortRank(value)! >= desiredRank);
+    return candidate ?? supported[supported.length - 1] ?? null;
+  };
+
+  return {
+    off: supported.includes("none") ? "none" : null,
+    minimal: pick(1),
+    low: pick(1),
+    medium: pick(2),
+    high: pick(3),
+    xhigh: pick(4),
+  };
+}
+
+// One metadata row → one provider model.
 function metadataToModelConfig(entry: MetadataEntry): NimModelConfig {
-  const thinkingCompat = mapThinkingFormatToCompat(entry.thinkingFormat);
+  const compat = mapThinkingFormatToCompat(entry.thinkingFormat);
   const thinkingLevelMap =
     entry.thinkingFormat === "reasoning-effort"
       ? buildReasoningEffortThinkingLevelMap(entry.reasoningEffortValues)
       : undefined;
 
-  const input: ("text" | "image")[] = ["text"];
-  if (entry.supportsVision) {
-    input.push("image");
-  }
-
   return {
     id: entry.id,
     name: makeDisplayName(entry.id),
     reasoning: entry.supportsReasoning ?? false,
-    input,
+    input: entry.supportsVision ? ["text", "image"] : ["text"],
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
     contextWindow: entry.contextWindow ?? 131072,
     maxTokens: entry.maxOutputTokens ?? 4096,
     reasoningBudget: entry.reasoningBudget,
     thinkingLevelMap,
-    compat: {
-      ...thinkingCompat,
-    },
+    compat,
   };
 }
 
-/**
- * Create a display name from model ID.
- * "deepseek-ai/deepseek-v4-flash" → "DeepSeek V4 Flash"
- */
 function makeDisplayName(id: string): string {
-  const name = id.split('/').pop() || id;
+  const name = id.split("/").pop() || id;
   return name
     .split(/[-_]/)
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
-/**
- * Filter to only LLM models (exclude embeddings, ASR, TTS, etc.)
- */
+// Filter out non-chat model families.
 function isLLMModel(entry: MetadataEntry): boolean {
   const id = entry.id.toLowerCase();
-  return !/embed|rerank|asr|tts|whisper|parakeet|conformer|transcribe|voice/i.test(id) &&
-         !/guard|safety|jailbreak|pii|content-safety/i.test(id) &&
-         !/fuyu|kosmos|deplot|neva|nvclip/i.test(id) &&
-         !/reward|arctic-embed/i.test(id) &&
-         !/boltz|diffdock|genmol|molmim|esm|alphafold|rdfusion/i.test(id) &&
-         !/cuopt|usdcode|usdvalidate/i.test(id) &&
-         !/starcoder|codegemma|recurrentgemma/i.test(id) &&
-         !/riva-translate|nemotron-parse|nemoretriever/i.test(id) &&
-         !/synthetic-video|cosmos-reason|lip-sync|eyecontact/i.test(id) &&
-         !/ising|fourcastnet|vista-3d/i.test(id) &&
-         !/gliner-pii|embed-qa/i.test(id) &&
-         !/nvidia\/llama3-chatqa|granite-.*-code/i.test(id);
+  return (
+    !/embed|rerank|asr|tts|whisper|parakeet|conformer|transcribe|voice/i.test(id) &&
+    !/guard|safety|jailbreak|pii|content-safety/i.test(id) &&
+    !/fuyu|kosmos|deplot|neva|nvclip/i.test(id) &&
+    !/reward|arctic-embed/i.test(id) &&
+    !/boltz|diffdock|genmol|molmim|esm|alphafold|rdfusion/i.test(id) &&
+    !/cuopt|usdcode|usdvalidate/i.test(id) &&
+    !/starcoder|codegemma|recurrentgemma/i.test(id) &&
+    !/riva-translate|nemotron-parse|nemoretriever/i.test(id) &&
+    !/synthetic-video|cosmos-reason|lip-sync|eyecontact/i.test(id) &&
+    !/ising|fourcastnet|vista-3d/i.test(id) &&
+    !/gliner-pii|embed-qa/i.test(id) &&
+    !/nvidia\/llama3-chatqa|granite-.*-code/i.test(id)
+  );
 }
 
-// Load and convert all models from metadata.json
 const entries = metadataJson as MetadataEntry[];
 const llmEntries = entries.filter(isLLMModel);
 
-// Deduplicate by model ID (first occurrence wins)
 const seen = new Set<string>();
 const uniqueEntries: MetadataEntry[] = [];
 for (const entry of llmEntries) {
-  if (!seen.has(entry.id)) {
-    seen.add(entry.id);
-    uniqueEntries.push(entry);
-  }
+  if (seen.has(entry.id)) continue;
+  seen.add(entry.id);
+  uniqueEntries.push(entry);
 }
 
-const MODELS_FROM_METADATA: NimModelConfig[] = uniqueEntries.map(entry => 
-  metadataToModelConfig(entry)
-);
+const MODELS_FROM_METADATA: NimModelConfig[] = uniqueEntries.map(metadataToModelConfig);
 
-// Apply family compat (adds any missing compat flags, thinking format override)
+// Load, dedupe, convert, then merge family compat.
 export const STATIC_MODELS = applyFamilyCompat(MODELS_FROM_METADATA);
+export const STATIC_MODEL_MAP = new Map(STATIC_MODELS.map((model) => [model.id, model]));
 
-// Re-export classifyThinkingFormat for use in index.ts
 export { classifyThinkingFormat };
 
-// Helper to check if a model has metadata
-const metadataMap = new Map(
-  entries.map(e => [e.id, e])
-);
+const metadataMap = new Map(entries.map((entry) => [entry.id, entry]));
+
+export function getModelMetadata(modelId: string): MetadataEntry | undefined {
+  return metadataMap.get(modelId);
+}
+
+export function getAllMetadata(): MetadataEntry[] {
+  return Array.from(metadataMap.values());
+}
+
 export function hasMetadata(modelId: string): boolean {
   return metadataMap.has(modelId);
+}
+
+export function applyMetadata(
+  model: NimModelConfig,
+  metadata: MetadataEntry | undefined
+): NimModelConfig {
+  if (!metadata) return model;
+
+  const compat = {
+    ...(model.compat ?? {}),
+    ...mapThinkingFormatToCompat(metadata.thinkingFormat),
+  };
+
+  const input: ("text" | "image")[] = ["text"];
+  if (metadata.supportsVision) input.push("image");
+
+  return {
+    ...model,
+    contextWindow: metadata.contextWindow ?? model.contextWindow,
+    maxTokens: metadata.maxOutputTokens ?? model.maxTokens,
+    reasoningBudget: metadata.reasoningBudget ?? model.reasoningBudget,
+    reasoning: metadata.supportsReasoning ?? model.reasoning,
+    thinkingLevelMap:
+      metadata.thinkingFormat === "reasoning-effort"
+        ? buildReasoningEffortThinkingLevelMap(metadata.reasoningEffortValues)
+        : model.thinkingLevelMap,
+    input,
+    compat,
+  };
+}
+
+export function applyMetadataToModels(models: NimModelConfig[]): NimModelConfig[] {
+  return models.map((model) => applyMetadata(model, metadataMap.get(model.id)));
 }

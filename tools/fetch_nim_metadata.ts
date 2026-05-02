@@ -28,8 +28,7 @@ const outputFile = process.argv
   .find(arg => arg.startsWith("--output=") || arg.startsWith("-o="))
   ?.replace(/^--?output[=-]?/, "") || OUTPUT_FILE;
 
-// ── Types ──────────────────────────────────────────────────────────────────
-
+// Scraper data shape.
 type ModelCategory = "chat" | "code" | "reasoning" | "embedding" | "vision" | "guard" | "other";
 type SpeedTier = "fast" | "medium" | "slow";
 type ToolCallFormat = "openai" | "hermes" | "mistral" | "llama" | "other";
@@ -44,65 +43,51 @@ interface ModelMetadata {
   id: string;
   owned_by: string;
 
-  // Core limits
   contextWindow?: number;
   maxOutputTokens?: number;
 
-  // Modalities
   inputModalities: string[];       // e.g. ["text"] | ["text","image"] | ["text","image","video"]
   supportsVision?: boolean;        // Derived from inputModalities, kept for backward compat
 
-  // Reasoning / thinking
   supportsReasoning?: boolean;
   thinkingFormat?: string;
   reasoningEffortValues?: string[];
   reasoningEffortDefault?: string;
 
-  // Tool calling
   supportsToolCalling?: boolean;
   supportsParallelToolCalls?: boolean;
   toolCallFormat?: ToolCallFormat;
 
-  // Structured output (response_format / JSON mode)
   supportsStructuredOutput?: boolean;
 
-  // Fill-in-the-Middle code completion
   supportsFIM?: boolean;
   fimTokens?: FimTokens;
 
-  // Prompt features
   supportsSystemPrompt: boolean;
 
-  // Recommended sampling (from modelcard)
   recommendedTemperature?: number;
   recommendedTopP?: number;
   recommendedTopK?: number;
 
-  // Internal reasoning budget (for NIM reasoning models)
   reasoningBudget?: number;
 
-  // Architecture
   totalParams?: number;   // billions
   activeParams?: number;  // billions (MoE active params)
   isMoE?: boolean;
 
-  // Routing / classification
   modelCategory: ModelCategory;
   speedTier?: SpeedTier;
 
-  // Labels / descriptions
   labels?: string[];
   description?: string;
   shortDescription?: string;
 
-  // Meta
   discovered_at: string;
   card_fetched?: boolean;
   build_fetched?: boolean;
 }
 
-// ── Fallback tables ────────────────────────────────────────────────────────
-
+// Fallback limits when docs are incomplete.
 function getYardstickFallback(modelId: string): { contextWindow?: number; maxOutputTokens?: number } {
   const families: { re: RegExp; ctx?: number; out?: number }[] = [
     { re: /llama-3\.[123]/i, ctx: 131072, out: 8192 },
@@ -149,7 +134,6 @@ function getYardstickFallback(modelId: string): { contextWindow?: number; maxOut
     { re: /solar-10\.7b/i, ctx: 4096, out: 4096 },
     { re: /seed-oss/i, ctx: 131072, out: 8192 },
     { re: /step-3\.5/i, ctx: 256000, out: 262144 },
-    // FIX: m2.7 ISL is 204,800 — split from older minimax models
     { re: /minimax-m2\.[6-9]/i, ctx: 204800, out: 16384 },
     { re: /minimax/i, ctx: 131072, out: 16384 },
     { re: /gpt-oss/i, ctx: 131072, out: 4096 },
@@ -168,8 +152,6 @@ const FALLBACK_LIMITS_MAP: Record<string, { contextWindow?: number; maxOutputTok
   "deepseek-ai/deepseek-coder-6.7b-instruct": { contextWindow: 16384, maxOutputTokens: 4096 },
 };
 
-// ── Step 1: Fetch model list ───────────────────────────────────────────────
-
 async function fetchModelIds(apiKey: string): Promise<{ id: string; owned_by: string }[]> {
   console.log("Fetching model IDs from NVIDIA NIM API...");
   const response = await fetch(`${NIM_BASE_URL}/models`, {
@@ -182,8 +164,6 @@ async function fetchModelIds(apiKey: string): Promise<{ id: string; owned_by: st
   const data = await response.json() as any;
   return data.data.map((m: any) => ({ id: m.id, owned_by: m.owned_by }));
 }
-
-// ── Parsers: limits ────────────────────────────────────────────────────────
 
 function parseContextWindow(text: string): number | undefined {
   const patterns: { re: RegExp; transform: (m: RegExpMatchArray) => number }[] = [
@@ -302,13 +282,6 @@ function parseReasoningEffortValues(html: string): { values?: string[]; defaultV
   };
 }
 
-// ── Parsers: modalities ────────────────────────────────────────────────────
-
-/**
- * Parse the "Input Types" field from the modelcard page into a modality array.
- * Returns e.g. ["text"], ["text", "image"], ["text", "image", "video"]
- * Handles both <strong>-tagged HTML and plain-text formats.
- */
 function parseInputModalities(html: string): string[] {
   const m1 = html.match(/<strong>Input Type(?:s|\(s\))?:\s*<\/strong>\s*([^<]+)/i);
   if (m1) return m1[1].split(/[,+]/).map(s => s.trim().toLowerCase()).filter(Boolean);
@@ -319,8 +292,6 @@ function parseInputModalities(html: string): string[] {
   return ["text"]; // safe default
 }
 
-// Kept for backward compat — derived from inputModalities
-// FIX: original regex on line 240 was "type"s*:s*"image" (missing backslashes on \s*)
 function detectVisionSupport(text: string, modelId: string): boolean {
   if (/vision/i.test(modelId) || /omni/i.test(modelId)) return true;
   if (/"type"\s*:\s*"image"/i.test(text)) return true;
@@ -335,8 +306,6 @@ function parseStructuredVisionSupport(html: string): boolean | undefined {
   return undefined;
 }
 
-// ── Parsers: reasoning / thinking ─────────────────────────────────────────
-
 function detectReasoningSupport(text: string): boolean {
   if (/reasoning\s+model/i.test(text)) return true;
   if (/thinking\s+mode/i.test(text)) return true;
@@ -347,15 +316,15 @@ function detectReasoningSupport(text: string): boolean {
   return false;
 }
 
+// Prefer exact IDs; HTML only backs it up.
 function detectThinkingFormat(modelId: string, text: string): string | undefined {
-  // Exact model-ID prefix rules (most reliable, checked first)
   if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
   if (/^deepseek-ai\/deepseek-(v3|r1)/.test(modelId)) return "deepseek-nim";
   if (/^moonshotai\/kimi-k2-thinking/.test(modelId)) return "deepseek-nim";
   if (/^moonshotai\/kimi-k2\.5/.test(modelId)) return "deepseek-nim";
   if (/^nvidia\/llama-3\.\d-nemotron-(ultra|super)/.test(modelId)) return "deepseek-nim";
   if (/^stepfun-ai\//.test(modelId)) return "stepfun-parallel";
-  // FIX: m2.7 has no thinking — only m2.5 uses minimax-inline
+  // m2.7 has no thinking; only m2.5 does.
   if (/^minimaxai\/minimax-m2\.5/.test(modelId)) return "minimax-inline";
   if (/^openai\/gpt-oss/.test(modelId)) return "reasoning-effort";
   if (/^z-ai\/glm/.test(modelId)) return "qwen-chat-template";
@@ -365,7 +334,6 @@ function detectThinkingFormat(modelId: string, text: string): string | undefined
   if (/^nvidia\/nemotron-3-super/.test(modelId)) return "qwen-chat-template";
   if (/^qwen\/qwen3/.test(modelId)) return "qwen-chat-template";
 
-  // HTML-based fallbacks (less reliable, checked last)
   if (/parallel_reasoning_mode/.test(text)) return "stepfun-parallel";
   if (/chat_template_kwargs.*(?:enable_thinking|clear_thinking)/.test(text)) return "qwen-chat-template";
   if (/chat_template_kwargs.*thinking.*true/.test(text)) return "deepseek-nim";
@@ -375,16 +343,13 @@ function detectThinkingFormat(modelId: string, text: string): string | undefined
   return undefined;
 }
 
-// ── Parsers: tool calling ──────────────────────────────────────────────────
-
+// Schema hints first, family heuristics second.
 function detectToolCalling(html: string, modelId: string): boolean {
-  // Infer-page schema signals
   if (/\btools\b.*array/i.test(html)) return true;
   if (/tool_choice/i.test(html)) return true;
   if (/function.{0,30}calling/i.test(html)) return true;
   if (/tool.{0,20}use/i.test(html)) return true;
 
-  // Well-known tool-capable families on NVIDIA NIM
   if (/llama-3\.[1-9]/i.test(modelId)) return true;
   if (/llama-4/i.test(modelId)) return true;
   if (/mistral(?!-7b)/i.test(modelId)) return true; // mistral-small and up support tools
@@ -401,34 +366,26 @@ function detectParallelToolCalls(html: string): boolean {
   return /parallel_tool_calls/i.test(html);
 }
 
+// Map tool calling to native provider formats.
 function detectToolCallFormat(modelId: string, html: string): ToolCallFormat | undefined {
-  // Not a tool calling model
   if (/llama2|gemma-2|codestral|starcoder|fim/i.test(modelId)) return undefined;
-  // Mistral family uses its own native tool format
   if (/mistral|mixtral|devstral|magistral|ministral/i.test(modelId)) return "mistral";
-  // Llama models served via NIM use OpenAI-compatible with llama tool schema
   if (/llama/i.test(modelId)) return "llama";
-  // These all use standard OpenAI-compatible format via NIM
   if (/qwen|glm|phi|deepseek|kimi|moonshot|gemma/i.test(modelId)) return "openai";
-  // Generic fallback if tools were detected at all
   if (detectToolCalling(html, modelId)) return "openai";
   return undefined;
 }
 
-// ── Parsers: structured output ─────────────────────────────────────────────
-
+// Response-format support is partly inferred.
 function detectStructuredOutput(html: string, modelId: string): boolean {
   if (/response_format/i.test(html)) return true;
   if (/json.{0,20}mode/i.test(html)) return true;
   if (/structured.{0,20}output/i.test(html)) return true;
-  // Models known to support response_format on NIM even when not in docs
   if (/llama-3\.[1-9]|llama-4/i.test(modelId)) return true;
   if (/mistral|mixtral/i.test(modelId)) return true;
   if (/qwen[23]/i.test(modelId)) return true;
   return false;
 }
-
-// ── Parsers: FIM (fill-in-the-middle) ─────────────────────────────────────
 
 const FIM_TOKEN_MAP: Record<string, FimTokens> = {
   "codestral": { prefix: "[SUFFIX]", suffix: "[PREFIX]", middle: "[MIDDLE]" },
@@ -449,19 +406,12 @@ function parseFimTokens(modelId: string): FimTokens | undefined {
   return undefined;
 }
 
-// ── Parsers: recommended sampling params ──────────────────────────────────
-
 interface RecommendedParams {
   temperature?: number;
   topP?: number;
   topK?: number;
 }
 
-/**
- * Extract recommended sampling settings from modelcard prose.
- * Handles formats like: temperature=1.0, top_p=0.95, top_k=40
- * or: temperature: 1.0 / top_p: 0.95
- */
 function parseRecommendedParams(html: string): RecommendedParams {
   const result: RecommendedParams = {};
   const tempMatch = html.match(/temperature[=:\s]+(\d+(?:\.\d+)?)/i);
@@ -472,8 +422,6 @@ function parseRecommendedParams(html: string): RecommendedParams {
   if (topKMatch) result.topK = parseInt(topKMatch[1], 10);
   return result;
 }
-
-// ── Parsers: architecture ──────────────────────────────────────────────────
 
 interface ArchitectureInfo {
   totalParams?: number;  // billions
@@ -490,13 +438,6 @@ function parseBillions(value: string, unit: string): number {
   return num;
 }
 
-/**
- * Extract model architecture info from modelcard HTML.
- * Parses fields like:
- *   Total Parameters: 230B
- *   Active Parameters: 10B
- *   Network Architecture: Sparse Mixture-of-Experts (MoE)
- */
 function parseModelArchitecture(html: string): ArchitectureInfo {
   const result: ArchitectureInfo = {};
   const totalMatch = html.match(/Total Parameters:\s*([\d.]+)\s*([TMB])/i);
@@ -509,8 +450,6 @@ function parseModelArchitecture(html: string): ArchitectureInfo {
   if (/Mixture.of.Experts|MoE/i.test(html)) result.isMoE = true;
   return result;
 }
-
-// ── Parsers: model category ────────────────────────────────────────────────
 
 function detectModelCategory(
   modelId: string,
@@ -526,8 +465,6 @@ function detectModelCategory(
   return "chat";
 }
 
-// ── Parsers: speed tier ────────────────────────────────────────────────────
-
 function detectSpeedTier(activeParams?: number, totalParams?: number): SpeedTier | undefined {
   const params = activeParams ?? totalParams;
   if (params == null) return undefined;
@@ -535,8 +472,6 @@ function detectSpeedTier(activeParams?: number, totalParams?: number): SpeedTier
   if (params < 75) return "medium";
   return "slow";
 }
-
-// ── Parsers: structured context window from modelcard page ────────────────
 
 function parseKtoNumber(value: string): number | undefined {
   const trimmed = value.trim();
@@ -549,20 +484,11 @@ function parseKtoNumber(value: string): number | undefined {
   return undefined;
 }
 
-/**
- * Parse context window from the structured modelcard page (non-infer).
- * Handles multiple formats:
- *   <strong>Input Context Length (ISL):</strong> 256K
- *   Input Context Length (ISL): 262,144 (256k)
- *   Input Context Length (ISL): 204,800          ← FIX: now handles comma numbers
- *   Maximum context length up to 256k tokens
- */
+// Handle comma-grouped numbers too.
 function parseStructuredContextWindow(html: string): number | undefined {
-  // Format 1: <strong> label with bare K suffix — e.g. "256K"
   const m1 = html.match(/<strong>Input Context Length(?:\s*\(ISL\))?:<\/strong>\s*(\d+)\s*K/i);
   if (m1) return parseKtoNumber(m1[1] + "K");
 
-  // Format 2: plain label with parenthetical — e.g. "262,144 (256k)"
   const m2 = html.match(/Input Context Length(?:\s*\(ISL\))?:\s*(\d[\d,]*)\s*\(([^)]+)\)/i);
   if (m2) {
     const kMatch = m2[2].match(/(\d+(?:\.\d+)?)\s*k/i);
@@ -571,32 +497,25 @@ function parseStructuredContextWindow(html: string): number | undefined {
     if (!isNaN(mainNum)) return mainNum;
   }
 
-  // Format 3: plain number (with or without commas) — e.g. "204,800"
-  // FIX: old pattern /(\d{5,})/ never matched comma-grouped numbers like "204,800"
-  // New pattern captures comma-grouped numbers then strips commas before parsing
   const m3 = html.match(/Input Context Length(?:\s*\(ISL\))?:\s*(\d[\d,]{4,})/i);
   if (m3) return parseInt(m3[1].replace(/,/g, ""), 10);
 
-  // Format 4: generic prose — "Context length up to 204,800 tokens"
   const m4 = html.match(/Context length(?: up to)?\s*(\d[\d,]*)\s*tokens?/i);
   if (m4) return parseInt(m4[1].replace(/,/g, ""), 10);
 
-  // Format 5: prose — "Maximum context length up to 256k tokens"
   const m5 = html.match(/Maximum context length(?: up to)?\s*(\d+(?:\.\d+)?\s*[kK]?)\s*tokens?/i);
   if (m5) return parseKtoNumber(m5[1]);
 
   return undefined;
 }
 
-// ── Step 2: Fetch build.nvidia.com (__NEXT_DATA__) ────────────────────────
-
+// Ignore tiny placeholder build pages.
 async function fetchBuildPageData(modelId: string): Promise<{ html: string; found: boolean }> {
   const url = `${BUILD_BASE_URL}/${modelId}`;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) return { html: "", found: false };
     const html = await res.text();
-    // Only treat as a successful fetch if we have meaningful content
     const hasData = html.includes("__NEXT_DATA__") && html.length > 5000;
     return { html: hasData ? html : "", found: hasData };
   } catch {
@@ -616,8 +535,7 @@ function extractNextData(html: string): any | null {
   }
 }
 
-// ── Step 3: Fetch and assemble metadata for one model ─────────────────────
-
+// Merge build/docs/fallback data for one model.
 async function fetchModelData(modelId: string, owned_by: string): Promise<ModelMetadata> {
   const meta: ModelMetadata = {
     id: modelId,
@@ -641,7 +559,6 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     ),
   ];
 
-  // ── Infer page: API schema, limits, tool params ──────────────────────────
   let combinedHtmlStr = "";
   for (const slug of slugVariations) {
     const url = `${DOCS_BASE_URL}/${slug}-infer`;
@@ -652,7 +569,6 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
         combinedHtmlStr += html;
         meta.card_fetched = true;
 
-        // Extract precise limits and capability flags from SSR-Props JSON (OpenAPI schema)
         const ssrStart = html.indexOf('id="ssr-props"');
         if (ssrStart !== -1) {
           const jsonStart = html.indexOf(">", ssrStart) + 1;
@@ -676,7 +592,6 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
                 const props = schema?.properties;
                 if (!props) continue;
 
-                // Max output tokens
                 const mtProp = props.max_tokens;
                 if (mtProp) {
                   const limit: number =
@@ -687,7 +602,6 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
                   }
                 }
 
-                // Tool calling — presence of "tools" property in schema
                 if (props.tools) meta.supportsToolCalling = true;
                 if (props.parallel_tool_calls) meta.supportsParallelToolCalls = true;
                 if (props.response_format) meta.supportsStructuredOutput = true;
@@ -700,7 +614,6 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     } catch { }
   }
 
-  // ── Modelcard page: structured Input/Output fields, architecture, sampling ─
   let structuredHtml = "";
   for (const slug of slugVariations) {
     const url = `${DOCS_BASE_URL}/${slug}`;
@@ -714,32 +627,24 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     } catch { }
   }
 
-  // ── build.nvidia.com: __NEXT_DATA__ for view-code snippets and extra params ─
   const buildData = await fetchBuildPageData(modelId);
   if (buildData.found) {
     meta.build_fetched = true;
     const nextData = extractNextData(buildData.html);
     const buildHtml = buildData.html;
-    // nextData.props.pageProps contains model info and code examples.
-    // Tool calling and thinking params sometimes appear only in the "view code"
-    // snippets on this page but not on the docs infer page.
     if (!meta.supportsToolCalling && detectToolCalling(buildHtml, modelId)) {
       meta.supportsToolCalling = true;
     }
     if (!meta.thinkingFormat) {
       meta.thinkingFormat = detectThinkingFormat(modelId, buildHtml);
     }
-    // Future: walk nextData.props.pageProps.codeSnippets for chat_template_kwargs,
-    // reasoning_effort, parallel_reasoning_mode, etc.
     void nextData;
   }
 
-  // ── Context window & max output (regex over infer page) ───────────────────
   meta.contextWindow = parseContextWindow(combinedHtmlStr);
   const textOutputTokens = parseMaxOutputTokens(combinedHtmlStr);
   if (!meta.maxOutputTokens) meta.maxOutputTokens = textOutputTokens;
 
-  // ── Reasoning / thinking ──────────────────────────────────────────────────
   meta.supportsReasoning = detectReasoningSupport(combinedHtmlStr);
   meta.thinkingFormat = meta.thinkingFormat ?? detectThinkingFormat(modelId, combinedHtmlStr);
   if (meta.thinkingFormat) meta.supportsReasoning = true;
@@ -748,56 +653,45 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   meta.reasoningEffortValues = reasoningEffort.values;
   meta.reasoningEffortDefault = reasoningEffort.defaultValue;
 
-  // ── Tool calling (HTML fallback if schema didn't set it) ──────────────────
   meta.supportsToolCalling = meta.supportsToolCalling ?? detectToolCalling(combinedHtmlStr, modelId);
   meta.supportsParallelToolCalls = meta.supportsParallelToolCalls ?? detectParallelToolCalls(combinedHtmlStr);
   if (meta.supportsToolCalling) {
     meta.toolCallFormat = detectToolCallFormat(modelId, combinedHtmlStr);
   }
 
-  // ── Structured output (HTML fallback) ─────────────────────────────────────
   meta.supportsStructuredOutput = meta.supportsStructuredOutput ?? detectStructuredOutput(combinedHtmlStr, modelId);
 
-  // ── FIM ───────────────────────────────────────────────────────────────────
   meta.supportsFIM = detectFIM(combinedHtmlStr, modelId);
   if (meta.supportsFIM) meta.fimTokens = parseFimTokens(modelId);
 
-  // ── Structured data from modelcard page (higher priority than regex) ───────
   const modalities = parseInputModalities(structuredHtml);
   const structuredCtx = parseStructuredContextWindow(structuredHtml);
   const structuredVis = parseStructuredVisionSupport(structuredHtml);
   const arch = parseModelArchitecture(structuredHtml);
   const samplingParams = parseRecommendedParams(structuredHtml);
 
-  // Modalities: use structured data if we got more than the default ["text"]
   if (modalities.length > 0 && !(modalities.length === 1 && modalities[0] === "text" && structuredHtml === "")) {
     meta.inputModalities = modalities;
     meta.supportsVision = modalities.some(m => m === "image" || m === "video");
   } else {
-    // Fall back to vision heuristics
     meta.supportsVision = structuredVis ?? detectVisionSupport(combinedHtmlStr, modelId);
     if (meta.supportsVision) meta.inputModalities = ["text", "image"];
-    // Gemma 3 is multimodal even when docs don't say so explicitly
     if (!meta.supportsVision && /gemma-3/i.test(modelId)) {
       meta.supportsVision = true;
       meta.inputModalities = ["text", "image"];
     }
   }
 
-  // Context window: structured field takes priority over regex
   if (structuredCtx !== undefined) meta.contextWindow = structuredCtx;
 
-  // Architecture
   if (arch.totalParams != null) meta.totalParams = arch.totalParams;
   if (arch.activeParams != null) meta.activeParams = arch.activeParams;
   if (arch.isMoE) meta.isMoE = true;
 
-  // Recommended sampling
   if (samplingParams.temperature != null) meta.recommendedTemperature = samplingParams.temperature;
   if (samplingParams.topP != null) meta.recommendedTopP = samplingParams.topP;
   if (samplingParams.topK != null) meta.recommendedTopK = samplingParams.topK;
 
-  // ── Fallbacks (only applied where still missing) ──────────────────────────
   const familyFallback = getYardstickFallback(modelId);
   const manualFallback = FALLBACK_LIMITS_MAP[modelId];
 
@@ -809,7 +703,6 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     if (fb != null) meta.maxOutputTokens = fb;
   }
 
-  // ── Classification ────────────────────────────────────────────────────────
   meta.modelCategory = detectModelCategory(
     modelId,
     combinedHtmlStr + structuredHtml,
@@ -830,8 +723,7 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   return meta;
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────
-
+// Batch-fetch all live models.
 async function main() {
   try {
     let models: { id: string; owned_by: string }[];
@@ -871,7 +763,6 @@ async function main() {
       return;
     }
 
-    // ── Full batch mode ────────────────────────────────────────────────────
     const rawModels = await fetchModelIds(NVIDIA_API_KEY!);
     const modelMap = new Map<string, { id: string; owned_by: string }>();
     for (const m of rawModels) modelMap.set(m.id, m);
@@ -897,7 +788,6 @@ async function main() {
     fs.writeFileSync(outputFile, JSON.stringify(results, null, 2));
     console.log(`\nWritten ${results.length} models to: ${outputFile}`);
 
-    // ── Summary ───────────────────────────────────────────────────────────
     const summary = {
       total: results.length,
       withCards: results.filter(r => r.card_fetched).length,

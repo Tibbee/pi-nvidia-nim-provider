@@ -14,8 +14,6 @@ interface MetadataEntry {
   reasoningEffortValues?: string[];
   reasoningEffortDefault?: string;
   thinkingFormat?: string;
-  discovered_at: string;
-  card_fetched?: boolean;
 }
 
 const REASONING_EFFORT_ORDER = ["none", "low", "medium", "high", "max"] as const;

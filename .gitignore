@@ -1,5 +1,6 @@
 .summaries
 tools/output
+test/
 # Dependencies
 node_modules/
 

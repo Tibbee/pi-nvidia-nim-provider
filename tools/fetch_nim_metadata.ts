@@ -28,16 +28,9 @@ const outputFile = process.argv
   .find(arg => arg.startsWith("--output=") || arg.startsWith("-o="))
   ?.replace(/^--?output[=-]?/, "") || OUTPUT_FILE;
 
-// Scraper data shape.
+// Scraper data shape — only fields actually used by the extension at runtime.
 type ModelCategory = "chat" | "code" | "reasoning" | "embedding" | "vision" | "guard" | "other";
-type SpeedTier = "fast" | "medium" | "slow";
 type ToolCallFormat = "openai" | "hermes" | "mistral" | "llama" | "other";
-
-interface FimTokens {
-  prefix: string;
-  suffix: string;
-  middle: string;
-}
 
 interface ModelMetadata {
   id: string;
@@ -46,45 +39,53 @@ interface ModelMetadata {
   contextWindow?: number;
   maxOutputTokens?: number;
 
-  inputModalities: string[];       // e.g. ["text"] | ["text","image"] | ["text","image","video"]
-  supportsVision?: boolean;        // Derived from inputModalities, kept for backward compat
+  inputModalities: string[];       // e.g. ["text"] | ["text","image"]
+  supportsVision?: boolean;        // Derived from inputModalities
 
   supportsReasoning?: boolean;
   thinkingFormat?: string;
   reasoningEffortValues?: string[];
   reasoningEffortDefault?: string;
+  reasoningBudget?: number;
 
   supportsToolCalling?: boolean;
-  supportsParallelToolCalls?: boolean;
   toolCallFormat?: ToolCallFormat;
 
   supportsStructuredOutput?: boolean;
 
-  supportsFIM?: boolean;
-  fimTokens?: FimTokens;
-
-  supportsSystemPrompt: boolean;
-
   recommendedTemperature?: number;
   recommendedTopP?: number;
-  recommendedTopK?: number;
-
-  reasoningBudget?: number;
-
-  totalParams?: number;   // billions
-  activeParams?: number;  // billions (MoE active params)
-  isMoE?: boolean;
 
   modelCategory: ModelCategory;
-  speedTier?: SpeedTier;
+}
 
-  labels?: string[];
-  description?: string;
-  shortDescription?: string;
+// Strip metadata fields that the extension never reads at runtime.
+// Keeps metadata.json lean and avoids dead-weight data.
+const UNUSED_METADATA_KEYS = new Set([
+  "discovered_at",
+  "card_fetched",
+  "build_fetched",
+  "supportsSystemPrompt",
+  "supportsFIM",
+  "fimTokens",
+  "supportsParallelToolCalls",
+  "isMoE",
+  "speedTier",
+  "totalParams",
+  "activeParams",
+  "recommendedTopK",
+  "labels",
+  "description",
+  "shortDescription",
+]);
 
-  discovered_at: string;
-  card_fetched?: boolean;
-  build_fetched?: boolean;
+function stripUnusedFields(results: ModelMetadata[]): ModelMetadata[] {
+  for (const entry of results) {
+    for (const key of UNUSED_METADATA_KEYS) {
+      delete (entry as any)[key];
+    }
+  }
+  return results;
 }
 
 // Fallback limits when docs are incomplete.
@@ -362,10 +363,6 @@ function detectToolCalling(html: string, modelId: string): boolean {
   return false;
 }
 
-function detectParallelToolCalls(html: string): boolean {
-  return /parallel_tool_calls/i.test(html);
-}
-
 // Map tool calling to native provider formats.
 function detectToolCallFormat(modelId: string, html: string): ToolCallFormat | undefined {
   if (/llama2|gemma-2|codestral|starcoder|fim/i.test(modelId)) return undefined;
@@ -387,29 +384,9 @@ function detectStructuredOutput(html: string, modelId: string): boolean {
   return false;
 }
 
-const FIM_TOKEN_MAP: Record<string, FimTokens> = {
-  "codestral": { prefix: "[SUFFIX]", suffix: "[PREFIX]", middle: "[MIDDLE]" },
-  "starcoder": { prefix: "<fim_prefix>", suffix: "<fim_suffix>", middle: "<fim_middle>" },
-  "deepseek-coder": { prefix: "<｜fim▁begin｜>", suffix: "<｜fim▁hole｜>", middle: "<｜fim▁end｜>" },
-};
-
-function detectFIM(html: string, modelId: string): boolean {
-  if (/fill.in.the.middle|\bfim\b/i.test(html)) return true;
-  if (/codestral|starcoder|deepseek-coder/i.test(modelId)) return true;
-  return false;
-}
-
-function parseFimTokens(modelId: string): FimTokens | undefined {
-  for (const [key, tokens] of Object.entries(FIM_TOKEN_MAP)) {
-    if (new RegExp(key, "i").test(modelId)) return tokens;
-  }
-  return undefined;
-}
-
 interface RecommendedParams {
   temperature?: number;
   topP?: number;
-  topK?: number;
 }
 
 function parseRecommendedParams(html: string): RecommendedParams {
@@ -418,36 +395,6 @@ function parseRecommendedParams(html: string): RecommendedParams {
   if (tempMatch) result.temperature = parseFloat(tempMatch[1]);
   const topPMatch = html.match(/top_p[=:\s]+(\d+(?:\.\d+)?)/i);
   if (topPMatch) result.topP = parseFloat(topPMatch[1]);
-  const topKMatch = html.match(/top_k[=:\s]+(\d+)/i);
-  if (topKMatch) result.topK = parseInt(topKMatch[1], 10);
-  return result;
-}
-
-interface ArchitectureInfo {
-  totalParams?: number;  // billions
-  activeParams?: number; // billions (MoE)
-  isMoE?: boolean;
-}
-
-function parseBillions(value: string, unit: string): number {
-  const num = parseFloat(value);
-  const u = unit.toUpperCase();
-  if (u === "T") return num * 1000;
-  if (u === "B") return num;
-  if (u === "M") return num / 1000;
-  return num;
-}
-
-function parseModelArchitecture(html: string): ArchitectureInfo {
-  const result: ArchitectureInfo = {};
-  const totalMatch = html.match(/Total Parameters:\s*([\d.]+)\s*([TMB])/i);
-  if (totalMatch) result.totalParams = parseBillions(totalMatch[1], totalMatch[2]);
-  const activeMatch = html.match(/Active Parameters:\s*([\d.]+)\s*([TMB])/i);
-  if (activeMatch) {
-    result.activeParams = parseBillions(activeMatch[1], activeMatch[2]);
-    result.isMoE = true;
-  }
-  if (/Mixture.of.Experts|MoE/i.test(html)) result.isMoE = true;
   return result;
 }
 
@@ -463,14 +410,6 @@ function detectModelCategory(
   if (/coder|codestral|starcoder|devstral|deepseek-coder/i.test(id)) return "code";
   if (supportsReasoning) return "reasoning";
   return "chat";
-}
-
-function detectSpeedTier(activeParams?: number, totalParams?: number): SpeedTier | undefined {
-  const params = activeParams ?? totalParams;
-  if (params == null) return undefined;
-  if (params < 15) return "fast";
-  if (params < 75) return "medium";
-  return "slow";
 }
 
 function parseKtoNumber(value: string): number | undefined {
@@ -516,7 +455,7 @@ async function fetchBuildPageData(modelId: string): Promise<{ html: string; foun
     const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) return { html: "", found: false };
     const html = await res.text();
-    const hasData = html.includes("__NEXT_DATA__") && html.length > 5000;
+    const hasData = html.length > 5000;
     return { html: hasData ? html : "", found: hasData };
   } catch {
     return { html: "", found: false };
@@ -535,15 +474,54 @@ function extractNextData(html: string): any | null {
   }
 }
 
+// Find the request schema by content, not name.
+// Works for ChatRequest, NIMLLMChatCompletionRequest, and any future variant.
+function findRequestSchema(schemas: Record<string, any>): Record<string, any> | null {
+  for (const schema of Object.values(schemas) as any[]) {
+    const props: Record<string, any> | undefined = schema?.properties;
+    if (!props) continue;
+    const keys = Object.keys(props);
+    if (keys.includes("model") && keys.includes("messages") &&
+        (keys.includes("max_tokens") || keys.includes("max_completion_tokens"))) {
+      return props;
+    }
+  }
+  return null;
+}
+
+// Classify thinking format from schema clues.
+// Checks reasoning_effort + chat_template_kwargs descriptions before
+// falling back to model-ID heuristics.
+function classifyThinkingFromSchema(
+  modelId: string,
+  props: Record<string, any>
+): string | undefined {
+  // reasoning_effort with "chat_template_kwargs" in description → deepseek family
+  const re = props.reasoning_effort;
+  if (re?.description && /chat_template_kwargs/.test(re.description)) {
+    if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
+    return "deepseek-nim";
+  }
+
+  // chat_template_kwargs property itself
+  const ctkw = props.chat_template_kwargs;
+  if (ctkw) {
+    const combined = (ctkw.description ?? "") + " " + JSON.stringify(ctkw.example ?? "");
+    if (/enable_thinking/.test(combined)) return "qwen-chat-template";
+    if (/parallel_reasoning_mode/.test(combined)) return "stepfun-parallel";
+    if (/\bthinking\b/.test(combined)) return "deepseek-nim";
+  }
+
+  return undefined;
+}
+
 // Merge build/docs/fallback data for one model.
 async function fetchModelData(modelId: string, owned_by: string): Promise<ModelMetadata> {
   const meta: ModelMetadata = {
     id: modelId,
     owned_by,
     inputModalities: ["text"],
-    supportsSystemPrompt: true,
     modelCategory: "chat",
-    discovered_at: new Date().toISOString(),
   };
 
   if (!fetchCards) return meta;
@@ -567,7 +545,6 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
       if (response.ok) {
         const html = await response.text();
         combinedHtmlStr += html;
-        meta.card_fetched = true;
 
         const ssrStart = html.indexOf('id="ssr-props"');
         if (ssrStart !== -1) {
@@ -588,23 +565,68 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
 
             const schemas = findSchemas(ssrProps);
             if (schemas) {
-              for (const schema of Object.values(schemas) as any[]) {
-                const props = schema?.properties;
-                if (!props) continue;
-
-                const mtProp = props.max_tokens;
+              // Primary: extract everything from the request schema
+              const reqProps = findRequestSchema(schemas);
+              if (reqProps) {
+                // ---- max output tokens ----
+                const mtProp = reqProps.max_tokens ?? reqProps.max_completion_tokens;
                 if (mtProp) {
                   const limit: number =
-                    mtProp.maximum ??
+                    mtProp.maximum ?? mtProp.default ??
                     (mtProp.anyOf as any[])?.find((s: any) => s.maximum != null)?.maximum;
                   if (limit != null && isFinite(limit) && limit >= MIN_REASONABLE_MAX_OUTPUT) {
                     meta.maxOutputTokens = limit;
                   }
                 }
 
+                // ---- recommended sampling params ----
+                if (reqProps.temperature?.default != null) meta.recommendedTemperature = reqProps.temperature.default;
+                if (reqProps.top_p?.default != null) meta.recommendedTopP = reqProps.top_p.default;
+
+                // ---- tool calling ----
+                if (reqProps.tools) meta.supportsToolCalling = true;
+                if (reqProps.tool_choice) meta.supportsToolCalling = true;
+
+                // ---- structured output ----
+                if (reqProps.response_format) meta.supportsStructuredOutput = true;
+
+                // ---- reasoning effort ----
+                const reProp = reqProps.reasoning_effort;
+                if (reProp) {
+                  meta.supportsReasoning = true;
+                  if (reProp.enum) meta.reasoningEffortValues = reProp.enum;
+                  if (reProp.default != null) meta.reasoningEffortDefault = reProp.default;
+                }
+
+                // ---- reasoning budget ----
+                const rbProp = reqProps.reasoning_budget;
+                if (rbProp) {
+                  meta.reasoningBudget = rbProp.maximum ?? rbProp.default;
+                }
+
+                // ---- thinking format from schema clues ----
+                const schemaFormat = classifyThinkingFromSchema(modelId, reqProps);
+                if (schemaFormat) {
+                  meta.thinkingFormat = schemaFormat;
+                  meta.supportsReasoning = true;
+                }
+              }
+
+              // Secondary: scan ALL schemas for tools/response_format signals
+              // (in case they appear on a different schema, e.g. ChatCompletionResponse)
+              for (const schema of Object.values(schemas) as any[]) {
+                const props = schema?.properties;
+                if (!props) continue;
                 if (props.tools) meta.supportsToolCalling = true;
-                if (props.parallel_tool_calls) meta.supportsParallelToolCalls = true;
                 if (props.response_format) meta.supportsStructuredOutput = true;
+              }
+
+              // ---- vision support from schema names ----
+              // VLM models expose NIMVLMChatCompletionContentPartImage in their schemas
+              if (!meta.supportsVision) {
+                if (Object.keys(schemas).some(n => /NIMVLMChatCompletionContentPartImage/i.test(n))) {
+                  meta.supportsVision = true;
+                }
               }
             }
           } catch { }
@@ -621,7 +643,6 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
       const response = await fetch(url);
       if (response.ok) {
         structuredHtml = await response.text();
-        meta.card_fetched = true;
         break;
       }
     } catch { }
@@ -629,7 +650,6 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
 
   const buildData = await fetchBuildPageData(modelId);
   if (buildData.found) {
-    meta.build_fetched = true;
     const nextData = extractNextData(buildData.html);
     const buildHtml = buildData.html;
     if (!meta.supportsToolCalling && detectToolCalling(buildHtml, modelId)) {
@@ -638,6 +658,14 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     if (!meta.thinkingFormat) {
       meta.thinkingFormat = detectThinkingFormat(modelId, buildHtml);
     }
+    // Fallback: check build page meta description for "reasoning" keyword
+    // (catches models like MiniMax M2.7 that have no reasoning params in their API schema)
+    if (!meta.supportsReasoning) {
+      const metaMatch = buildHtml.match(/<meta\s+name="description"\s+content="([^"]+)"/i);
+      if (metaMatch && /\breasoning\b/i.test(metaMatch[1])) {
+        meta.supportsReasoning = true;
+      }
+    }
     void nextData;
   }
 
@@ -645,37 +673,34 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   const textOutputTokens = parseMaxOutputTokens(combinedHtmlStr);
   if (!meta.maxOutputTokens) meta.maxOutputTokens = textOutputTokens;
 
-  meta.supportsReasoning = detectReasoningSupport(combinedHtmlStr);
+  if (!meta.supportsReasoning) meta.supportsReasoning = detectReasoningSupport(combinedHtmlStr);
   meta.thinkingFormat = meta.thinkingFormat ?? detectThinkingFormat(modelId, combinedHtmlStr);
   if (meta.thinkingFormat) meta.supportsReasoning = true;
-  meta.reasoningBudget = parseReasoningBudget(combinedHtmlStr);
-  const reasoningEffort = parseReasoningEffortValues(combinedHtmlStr);
-  meta.reasoningEffortValues = reasoningEffort.values;
-  meta.reasoningEffortDefault = reasoningEffort.defaultValue;
+  if (meta.reasoningBudget == null) meta.reasoningBudget = parseReasoningBudget(combinedHtmlStr);
+  if (!meta.reasoningEffortValues) {
+    const reasoningEffort = parseReasoningEffortValues(combinedHtmlStr);
+    meta.reasoningEffortValues = reasoningEffort.values;
+    meta.reasoningEffortDefault = reasoningEffort.defaultValue;
+  }
 
   meta.supportsToolCalling = meta.supportsToolCalling ?? detectToolCalling(combinedHtmlStr, modelId);
-  meta.supportsParallelToolCalls = meta.supportsParallelToolCalls ?? detectParallelToolCalls(combinedHtmlStr);
   if (meta.supportsToolCalling) {
     meta.toolCallFormat = detectToolCallFormat(modelId, combinedHtmlStr);
   }
 
   meta.supportsStructuredOutput = meta.supportsStructuredOutput ?? detectStructuredOutput(combinedHtmlStr, modelId);
 
-  meta.supportsFIM = detectFIM(combinedHtmlStr, modelId);
-  if (meta.supportsFIM) meta.fimTokens = parseFimTokens(modelId);
-
   const modalities = parseInputModalities(structuredHtml);
   const structuredCtx = parseStructuredContextWindow(structuredHtml);
   const structuredVis = parseStructuredVisionSupport(structuredHtml);
-  const arch = parseModelArchitecture(structuredHtml);
   const samplingParams = parseRecommendedParams(structuredHtml);
 
   if (modalities.length > 0 && !(modalities.length === 1 && modalities[0] === "text" && structuredHtml === "")) {
     meta.inputModalities = modalities;
-    meta.supportsVision = modalities.some(m => m === "image" || m === "video");
+    if (!meta.supportsVision) meta.supportsVision = modalities.some(m => m === "image" || m === "video");
   } else {
-    meta.supportsVision = structuredVis ?? detectVisionSupport(combinedHtmlStr, modelId);
-    if (meta.supportsVision) meta.inputModalities = ["text", "image"];
+    if (!meta.supportsVision) meta.supportsVision = structuredVis ?? detectVisionSupport(combinedHtmlStr, modelId);
+    if (meta.supportsVision && meta.inputModalities.length === 1 && meta.inputModalities[0] === "text") meta.inputModalities = ["text", "image"];
     if (!meta.supportsVision && /gemma-3/i.test(modelId)) {
       meta.supportsVision = true;
       meta.inputModalities = ["text", "image"];
@@ -684,13 +709,8 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
 
   if (structuredCtx !== undefined) meta.contextWindow = structuredCtx;
 
-  if (arch.totalParams != null) meta.totalParams = arch.totalParams;
-  if (arch.activeParams != null) meta.activeParams = arch.activeParams;
-  if (arch.isMoE) meta.isMoE = true;
-
-  if (samplingParams.temperature != null) meta.recommendedTemperature = samplingParams.temperature;
-  if (samplingParams.topP != null) meta.recommendedTopP = samplingParams.topP;
-  if (samplingParams.topK != null) meta.recommendedTopK = samplingParams.topK;
+  if (meta.recommendedTemperature == null && samplingParams.temperature != null) meta.recommendedTemperature = samplingParams.temperature;
+  if (meta.recommendedTopP == null && samplingParams.topP != null) meta.recommendedTopP = samplingParams.topP;
 
   const familyFallback = getYardstickFallback(modelId);
   const manualFallback = FALLBACK_LIMITS_MAP[modelId];
@@ -708,15 +728,13 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     combinedHtmlStr + structuredHtml,
     !!meta.supportsReasoning
   );
-  meta.speedTier = detectSpeedTier(meta.activeParams, meta.totalParams);
 
   if (verbose) {
     console.log(
       `  ✓ ${modelId}: ctx=${meta.contextWindow ?? "?"} maxOut=${meta.maxOutputTokens ?? "?"} ` +
       `tools=${meta.supportsToolCalling} vision=${meta.supportsVision} ` +
-      `fim=${meta.supportsFIM} reason=${meta.supportsReasoning} ` +
-      `format=${meta.thinkingFormat ?? "none"} cat=${meta.modelCategory} ` +
-      `speed=${meta.speedTier ?? "?"}`
+      `reason=${meta.supportsReasoning} ` +
+      `format=${meta.thinkingFormat ?? "none"} cat=${meta.modelCategory}`
     );
   }
 
@@ -734,6 +752,7 @@ async function main() {
       models = [{ id: singleModel, owned_by: org }];
 
       const meta = await fetchModelData(singleModel, org);
+      stripUnusedFields([meta]);
 
       const output = outputFile.includes(".json")
         ? outputFile
@@ -745,19 +764,12 @@ async function main() {
       console.log(`  inputModalities:         ${meta.inputModalities.join(", ")}`);
       console.log(`  supportsToolCalling:     ${meta.supportsToolCalling}`);
       console.log(`  toolCallFormat:          ${meta.toolCallFormat ?? "none"}`);
-      console.log(`  supportsParallelTools:   ${meta.supportsParallelToolCalls}`);
       console.log(`  supportsStructuredOut:   ${meta.supportsStructuredOutput}`);
-      console.log(`  supportsFIM:             ${meta.supportsFIM}`);
       console.log(`  supportsReasoning:       ${meta.supportsReasoning}`);
       console.log(`  thinkingFormat:          ${meta.thinkingFormat ?? "none"}`);
       console.log(`  modelCategory:           ${meta.modelCategory}`);
-      console.log(`  speedTier:               ${meta.speedTier ?? "?"}`);
-      console.log(`  totalParams:             ${meta.totalParams != null ? meta.totalParams + "B" : "?"}`);
-      console.log(`  activeParams:            ${meta.activeParams != null ? meta.activeParams + "B" : "?"}`);
-      console.log(`  isMoE:                   ${meta.isMoE ?? false}`);
       console.log(`  recommendedTemperature:  ${meta.recommendedTemperature ?? "?"}`);
       console.log(`  recommendedTopP:         ${meta.recommendedTopP ?? "?"}`);
-      console.log(`  recommendedTopK:         ${meta.recommendedTopK ?? "?"}`);
       console.log(`  reasoningBudget:         ${meta.reasoningBudget ?? "?"}`);
       console.log(`  reasoningEffort:         ${meta.reasoningEffortValues?.join(", ") ?? "?"}`);
       return;
@@ -785,38 +797,31 @@ async function main() {
       }
     }
 
+    stripUnusedFields(results);
     fs.writeFileSync(outputFile, JSON.stringify(results, null, 2));
     console.log(`\nWritten ${results.length} models to: ${outputFile}`);
 
     const summary = {
       total: results.length,
-      withCards: results.filter(r => r.card_fetched).length,
-      withBuildData: results.filter(r => r.build_fetched).length,
       withContext: results.filter(r => r.contextWindow).length,
       withToolCalling: results.filter(r => r.supportsToolCalling).length,
       withStructuredOut: results.filter(r => r.supportsStructuredOutput).length,
-      withFIM: results.filter(r => r.supportsFIM).length,
       withReasoning: results.filter(r => r.supportsReasoning).length,
       withVision: results.filter(r => r.supportsVision).length,
       withThinking: results.filter(r => r.thinkingFormat).length,
       withReasoningBudget: results.filter(r => r.reasoningBudget != null).length,
       withReasoningEffortValues: results.filter(r => r.reasoningEffortValues?.length).length,
-      isMoE: results.filter(r => r.isMoE).length,
     };
 
     console.log("\n=== Summary ===");
     console.log(`Total models:            ${summary.total}`);
-    console.log(`Static data fetched:     ${summary.withCards}`);
-    console.log(`Build data fetched:      ${summary.withBuildData}`);
     console.log(`With context window:     ${summary.withContext}`);
     console.log(`With tool calling:       ${summary.withToolCalling}`);
     console.log(`With structured output:  ${summary.withStructuredOut}`);
-    console.log(`With FIM support:        ${summary.withFIM}`);
     console.log(`With reasoning:          ${summary.withReasoning}`);
     console.log(`With vision:             ${summary.withVision}`);
     console.log(`With thinking format:    ${summary.withThinking}`);
     console.log(`With reasoning budget:    ${summary.withReasoningBudget}`);
-    console.log(`MoE models:              ${summary.isMoE}`);
 
     console.log("\nCategory distribution:");
     const categories = results.reduce((acc, r) => {

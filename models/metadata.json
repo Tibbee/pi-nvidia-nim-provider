@@ -5,16 +5,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:30.585Z",
+    "supportsToolCalling": true,
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -23,21 +19,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:30.586Z",
-    "card_fetched": true,
-    "contextWindow": 131072,
     "maxOutputTokens": 1024,
-    "supportsReasoning": false,
+    "recommendedTemperature": 0.5,
+    "recommendedTopP": 1,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "contextWindow": 131072,
+    "supportsReasoning": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "adept/fuyu-8b",
@@ -45,14 +36,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:30.587Z",
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -61,16 +48,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:30.587Z",
     "contextWindow": 262144,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -79,14 +62,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:30.588Z",
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -95,17 +74,11 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:35.328Z",
-    "card_fetched": true,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "bigcode/starcoder2-15b",
@@ -113,19 +86,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "code",
-    "discovered_at": "2026-05-02T13:34:35.328Z",
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": true,
-    "fimTokens": {
-      "prefix": "<fim_prefix>",
-      "suffix": "<fim_suffix>",
-      "middle": "<fim_middle>"
-    },
     "supportsVision": false
   },
   {
@@ -134,21 +98,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:34:35.329Z",
-    "card_fetched": true,
     "maxOutputTokens": 32768,
-    "contextWindow": 524288,
-    "supportsReasoning": true,
+    "recommendedTemperature": 1.1,
+    "recommendedTopP": 0.95,
+    "supportsToolCalling": true,
     "thinkingFormat": "qwen-chat-template",
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
+    "supportsReasoning": true,
+    "contextWindow": 524288,
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "databricks/dbrx-instruct",
@@ -156,16 +115,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:35.329Z",
+    "supportsToolCalling": true,
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -174,21 +129,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "code",
-    "discovered_at": "2026-05-02T13:34:35.329Z",
     "contextWindow": 16384,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": true,
-    "fimTokens": {
-      "prefix": "<｜fim▁begin｜>",
-      "suffix": "<｜fim▁hole｜>",
-      "middle": "<｜fim▁end｜>"
-    },
     "supportsVision": false
   },
   {
@@ -197,22 +143,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:34:40.183Z",
-    "card_fetched": true,
     "maxOutputTokens": 16384,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
+    "supportsToolCalling": true,
+    "thinkingFormat": "deepseek-nim",
     "contextWindow": 131072,
     "supportsReasoning": true,
-    "thinkingFormat": "deepseek-nim",
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "deepseek-ai/deepseek-v3.2",
@@ -220,22 +161,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:34:40.183Z",
-    "card_fetched": true,
     "maxOutputTokens": 16384,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 0.95,
+    "supportsToolCalling": true,
+    "thinkingFormat": "deepseek-nim",
     "contextWindow": 131072,
     "supportsReasoning": true,
-    "thinkingFormat": "deepseek-nim",
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "deepseek-ai/deepseek-v4-flash",
@@ -243,28 +179,23 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:34:40.183Z",
-    "card_fetched": true,
     "maxOutputTokens": 16384,
-    "contextWindow": 1000000,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 0.95,
     "supportsReasoning": true,
-    "thinkingFormat": "deepseek-v4",
     "reasoningEffortValues": [
       "none",
       "high",
       "max"
     ],
     "reasoningEffortDefault": "high",
+    "thinkingFormat": "deepseek-v4",
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "contextWindow": 1000000,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "deepseek-ai/deepseek-v4-pro",
@@ -272,28 +203,23 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:34:40.183Z",
-    "card_fetched": true,
     "maxOutputTokens": 16384,
-    "contextWindow": 1000000,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 0.95,
     "supportsReasoning": true,
-    "thinkingFormat": "deepseek-v4",
     "reasoningEffortValues": [
       "none",
       "high",
       "max"
     ],
     "reasoningEffortDefault": "high",
+    "thinkingFormat": "deepseek-v4",
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "contextWindow": 1000000,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "google/codegemma-1.1-7b",
@@ -301,14 +227,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:40.183Z",
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -317,19 +239,15 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:45.194Z",
-    "card_fetched": true,
     "maxOutputTokens": 1024,
+    "recommendedTemperature": 0.5,
+    "recommendedTopP": 1,
+    "supportsToolCalling": true,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
+    "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "google/deplot",
@@ -337,14 +255,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:45.194Z",
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -353,20 +267,15 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:45.194Z",
-    "card_fetched": true,
     "maxOutputTokens": 4096,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
+    "supportsToolCalling": true,
     "contextWindow": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "google/gemma-2b",
@@ -374,16 +283,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:45.195Z",
+    "modelCategory": "reasoning",
+    "supportsToolCalling": true,
+    "supportsReasoning": true,
     "contextWindow": 8192,
     "maxOutputTokens": 8192,
-    "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -393,17 +298,13 @@
       "text",
       "image"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:45.195Z",
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": true
   },
   {
@@ -412,20 +313,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:48.333Z",
-    "card_fetched": true,
-    "maxOutputTokens": 4096,
-    "contextWindow": 131072,
-    "supportsReasoning": false,
+    "modelCategory": "reasoning",
+    "maxOutputTokens": 512,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
+    "supportsVision": true,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "supportsReasoning": true,
+    "contextWindow": 131072,
     "toolCallFormat": "openai",
-    "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsStructuredOutput": false
   },
   {
     "id": "google/gemma-3-4b-it",
@@ -434,17 +331,13 @@
       "text",
       "image"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:48.334Z",
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": true
   },
   {
@@ -455,20 +348,16 @@
       "image",
       "audio"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:48.334Z",
-    "card_fetched": true,
-    "maxOutputTokens": 8192,
+    "maxOutputTokens": 512,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": true,
-    "isMoE": true
+    "supportsVision": true
   },
   {
     "id": "google/gemma-3n-e4b-it",
@@ -478,20 +367,16 @@
       "image",
       "audio"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:48.334Z",
-    "card_fetched": true,
-    "maxOutputTokens": 8192,
+    "maxOutputTokens": 512,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": true,
-    "isMoE": true
+    "supportsVision": true
   },
   {
     "id": "google/gemma-4-31b-it",
@@ -501,24 +386,17 @@
       "image",
       "video"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:34:48.334Z",
-    "card_fetched": true,
-    "maxOutputTokens": 32768,
-    "contextWindow": 262144,
-    "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
-    "toolCallFormat": "openai",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": true,
-    "isMoE": true,
+    "maxOutputTokens": 16384,
     "recommendedTemperature": 1,
     "recommendedTopP": 0.95,
-    "recommendedTopK": 64
+    "thinkingFormat": "qwen-chat-template",
+    "supportsReasoning": true,
+    "supportsVision": true,
+    "supportsToolCalling": true,
+    "contextWindow": 262144,
+    "toolCallFormat": "openai",
+    "supportsStructuredOutput": true
   },
   {
     "id": "google/recurrentgemma-2b",
@@ -526,14 +404,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:51.317Z",
+    "supportsToolCalling": true,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -542,16 +416,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:51.317Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -560,16 +430,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:51.317Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -578,16 +444,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:51.317Z",
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -596,14 +458,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:51.317Z",
+    "supportsToolCalling": true,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -612,14 +470,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:56.336Z",
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -628,17 +482,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:56.337Z",
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -647,17 +497,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:56.337Z",
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -666,17 +512,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:56.337Z",
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -685,20 +527,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:34:56.337Z",
-    "card_fetched": true,
-    "maxOutputTokens": 8192,
+    "maxOutputTokens": 512,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 1,
+    "supportsVision": true,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsStructuredOutput": true
   },
   {
     "id": "meta/llama-3.2-1b-instruct",
@@ -706,21 +544,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:01.009Z",
-    "card_fetched": true,
+    "modelCategory": "reasoning",
     "maxOutputTokens": 4096,
-    "contextWindow": 131072,
-    "supportsReasoning": false,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "supportsReasoning": true,
+    "contextWindow": 131072,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "meta/llama-3.2-3b-instruct",
@@ -728,21 +561,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:01.009Z",
-    "card_fetched": true,
+    "modelCategory": "reasoning",
     "maxOutputTokens": 4096,
-    "contextWindow": 131072,
-    "supportsReasoning": false,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "supportsReasoning": true,
+    "contextWindow": 131072,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "meta/llama-3.2-90b-vision-instruct",
@@ -750,20 +578,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:01.009Z",
-    "card_fetched": true,
-    "maxOutputTokens": 8192,
+    "maxOutputTokens": 512,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 1,
+    "supportsVision": true,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsStructuredOutput": true
   },
   {
     "id": "meta/llama-3.3-70b-instruct",
@@ -771,21 +595,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:01.009Z",
-    "card_fetched": true,
     "maxOutputTokens": 4096,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
     "supportsToolCalling": true,
     "contextWindow": 131072,
     "supportsReasoning": false,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "meta/llama-4-maverick-17b-128e-instruct",
@@ -793,20 +612,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:01.009Z",
-    "card_fetched": true,
-    "maxOutputTokens": 8192,
+    "maxOutputTokens": 512,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 1,
+    "supportsVision": true,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsStructuredOutput": true
   },
   {
     "id": "meta/llama-guard-4-12b",
@@ -815,18 +630,15 @@
       "text",
       "image"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "guard",
-    "discovered_at": "2026-05-02T13:35:05.718Z",
-    "card_fetched": true,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
+    "supportsVision": true,
+    "supportsToolCalling": true,
     "maxOutputTokens": 9223372036854776000,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": true,
-    "isMoE": true
+    "toolCallFormat": "llama",
+    "supportsStructuredOutput": true
   },
   {
     "id": "meta/llama2-70b",
@@ -834,19 +646,15 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:05.719Z",
-    "card_fetched": true,
-    "contextWindow": 4096,
     "maxOutputTokens": 1024,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 1,
+    "contextWindow": 4096,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "microsoft/kosmos-2",
@@ -854,14 +662,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:05.719Z",
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -871,16 +675,13 @@
       "text",
       "image"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:05.719Z",
+    "modelCategory": "reasoning",
+    "supportsToolCalling": true,
+    "supportsReasoning": true,
     "contextWindow": 131072,
     "maxOutputTokens": 4096,
-    "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
+    "toolCallFormat": "openai",
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": true
   },
   {
@@ -889,16 +690,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:05.719Z",
     "contextWindow": 131072,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -907,22 +704,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:10.346Z",
-    "card_fetched": true,
     "maxOutputTokens": 4096,
+    "recommendedTemperature": 0.1,
+    "recommendedTopP": 0.7,
     "supportsToolCalling": true,
+    "thinkingFormat": "qwen-chat-template",
     "contextWindow": 131072,
     "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "microsoft/phi-4-multimodal-instruct",
@@ -932,20 +724,16 @@
       "image",
       "audio"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:10.346Z",
-    "card_fetched": true,
-    "maxOutputTokens": 8192,
-    "contextWindow": 131072,
-    "supportsReasoning": false,
+    "modelCategory": "reasoning",
+    "maxOutputTokens": 512,
+    "recommendedTemperature": 0.1,
+    "recommendedTopP": 0.7,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "supportsReasoning": true,
+    "contextWindow": 131072,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": true,
-    "isMoE": true
+    "supportsVision": true
   },
   {
     "id": "minimaxai/minimax-m2.5",
@@ -953,22 +741,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:10.346Z",
-    "card_fetched": true,
     "maxOutputTokens": 16384,
-    "contextWindow": 204800,
-    "supportsReasoning": true,
-    "thinkingFormat": "minimax-inline",
+    "recommendedTemperature": 1,
+    "recommendedTopP": 0.95,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "thinkingFormat": "minimax-inline",
+    "supportsReasoning": true,
+    "contextWindow": 204800,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "minimaxai/minimax-m2.7",
@@ -976,23 +759,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:10.346Z",
-    "card_fetched": true,
+    "modelCategory": "reasoning",
     "maxOutputTokens": 16384,
-    "contextWindow": 204800,
-    "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
-    "toolCallFormat": "openai",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
     "recommendedTemperature": 1,
     "recommendedTopP": 0.95,
-    "recommendedTopK": 40
+    "supportsToolCalling": true,
+    "supportsReasoning": true,
+    "contextWindow": 204800,
+    "toolCallFormat": "openai",
+    "supportsStructuredOutput": true,
+    "supportsVision": false
   },
   {
     "id": "mistralai/codestral-22b-instruct-v0.1",
@@ -1000,21 +776,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "code",
-    "discovered_at": "2026-05-02T13:35:10.346Z",
+    "supportsToolCalling": true,
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": true,
-    "supportsFIM": true,
-    "fimTokens": {
-      "prefix": "[SUFFIX]",
-      "suffix": "[PREFIX]",
-      "middle": "[MIDDLE]"
-    },
     "supportsVision": false
   },
   {
@@ -1023,22 +790,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "code",
-    "discovered_at": "2026-05-02T13:35:15.182Z",
-    "card_fetched": true,
     "maxOutputTokens": 16384,
-    "contextWindow": 262144,
-    "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
+    "recommendedTemperature": 0.15,
+    "recommendedTopP": 0.95,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "thinkingFormat": "qwen-chat-template",
+    "supportsReasoning": true,
+    "contextWindow": 262144,
     "toolCallFormat": "mistral",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "mistralai/magistral-small-2506",
@@ -1046,22 +808,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:15.183Z",
-    "card_fetched": true,
     "maxOutputTokens": 40960,
-    "contextWindow": 131072,
-    "supportsReasoning": true,
-    "thinkingFormat": "deepseek-nim",
+    "recommendedTemperature": 0.7,
+    "recommendedTopP": 0.95,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "thinkingFormat": "deepseek-nim",
+    "supportsReasoning": true,
+    "contextWindow": 131072,
     "toolCallFormat": "mistral",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "mistralai/ministral-14b-instruct-2512",
@@ -1070,21 +827,16 @@
       "image",
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:15.183Z",
-    "card_fetched": true,
-    "maxOutputTokens": 8192,
+    "maxOutputTokens": 2048,
+    "recommendedTemperature": 0.15,
+    "recommendedTopP": 1,
+    "supportsVision": true,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "mistral",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": true,
-    "isMoE": true,
-    "recommendedTemperature": 0.15
+    "supportsStructuredOutput": true
   },
   {
     "id": "mistralai/mistral-7b-instruct-v0.3",
@@ -1092,17 +844,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:15.183Z",
+    "supportsToolCalling": true,
     "contextWindow": 32768,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "mistral",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1111,17 +859,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:15.184Z",
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "mistral",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1130,17 +874,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:19.837Z",
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "mistral",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1150,21 +890,16 @@
       "image",
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:19.837Z",
-    "card_fetched": true,
-    "maxOutputTokens": 8192,
+    "maxOutputTokens": 2048,
+    "recommendedTemperature": 0.15,
+    "recommendedTopP": 1,
+    "supportsVision": true,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "mistral",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": true,
-    "isMoE": true,
-    "recommendedTemperature": 0.15
+    "supportsStructuredOutput": true
   },
   {
     "id": "mistralai/mistral-medium-3-instruct",
@@ -1172,20 +907,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:19.838Z",
-    "card_fetched": true,
-    "maxOutputTokens": 8192,
-    "contextWindow": 131072,
-    "supportsReasoning": false,
+    "modelCategory": "reasoning",
+    "maxOutputTokens": 512,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 1,
+    "supportsVision": true,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "supportsReasoning": true,
+    "contextWindow": 131072,
     "toolCallFormat": "mistral",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsStructuredOutput": true
   },
   {
     "id": "mistralai/mistral-medium-3.5-128b",
@@ -1194,26 +925,22 @@
       "text",
       "image"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:19.838Z",
-    "card_fetched": true,
-    "maxOutputTokens": 32768,
-    "contextWindow": 262144,
+    "maxOutputTokens": 16384,
+    "recommendedTemperature": 0.7,
+    "recommendedTopP": 1,
     "supportsReasoning": true,
-    "thinkingFormat": "reasoning-effort",
     "reasoningEffortValues": [
       "none",
       "high"
     ],
     "reasoningEffortDefault": "high",
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
-    "toolCallFormat": "mistral",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": true,
-    "isMoE": true
+    "supportsToolCalling": true,
+    "thinkingFormat": "reasoning-effort",
+    "contextWindow": 262144,
+    "toolCallFormat": "mistral",
+    "supportsStructuredOutput": true
   },
   {
     "id": "mistralai/mistral-nemotron",
@@ -1221,21 +948,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:19.838Z",
-    "card_fetched": true,
     "maxOutputTokens": 4096,
+    "recommendedTemperature": 0.6,
+    "recommendedTopP": 0.7,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "mistral",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "mistralai/mistral-small-4-119b-2603",
@@ -1244,26 +966,22 @@
       "text",
       "image"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:22.731Z",
-    "card_fetched": true,
-    "maxOutputTokens": 32768,
-    "contextWindow": 131072,
+    "maxOutputTokens": 16384,
+    "recommendedTemperature": 0.1,
+    "recommendedTopP": 1,
     "supportsReasoning": true,
-    "thinkingFormat": "reasoning-effort",
     "reasoningEffortValues": [
       "none",
       "high"
     ],
     "reasoningEffortDefault": "high",
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
-    "toolCallFormat": "mistral",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": true,
-    "isMoE": true
+    "supportsToolCalling": true,
+    "thinkingFormat": "reasoning-effort",
+    "contextWindow": 131072,
+    "toolCallFormat": "mistral",
+    "supportsStructuredOutput": true
   },
   {
     "id": "mistralai/mixtral-8x22b-instruct-v0.1",
@@ -1271,17 +989,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:22.731Z",
+    "supportsToolCalling": true,
     "contextWindow": 65536,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "mistral",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1290,17 +1004,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:22.731Z",
+    "supportsToolCalling": true,
     "contextWindow": 65536,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "mistral",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1309,17 +1019,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:22.732Z",
+    "supportsToolCalling": true,
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "mistral",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1328,22 +1034,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:22.732Z",
-    "card_fetched": true,
+    "modelCategory": "reasoning",
     "maxOutputTokens": 16384,
+    "recommendedTemperature": 0.6,
+    "recommendedTopP": 0.9,
     "supportsToolCalling": true,
+    "supportsReasoning": true,
     "contextWindow": 131072,
-    "supportsReasoning": false,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTemperature": 0.6,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "moonshotai/kimi-k2-instruct-0905",
@@ -1351,22 +1051,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:27.760Z",
-    "card_fetched": true,
     "maxOutputTokens": 16384,
+    "recommendedTemperature": 0.6,
+    "recommendedTopP": 0.9,
     "supportsToolCalling": true,
-    "contextWindow": 262144,
-    "supportsReasoning": true,
     "thinkingFormat": "deepseek-nim",
-    "supportsParallelToolCalls": false,
+    "supportsReasoning": true,
+    "contextWindow": 262144,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "moonshotai/kimi-k2-thinking",
@@ -1375,23 +1070,17 @@
       "text",
       "tool definitions"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:27.760Z",
-    "card_fetched": true,
     "maxOutputTokens": 32768,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 0.9,
     "supportsToolCalling": true,
-    "contextWindow": 262144,
-    "supportsReasoning": true,
     "thinkingFormat": "deepseek-nim",
-    "supportsParallelToolCalls": false,
+    "supportsReasoning": true,
+    "contextWindow": 262144,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTemperature": 1,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "moonshotai/kimi-k2.6",
@@ -1401,21 +1090,17 @@
       "image",
       "video"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:27.760Z",
-    "card_fetched": true,
-    "maxOutputTokens": 65536,
+    "maxOutputTokens": 16384,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 1,
     "supportsToolCalling": true,
-    "contextWindow": 262144,
-    "supportsReasoning": true,
     "thinkingFormat": "deepseek-nim",
-    "supportsParallelToolCalls": false,
-    "toolCallFormat": "openai",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
+    "supportsReasoning": true,
     "supportsVision": true,
-    "isMoE": true
+    "contextWindow": 262144,
+    "toolCallFormat": "openai",
+    "supportsStructuredOutput": true
   },
   {
     "id": "nv-mistralai/mistral-nemo-12b-instruct",
@@ -1423,17 +1108,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:27.760Z",
+    "modelCategory": "reasoning",
+    "supportsToolCalling": true,
+    "supportsReasoning": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
-    "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "mistral",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1442,14 +1123,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:27.760Z",
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1458,14 +1135,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:30.888Z",
-    "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
+    "modelCategory": "reasoning",
+    "supportsToolCalling": true,
+    "supportsReasoning": true,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1474,17 +1147,11 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:35:30.889Z",
-    "card_fetched": true,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/gliner-pii",
@@ -1492,17 +1159,11 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "guard",
-    "discovered_at": "2026-05-02T13:35:30.889Z",
-    "card_fetched": true,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/ising-calibration-1-35b-a3b",
@@ -1511,20 +1172,15 @@
       "image",
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:30.889Z",
-    "card_fetched": true,
     "maxOutputTokens": 32768,
-    "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 1,
     "supportsVision": true,
-    "isMoE": true,
-    "recommendedTemperature": 0
+    "supportsToolCalling": true,
+    "thinkingFormat": "qwen-chat-template",
+    "supportsReasoning": true,
+    "supportsStructuredOutput": true
   },
   {
     "id": "nvidia/llama-3.1-nemoguard-8b-content-safety",
@@ -1532,20 +1188,14 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "guard",
-    "discovered_at": "2026-05-02T13:35:30.889Z",
-    "card_fetched": true,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/llama-3.1-nemoguard-8b-topic-control",
@@ -1553,21 +1203,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "guard",
-    "discovered_at": "2026-05-02T13:35:34.561Z",
-    "card_fetched": true,
-    "contextWindow": 131072,
     "maxOutputTokens": 1024,
-    "supportsReasoning": false,
+    "recommendedTemperature": 0.5,
+    "recommendedTopP": 1,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "contextWindow": 131072,
+    "supportsReasoning": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "nvidia/llama-3.1-nemotron-51b-instruct",
@@ -1575,17 +1220,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:34.561Z",
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1594,17 +1235,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:34.561Z",
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1613,21 +1250,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:34.561Z",
-    "card_fetched": true,
     "maxOutputTokens": 16384,
+    "recommendedTemperature": 0.6,
+    "recommendedTopP": 0.95,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
@@ -1637,20 +1269,16 @@
       "video",
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "vision",
-    "discovered_at": "2026-05-02T13:35:34.561Z",
-    "card_fetched": true,
     "maxOutputTokens": 2048,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 0.01,
+    "supportsVision": true,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": true,
-    "isMoE": true
+    "supportsStructuredOutput": true
   },
   {
     "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
@@ -1658,21 +1286,15 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "guard",
-    "discovered_at": "2026-05-02T13:35:39.249Z",
-    "card_fetched": true,
+    "supportsToolCalling": true,
+    "thinkingFormat": "deepseek-nim",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": true,
-    "thinkingFormat": "deepseek-nim",
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
@@ -1680,23 +1302,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:39.249Z",
-    "card_fetched": true,
     "maxOutputTokens": 16384,
+    "recommendedTemperature": 0.6,
+    "recommendedTopP": 0.95,
+    "supportsToolCalling": true,
+    "thinkingFormat": "deepseek-nim",
     "contextWindow": 131072,
     "supportsReasoning": true,
-    "thinkingFormat": "deepseek-nim",
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTemperature": 0,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
@@ -1704,17 +1320,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:35:39.249Z",
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1723,20 +1335,14 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:35:39.250Z",
-    "card_fetched": true,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/llama-3.2-nv-embedqa-1b-v1",
@@ -1744,20 +1350,14 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:35:39.250Z",
-    "card_fetched": true,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/llama-3.2-nv-embedqa-1b-v2",
@@ -1765,20 +1365,14 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:35:43.727Z",
-    "card_fetched": true,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/llama-3.3-nemotron-super-49b-v1",
@@ -1786,22 +1380,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:43.727Z",
-    "card_fetched": true,
     "maxOutputTokens": 16384,
+    "recommendedTemperature": 0.6,
+    "recommendedTopP": 0.95,
+    "supportsToolCalling": true,
+    "thinkingFormat": "deepseek-nim",
     "contextWindow": 131072,
     "supportsReasoning": true,
-    "thinkingFormat": "deepseek-nim",
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
@@ -1809,23 +1398,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:43.727Z",
-    "card_fetched": true,
     "maxOutputTokens": 65536,
+    "recommendedTemperature": 0.6,
+    "recommendedTopP": 0.95,
+    "supportsToolCalling": true,
+    "thinkingFormat": "deepseek-nim",
     "contextWindow": 131072,
     "supportsReasoning": true,
-    "thinkingFormat": "deepseek-nim",
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "llama",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTemperature": 0.6,
-    "recommendedTopP": 0.95
+    "supportsVision": false
   },
   {
     "id": "nvidia/llama-nemotron-embed-1b-v2",
@@ -1833,17 +1416,11 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:35:43.727Z",
-    "card_fetched": true,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/llama-nemotron-embed-vl-1b-v2",
@@ -1852,17 +1429,11 @@
       "text (for queries)",
       "text | image (for documents)"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:35:43.727Z",
-    "card_fetched": true,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/llama3-chatqa-1.5-70b",
@@ -1870,16 +1441,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:48.165Z",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1888,17 +1455,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:48.165Z",
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "mistral",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -1907,19 +1470,15 @@
     "inputModalities": [
       "image"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:35:48.165Z",
-    "card_fetched": true,
-    "maxOutputTokens": 8192,
-    "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
-    "toolCallFormat": "openai",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
+    "maxOutputTokens": 512,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 1,
     "supportsVision": true,
-    "isMoE": true
+    "supportsToolCalling": true,
+    "supportsReasoning": false,
+    "toolCallFormat": "openai",
+    "supportsStructuredOutput": true
   },
   {
     "id": "nvidia/nemotron-3-content-safety",
@@ -1928,19 +1487,15 @@
       "text",
       "image"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "guard",
-    "discovered_at": "2026-05-02T13:35:48.165Z",
-    "card_fetched": true,
-    "maxOutputTokens": 4096,
-    "supportsReasoning": true,
-    "thinkingFormat": "deepseek-nim",
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
+    "maxOutputTokens": 512,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
     "supportsVision": true,
-    "isMoE": true
+    "thinkingFormat": "deepseek-nim",
+    "supportsReasoning": true,
+    "supportsToolCalling": false,
+    "supportsStructuredOutput": true
   },
   {
     "id": "nvidia/nemotron-3-nano-30b-a3b",
@@ -1948,22 +1503,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:48.165Z",
-    "card_fetched": true,
     "maxOutputTokens": 32768,
-    "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
+    "recommendedTemperature": 1,
+    "recommendedTopP": 1,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "thinkingFormat": "qwen-chat-template",
+    "supportsReasoning": true,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTemperature": 1,
-    "recommendedTopP": 1
+    "supportsVision": false
   },
   {
     "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
@@ -1974,25 +1523,18 @@
       "image",
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:53.025Z",
-    "card_fetched": true,
     "maxOutputTokens": 65536,
-    "contextWindow": 262144,
-    "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
-    "reasoningBudget": 32768,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
-    "toolCallFormat": "openai",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": true,
-    "isMoE": true,
-    "recommendedTemperature": 1,
+    "recommendedTemperature": 0.6,
     "recommendedTopP": 0.95,
-    "recommendedTopK": 1
+    "reasoningBudget": 32768,
+    "supportsVision": true,
+    "supportsToolCalling": true,
+    "thinkingFormat": "qwen-chat-template",
+    "supportsReasoning": true,
+    "contextWindow": 262144,
+    "toolCallFormat": "openai",
+    "supportsStructuredOutput": true
   },
   {
     "id": "nvidia/nemotron-3-super-120b-a12b",
@@ -2000,30 +1542,24 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:53.025Z",
-    "card_fetched": true,
     "maxOutputTokens": 32768,
-    "contextWindow": 1000000,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 0.95,
     "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
-    "reasoningBudget": 32768,
     "reasoningEffortValues": [
       "none",
       "low",
       "high"
     ],
     "reasoningEffortDefault": "high",
+    "reasoningBudget": 32768,
+    "thinkingFormat": "deepseek-nim",
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "contextWindow": 1000000,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTemperature": 1,
-    "recommendedTopP": 0.95
+    "supportsVision": false
   },
   {
     "id": "nvidia/nemotron-4-340b-instruct",
@@ -2031,16 +1567,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:53.026Z",
+    "supportsToolCalling": true,
     "contextWindow": 4096,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -2049,16 +1581,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:53.026Z",
     "contextWindow": 4096,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -2067,24 +1595,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "guard",
-    "discovered_at": "2026-05-02T13:35:53.027Z",
-    "card_fetched": true,
     "maxOutputTokens": 32768,
-    "contextWindow": 131072,
-    "supportsReasoning": false,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 1,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "supportsReasoning": true,
+    "contextWindow": 131072,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "totalParams": 4,
-    "isMoE": true,
-    "recommendedTemperature": 0,
-    "recommendedTopP": 0.2,
-    "speedTier": "fast"
+    "supportsVision": false
   },
   {
     "id": "nvidia/nemotron-mini-4b-instruct",
@@ -2092,21 +1612,16 @@
     "inputModalities": [
       "text (prompt)"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:56.141Z",
-    "card_fetched": true,
     "maxOutputTokens": 4096,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
     "supportsToolCalling": true,
     "contextWindow": 4096,
     "supportsReasoning": false,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "nvidia/nemotron-nano-12b-v2-vl",
@@ -2116,20 +1631,16 @@
       "video",
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "vision",
-    "discovered_at": "2026-05-02T13:35:56.141Z",
-    "card_fetched": true,
-    "maxOutputTokens": 8192,
+    "maxOutputTokens": 4096,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 1,
+    "supportsVision": true,
+    "supportsToolCalling": true,
     "contextWindow": 4096,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": true,
-    "isMoE": true
+    "supportsStructuredOutput": true
   },
   {
     "id": "nvidia/nemotron-nano-3-30b-a3b",
@@ -2137,16 +1648,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:56.142Z",
     "contextWindow": 4096,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -2158,20 +1665,16 @@
       "blue (rgb)",
       "prompt (string)"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:35:56.142Z",
-    "card_fetched": true,
-    "maxOutputTokens": 8192,
-    "supportsReasoning": true,
-    "thinkingFormat": "deepseek-nim",
+    "maxOutputTokens": 3500,
+    "recommendedTemperature": 0,
+    "recommendedTopP": 1,
+    "supportsVision": true,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "thinkingFormat": "deepseek-nim",
+    "supportsReasoning": true,
     "toolCallFormat": "openai",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsStructuredOutput": true
   },
   {
     "id": "nvidia/neva-22b",
@@ -2179,14 +1682,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:56.142Z",
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -2195,17 +1694,11 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:35:59.814Z",
-    "card_fetched": true,
+    "supportsToolCalling": true,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/nv-embedcode-7b-v1",
@@ -2213,17 +1706,11 @@
     "inputModalities": [
       "code or text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:35:59.815Z",
-    "card_fetched": true,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/nv-embedqa-e5-v5",
@@ -2231,17 +1718,11 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:35:59.815Z",
-    "card_fetched": true,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/nv-embedqa-mistral-7b-v2",
@@ -2249,16 +1730,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:35:59.815Z",
     "contextWindow": 32768,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -2268,17 +1745,11 @@
       "images",
       "texts"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:35:59.815Z",
-    "card_fetched": true,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "nvidia/nvidia-nemotron-nano-9b-v2",
@@ -2286,19 +1757,14 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:36:02.301Z",
-    "card_fetched": true,
+    "modelCategory": "reasoning",
+    "supportsToolCalling": true,
+    "thinkingFormat": "deepseek-nim",
+    "supportsReasoning": true,
     "contextWindow": 4096,
     "maxOutputTokens": 4096,
-    "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
     "supportsVision": false,
-    "isMoE": true,
     "recommendedTemperature": 0.6,
     "recommendedTopP": 0.95
   },
@@ -2308,14 +1774,10 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:36:02.301Z",
+    "supportsToolCalling": true,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -2324,20 +1786,32 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:36:02.301Z",
-    "card_fetched": true,
     "maxOutputTokens": 4096,
+    "recommendedTemperature": 0,
+    "recommendedTopP": 0.9,
     "supportsReasoning": false,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
+  },
+  {
+    "id": "nvidia/vila",
+    "owned_by": "nvidia",
+    "inputModalities": [
+      "image",
+      "video",
+      "text"
+    ],
+    "modelCategory": "vision",
+    "maxOutputTokens": 2048,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
+    "supportsVision": true,
+    "supportsReasoning": false,
+    "supportsToolCalling": false,
+    "supportsStructuredOutput": false
   },
   {
     "id": "openai/gpt-oss-120b",
@@ -2345,28 +1819,23 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:36:02.301Z",
-    "card_fetched": true,
     "maxOutputTokens": 4096,
+    "recommendedTemperature": 0.6,
+    "recommendedTopP": 0.7,
     "supportsToolCalling": true,
-    "contextWindow": 128000,
     "supportsReasoning": true,
-    "thinkingFormat": "reasoning-effort",
     "reasoningEffortValues": [
       "low",
       "medium",
       "high"
     ],
     "reasoningEffortDefault": "medium",
-    "supportsParallelToolCalls": false,
+    "thinkingFormat": "reasoning-effort",
+    "contextWindow": 128000,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "openai/gpt-oss-20b",
@@ -2374,28 +1843,23 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:36:02.301Z",
-    "card_fetched": true,
     "maxOutputTokens": 4096,
+    "recommendedTemperature": 0.6,
+    "recommendedTopP": 0.7,
     "supportsToolCalling": true,
-    "contextWindow": 128000,
     "supportsReasoning": true,
-    "thinkingFormat": "reasoning-effort",
     "reasoningEffortValues": [
       "low",
       "medium",
       "high"
     ],
     "reasoningEffortDefault": "medium",
-    "supportsParallelToolCalls": false,
+    "thinkingFormat": "reasoning-effort",
+    "contextWindow": 128000,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "qwen/qwen2.5-coder-32b-instruct",
@@ -2403,21 +1867,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "code",
-    "discovered_at": "2026-05-02T13:36:07.209Z",
-    "card_fetched": true,
     "maxOutputTokens": 4000,
+    "recommendedTemperature": 0.2,
+    "recommendedTopP": 0.7,
+    "supportsToolCalling": true,
     "contextWindow": 131072,
     "supportsReasoning": false,
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "qwen/qwen3-coder-480b-a35b-instruct",
@@ -2425,22 +1884,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "code",
-    "discovered_at": "2026-05-02T13:36:07.209Z",
-    "card_fetched": true,
     "maxOutputTokens": 16384,
+    "recommendedTemperature": 0.7,
+    "recommendedTopP": 0.8,
     "supportsToolCalling": true,
+    "thinkingFormat": "qwen-chat-template",
     "contextWindow": 262144,
     "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "qwen/qwen3-next-80b-a3b-instruct",
@@ -2448,23 +1902,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:36:07.210Z",
-    "card_fetched": true,
     "maxOutputTokens": 4096,
+    "recommendedTemperature": 0.6,
+    "recommendedTopP": 0.7,
+    "supportsToolCalling": true,
+    "thinkingFormat": "qwen-chat-template",
     "contextWindow": 262144,
     "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTemperature": 0.7,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "qwen/qwen3-next-80b-a3b-thinking",
@@ -2472,22 +1920,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:36:07.210Z",
-    "card_fetched": true,
     "maxOutputTokens": 4096,
-    "contextWindow": 262144,
-    "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
+    "recommendedTemperature": 0.6,
+    "recommendedTopP": 0.7,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "thinkingFormat": "qwen-chat-template",
+    "supportsReasoning": true,
+    "contextWindow": 262144,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "qwen/qwen3.5-122b-a10b",
@@ -2497,21 +1940,17 @@
       "image",
       "video"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:36:07.210Z",
-    "card_fetched": true,
-    "maxOutputTokens": 32768,
+    "maxOutputTokens": 16384,
+    "recommendedTemperature": 0.6,
+    "recommendedTopP": 0.95,
     "supportsToolCalling": true,
-    "contextWindow": 262144,
-    "supportsReasoning": true,
     "thinkingFormat": "qwen-chat-template",
-    "supportsParallelToolCalls": false,
-    "toolCallFormat": "openai",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
+    "supportsReasoning": true,
     "supportsVision": true,
-    "isMoE": true
+    "contextWindow": 262144,
+    "toolCallFormat": "openai",
+    "supportsStructuredOutput": true
   },
   {
     "id": "qwen/qwen3.5-397b-a17b",
@@ -2521,24 +1960,17 @@
       "image",
       "video"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:36:11.478Z",
-    "card_fetched": true,
-    "maxOutputTokens": 32768,
-    "supportsToolCalling": true,
-    "contextWindow": 262144,
-    "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsParallelToolCalls": false,
-    "toolCallFormat": "openai",
-    "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": true,
-    "isMoE": true,
+    "maxOutputTokens": 16384,
     "recommendedTemperature": 0.6,
     "recommendedTopP": 0.95,
-    "recommendedTopK": 20
+    "supportsToolCalling": true,
+    "thinkingFormat": "qwen-chat-template",
+    "supportsReasoning": true,
+    "supportsVision": true,
+    "contextWindow": 262144,
+    "toolCallFormat": "openai",
+    "supportsStructuredOutput": true
   },
   {
     "id": "sarvamai/sarvam-m",
@@ -2546,21 +1978,16 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:36:11.478Z",
-    "card_fetched": true,
+    "modelCategory": "reasoning",
     "maxOutputTokens": 16384,
-    "supportsReasoning": false,
+    "recommendedTemperature": 0.5,
+    "recommendedTopP": 1,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "thinkingFormat": "qwen-chat-template",
+    "supportsReasoning": true,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTemperature": 0.5,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "snowflake/arctic-embed-l",
@@ -2568,17 +1995,11 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "embedding",
-    "discovered_at": "2026-05-02T13:36:11.478Z",
-    "card_fetched": true,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true
+    "supportsVision": false
   },
   {
     "id": "stepfun-ai/step-3.5-flash",
@@ -2586,23 +2007,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:36:11.478Z",
-    "card_fetched": true,
     "maxOutputTokens": 262144,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 0.9,
     "supportsToolCalling": true,
-    "contextWindow": 256000,
-    "supportsReasoning": true,
     "thinkingFormat": "stepfun-parallel",
-    "supportsParallelToolCalls": false,
+    "supportsReasoning": true,
+    "contextWindow": 256000,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTemperature": 1,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "stockmark/stockmark-2-100b-instruct",
@@ -2610,19 +2025,13 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:36:11.478Z",
-    "card_fetched": true,
+    "supportsToolCalling": true,
     "contextWindow": 32768,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false,
-    "isMoE": true,
     "recommendedTopP": 0.2
   },
   {
@@ -2631,20 +2040,15 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:36:14.813Z",
-    "card_fetched": true,
-    "contextWindow": 4096,
     "maxOutputTokens": 1024,
+    "recommendedTemperature": 0.5,
+    "recommendedTopP": 1,
+    "contextWindow": 4096,
     "supportsReasoning": false,
     "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "writer/palmyra-creative-122b",
@@ -2652,16 +2056,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:36:14.813Z",
+    "supportsToolCalling": true,
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -2670,16 +2070,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:36:14.813Z",
+    "supportsToolCalling": true,
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -2688,16 +2084,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:36:14.813Z",
+    "supportsToolCalling": true,
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -2706,16 +2098,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:36:14.813Z",
+    "supportsToolCalling": true,
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -2724,22 +2112,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:36:19.033Z",
-    "card_fetched": true,
     "maxOutputTokens": 32768,
-    "contextWindow": 131072,
-    "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
+    "recommendedTemperature": 1,
+    "recommendedTopP": 1,
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
+    "thinkingFormat": "qwen-chat-template",
+    "supportsReasoning": true,
+    "contextWindow": 131072,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "z-ai/glm4.7",
@@ -2747,22 +2130,17 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:36:19.034Z",
-    "card_fetched": true,
     "maxOutputTokens": 32768,
+    "recommendedTemperature": 1,
+    "recommendedTopP": 1,
+    "thinkingFormat": "qwen-chat-template",
     "contextWindow": 128000,
     "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
     "supportsToolCalling": true,
-    "supportsParallelToolCalls": false,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true,
-    "supportsFIM": false,
-    "supportsVision": false,
-    "isMoE": true,
-    "recommendedTopP": 0.2
+    "supportsVision": false
   },
   {
     "id": "z-ai/glm5",
@@ -2770,17 +2148,14 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
     "modelCategory": "reasoning",
-    "discovered_at": "2026-05-02T13:36:19.034Z",
+    "supportsToolCalling": true,
+    "thinkingFormat": "qwen-chat-template",
+    "supportsReasoning": true,
     "contextWindow": 128000,
     "maxOutputTokens": 8192,
-    "supportsReasoning": true,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
+    "toolCallFormat": "openai",
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   },
   {
@@ -2789,16 +2164,12 @@
     "inputModalities": [
       "text"
     ],
-    "supportsSystemPrompt": true,
-    "modelCategory": "chat",
-    "discovered_at": "2026-05-02T13:36:19.034Z",
+    "modelCategory": "reasoning",
+    "supportsToolCalling": true,
+    "supportsReasoning": true,
     "contextWindow": 4096,
     "maxOutputTokens": 4096,
-    "supportsReasoning": false,
-    "supportsToolCalling": false,
-    "supportsParallelToolCalls": false,
     "supportsStructuredOutput": false,
-    "supportsFIM": false,
     "supportsVision": false
   }
 ]

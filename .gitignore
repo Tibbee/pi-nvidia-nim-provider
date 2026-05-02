@@ -1,4 +1,5 @@
 .summaries
+tools/output
 # Dependencies
 node_modules/
 

@@ -1,9 +1,8 @@
 /**
  * NVIDIA NIM Model type for internal use.
  *
- * Extends the provider-facing ProviderModelConfig with fields
- * used only during model registration and event handling.
- * These internal fields are stripped before passing to pi.registerProvider().
+ * Extends the provider-facing model config with fields
+ * used during model registration and event handling.
  */
 export interface NimModelConfig {
   /** Model ID as used by the NVIDIA NIM API (e.g., "deepseek-ai/deepseek-v4-flash"). */
@@ -27,6 +26,10 @@ export interface NimModelConfig {
   contextWindow: number;
   /** Maximum output tokens. */
   maxTokens: number;
+  /** Model-specific thinking levels and provider mappings used by pi. */
+  thinkingLevelMap?: Partial<
+    Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh", string | null>
+  >;
   /** Custom headers for this specific model (optional). */
   headers?: Record<string, string>;
   /** OpenAI compatibility settings. */

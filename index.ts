@@ -23,11 +23,12 @@
  *      Pi injects `chat_template_kwargs: { enable_thinking: true/false,
  *      preserve_thinking: true }`. No custom handler needed.
  *
- *   2. **deepseek-v4** (V4 Flash/Pro): Pi's thinkingFormat: "deepseek" sends
- *      `params.thinking = { type: "enabled" }` and `params.reasoning_effort`.
- *      NIM requires `chat_template_kwargs: { thinking: true/false,
- *      reasoning_effort: "none"|"high"|"max" }` instead.
- *      The before_provider_request handler converts the pi format to NIM format.
+ *   2. **deepseek-v4** (V4 Flash/Pro): model-level thinkingLevelMap maps
+ *      `off` to `none`, `minimal`/`low`/`medium`/`high` to `high`, and
+ *      `xhigh` to `max`. Pi's thinkingFormat: "deepseek" still sends
+ *      `params.thinking = { type: "enabled" }` and `params.reasoning_effort`,
+ *      and the before_provider_request handler moves those into
+ *      `chat_template_kwargs`.
  *
  *   3. **deepseek-nim** (V3.x, R1, Kimi-K2-Thinking, K2.5, Nemotron-Ultra/Super):
  *      Pi's thinkingFormat: "deepseek" sends `params.thinking = { type: "enabled" }`
@@ -45,7 +46,8 @@
  *      prevents tag leakage in conversation history.
  *
  *   6. **reasoning-effort** (GPT-OSS): Uses standard OpenAI reasoning_effort
- *      with mapping (`minimal` -> `low`). Pi handles this natively.
+ *      with model-level thinkingLevelMap (`minimal` -> `low`). Pi handles this
+ *      natively.
  *
  * ## Bug Fixes from Previous Extension (nvidiaNim.ts)
  *
@@ -67,22 +69,6 @@ import { STATIC_MODELS, classifyThinkingFormat } from "./models/registry";
 import { NIM_BASE_URL, NIM_API_KEY_ENV } from "./config/defaults";
 
 // -- Thinking Format Handlers -----------------------------------------------
-
-/**
- * Map pi reasoning_effort levels to DeepSeek V4 NIM values.
- * Pi levels: minimal, low, medium, high, xhigh
- * NIM values: none, high, max
- */
-function mapDeepSeekV4Effort(effort: string): string {
-  const map: Record<string, string> = {
-    minimal: "high",
-    low: "high",
-    medium: "high",
-    high: "max",
-    xhigh: "max",
-  };
-  return map[effort] ?? "high";
-}
 
 /**
  * Map pi reasoning_effort levels to StepFun parallel_reasoning_mode values.
@@ -153,7 +139,6 @@ function getReasoningEffort(
  */
 function handleCustomThinkingFormat(
   payload: Record<string, unknown>,
-  modelId: string,
   format: string
 ): Record<string, unknown> | undefined {
   switch (format) {
@@ -172,9 +157,7 @@ function handleCustomThinkingFormat(
       payload.chat_template_kwargs = {
         ...(existingKwargs ?? {}),
         thinking: isThinkingOn,
-        reasoning_effort: isThinkingOn
-          ? mapDeepSeekV4Effort(effort ?? "high")
-          : "none",
+        reasoning_effort: isThinkingOn ? (effort ?? "high") : "none",
       };
       return payload;
     }
@@ -274,7 +257,7 @@ export default async function (pi: ExtensionAPI) {
     );
 
     // Handle custom thinking formats
-    const result = handleCustomThinkingFormat(payload, modelId, format);
+    const result = handleCustomThinkingFormat(payload, format);
     if (result) return result;
 
     // -- GLM-5.1 extra: clear_thinking: false --------------------------------

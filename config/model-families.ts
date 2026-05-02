@@ -11,6 +11,8 @@ export interface ModelFamily {
   pattern: RegExp;
   /** Compat flags applied to all models in this family. */
   compat: NonNullable<NimModelConfig["compat"]>;
+  /** Model-level thinking map applied to all models in this family. */
+  thinkingLevelMap?: NimModelConfig["thinkingLevelMap"];
 }
 
 /**
@@ -46,7 +48,8 @@ export interface ModelFamily {
  * - MiniMax M2 always thinks inline with <antha> tags in content.
  *   No kwargs control. requiresThinkingAsText prevents tag leakage.
  *
- * - GPT-OSS supports standard reasoning_effort with mapping (minimal->low).
+ * - GPT-OSS uses model-level thinkingLevelMap (minimal->low) and pi handles
+ *   reasoning_effort natively.
  */
 export const MODEL_FAMILIES: ModelFamily[] = [
   // -- DeepSeek V4 (Flash/Pro) ---------------------------------------------
@@ -60,13 +63,15 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     compat: {
       supportsDeveloperRole: false,
       thinkingFormat: "deepseek",
-      reasoningEffortMap: {
-        minimal: "high",
-        low: "high",
-        medium: "high",
-        high: "max",
-      },
       maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: {
+      off: "none",
+      minimal: "high",
+      low: "high",
+      medium: "high",
+      high: "high",
+      xhigh: "max",
     },
   },
 
@@ -233,9 +238,9 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     compat: {
       supportsDeveloperRole: false,
       supportsReasoningEffort: true,
-      reasoningEffortMap: { minimal: "low" },
       maxTokensField: "max_tokens",
     },
+    thinkingLevelMap: { minimal: "low" },
   },
 
   // -- StepFun (Parallel Thinking / PaCoRe) --------------------------------
@@ -534,6 +539,12 @@ export function applyFamilyCompat(
     const { ...providerModel } = model;
     if (family) {
       providerModel.compat = { ...family.compat, ...model.compat };
+      if (family.thinkingLevelMap || model.thinkingLevelMap) {
+        providerModel.thinkingLevelMap = {
+          ...(family.thinkingLevelMap ?? {}),
+          ...(model.thinkingLevelMap ?? {}),
+        };
+      }
     }
     return providerModel;
   });

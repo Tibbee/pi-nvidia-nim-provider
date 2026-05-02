@@ -231,12 +231,14 @@ when `thinkingFormat: "qwen-chat-template"` is set and reasoning is enabled. No 
 3. Removes the original top-level `thinking` and `reasoning_effort`
 
 **Mapping:**
-| Pi thinking level | `chat_template_kwargs.reasoning_effort` |
-|-------------------|----------------------------------------|
+| Pi thinking level | Behavior |
+|-------------------|----------|
 | Off | `"none"` |
+| Minimal | `"high"` |
 | Low | `"high"` |
 | Medium | `"high"` |
-| High | `"max"` |
+| High | `"high"` |
+| XHigh | `"max"` |
 
 ### 5.3 `deepseek-nim` (Handler)
 
@@ -294,7 +296,7 @@ No `chat_template_kwargs` injection needed — the model always reasons inline.
 
 **Models:** `openai/gpt-oss-120b`, `openai/gpt-oss-20b`
 
-**How it works:** Standard OpenAI-style `reasoning_effort` parameter. Pi handles natively. We add `reasoningEffortMap: { minimal: "low" }` so the "minimal" thinking level maps to `"low"` (since NIM doesn't accept `"minimal"`).
+**How it works:** Standard OpenAI-style `reasoning_effort` parameter. Pi handles natively. We add model-level `thinkingLevelMap: { minimal: "low" }` so the "minimal" thinking level maps to `"low"` (since NIM doesn't accept `"minimal"`).
 
 ---
 

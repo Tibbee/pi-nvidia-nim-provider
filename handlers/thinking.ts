@@ -1,17 +1,6 @@
 // Converts pi thinking payloads into NIM-specific kwargs.
 type Payload = Record<string, unknown>;
 
-function mapStepfunEffort(effort: string): string {
-  const map: Record<string, string> = {
-    minimal: "low",
-    low: "low",
-    medium: "medium",
-    high: "heavy",
-    xhigh: "heavy",
-  };
-  return map[effort] ?? "medium";
-}
-
 function isDeepSeekThinkingEnabled(payload: Payload): boolean {
   const thinking = payload.thinking as { type?: string } | undefined;
   if (thinking?.type === "enabled") return true;
@@ -66,20 +55,6 @@ export function applyCustomThinkingFormat(
       payload.chat_template_kwargs = {
         ...(kwargs ?? {}),
         thinking,
-      };
-      return true;
-    }
-
-    case "stepfun-parallel": {
-      // StepFun maps reasoning_effort to parallel_reasoning_mode.
-      const effort = getReasoningEffort(payload);
-      const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
-
-      delete payload.reasoning_effort;
-
-      payload.chat_template_kwargs = {
-        ...(kwargs ?? {}),
-        parallel_reasoning_mode: effort ? mapStepfunEffort(effort) : "none",
       };
       return true;
     }

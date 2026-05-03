@@ -1,5 +1,5 @@
 // Builds the static NIM model list from metadata + family compat.
-import type { NimModelConfig } from "./types";
+import type { NimModelConfig, NimModelCompat } from "./types";
 import metadataJson from "./metadata.json";
 import { applyFamilyCompat, classifyThinkingFormat } from "../config/model-families";
 
@@ -28,19 +28,17 @@ function reasoningEffortRank(value: string): number | undefined {
 // Map scraper thinking labels to pi compat flags.
 export function mapThinkingFormatToCompat(
   thinkingFormat: string | undefined
-): Record<string, unknown> {
+): NimModelCompat {
   switch (thinkingFormat) {
     case "qwen-chat-template":
       return { thinkingFormat: "qwen-chat-template" };
     case "deepseek-v4":
     case "deepseek-nim":
       return { thinkingFormat: "deepseek" };
-    case "stepfun-parallel":
-      return { supportsReasoningEffort: true };
     case "minimax-inline":
       return { requiresThinkingAsText: true };
     case "reasoning-effort":
-      return { thinkingFormat: "reasoning-effort", supportsReasoningEffort: true };
+      return { supportsReasoningEffort: true };
     case "none":
     case undefined:
     default:

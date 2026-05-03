@@ -1,4 +1,17 @@
 // Internal model shape used while building the provider list.
+
+export interface NimModelCompat {
+  thinkingFormat?: "openai" | "openrouter" | "deepseek" | "zai" | "qwen" | "qwen-chat-template";
+  supportsReasoningEffort?: boolean;
+  supportsDeveloperRole?: boolean;
+  supportsUsageInStreaming?: boolean;
+  maxTokensField?: "max_completion_tokens" | "max_tokens";
+  requiresToolResultName?: boolean;
+  requiresAssistantAfterToolResult?: boolean;
+  requiresThinkingAsText?: boolean;
+  requiresReasoningContentOnAssistantMessages?: boolean;
+}
+
 export interface NimModelConfig {
   id: string;
   name: string;
@@ -9,11 +22,9 @@ export interface NimModelConfig {
   contextWindow: number;
   maxTokens: number;
   reasoningBudget?: number;
-  reasoningEffortValues?: string[];
-  reasoningEffortDefault?: string;
   thinkingLevelMap?: Partial<Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh", string | null>>;
   headers?: Record<string, string>;
-  compat?: Record<string, unknown>;
+  compat?: NimModelCompat;
   exampleRequestExtra?: Record<string, unknown>;
 }
 
@@ -22,7 +33,6 @@ export type NimThinkingFormat =
   | "qwen-chat-template"
   | "deepseek-v4"
   | "deepseek-nim"
-  | "stepfun-parallel"
   | "minimax-inline"
   | "reasoning-effort"
   | "none";

@@ -23,9 +23,8 @@
   - [5.1 `qwen-chat-template` (Native)](#51-qwen-chat-template-native)
   - [5.2 `deepseek-v4` (Handler)](#52-deepseek-v4-handler)
   - [5.3 `deepseek-nim` (Handler)](#53-deepseek-nim-handler)
-  - [5.4 `stepfun-parallel` (Handler)](#54-stepfun-parallel-handler)
-  - [5.5 `minimax-inline` (Native)](#55-minimax-inline-native)
-  - [5.6 `reasoning-effort` (Native)](#56-reasoning-effort-native)
+  - [5.4 `minimax-inline` (Native)](#54-minimax-inline-native)
+  - [5.5 `reasoning-effort` (Native)](#55-reasoning-effort-native)
 - [6. `before_provider_request` Handler](#6-before_provider_request-handler)
   - [6.1 Critical Bug Fix From Old Extension](#61-critical-bug-fix-from-old-extension)
   - [6.2 Handler Implementation](#62-handler-implementation)
@@ -72,8 +71,7 @@ NVIDIA NIM models use different `chat_template_kwargs` structures for thinking. 
 |--------|--------|-----------|
 | `qwen-chat-template` | Qwen3, GLM, Phi-4-Mini-Flash, Magistral, Seed, Nemotron-Nano-9B | Pi handles natively via `thinkingFormat: "qwen-chat-template"` |
 | `deepseek-v4` | DeepSeek V4 Flash/Pro | `chat_template_kwargs: { reasoning_effort: "none"\|"high"\|"max" }` via before_provider_request |
-| `deepseek-nim` | DeepSeek V3.x, R1, Kimi K2 Thinking, K2.5, Nemotron Ultra/Super | `chat_template_kwargs: { thinking: true/false }` via before_provider_request |
-| `stepfun-parallel` | Step 3.5 Flash | `chat_template_kwargs: { parallel_reasoning_mode: "none"\|"low"\|"medium"\|"heavy" }` via before_provider_request |
+| `deepseek-nim` | DeepSeek V3.x, R1, Kimi K2 Thinking/K2.5/K2.6, Step 3.5 Flash, Nemotron Ultra/Super | `chat_template_kwargs: { thinking: true/false }` via before_provider_request |
 | `minimax-inline` | MiniMax M2.x | Always thinks inline with `<antha>` tags, no kwargs control, `requiresThinkingAsText: true` |
 | `reasoning-effort` | GPT-OSS 120B/20B | Standard OpenAI `reasoning_effort` with `minimal→low` mapping, pi handles natively |
 
@@ -204,7 +202,7 @@ All families set `supportsDeveloperRole: false` and `maxTokensField: "max_tokens
 | `kimi-k2.5` | `moonshotai/kimi-k2\.5` | `"deepseek"` | — | — |
 | `kimi` | `moonshotai/kimi` | — | — | Non-thinking base models |
 | `gpt-oss` | `openai/gpt-oss` | — | `true` | `thinkingLevelMap: { minimal: "low" }` |
-| `stepfun` | `stepfun-ai/` | — | `true` | Handler remaps → `parallel_reasoning_mode` |
+| `stepfun` | `stepfun-ai/` | `"deepseek"` | — | Always full thinking on NIM |
 | `seed` | `bytedance/` | `"qwen-chat-template"` | — | — |
 | `nemotron-nano` | `nvidia/nvidia-nemotron-nano` | `"qwen-chat-template"` | — | — |
 | `nemotron-thinking` | `nvidia/llama-3.\d-nemotron-(ultra\|super)` | `"deepseek"` | — | — |
@@ -273,7 +271,7 @@ when `thinkingFormat: "qwen-chat-template"` is set and reasoning is enabled. No 
 
 ### 5.3 `deepseek-nim` (Handler)
 
-**Models:** DeepSeek V3.x, R1, Kimi K2-Thinking, K2.5, Nemotron Ultra/Super
+**Models:** DeepSeek V3.x, R1, Kimi K2-Thinking, K2.5, K2.6, Step 3.5 Flash, Nemotron Ultra/Super
 
 **How it works:**
 1. `thinkingFormat: "deepseek"` tells pi to send top-level `thinking: { type: "enabled" }`
@@ -289,33 +287,9 @@ when `thinkingFormat: "qwen-chat-template"` is set and reasoning is enabled. No 
 
 3. Removes original top-level `thinking` and `reasoning_effort`
 
-Unlike `deepseek-v4`, these models do NOT support `reasoning_effort` inside `chat_template_kwargs`.
+Unlike `deepseek-v4`, these models do NOT support `reasoning_effort` inside `chat_template_kwargs`. On NVIDIA NIM, they always do full thinking when enabled.
 
-### 5.4 `stepfun-parallel` (Handler)
-
-**Models:** `stepfun-ai/step-3.5-flash`
-
-**How it works:**
-1. `supportsReasoningEffort: true` in family compat tells pi to send top-level `reasoning_effort`
-2. Our `before_provider_request` handler converts to `chat_template_kwargs.parallel_reasoning_mode`:
-
-```json
-{
-  "chat_template_kwargs": {
-    "parallel_reasoning_mode": "none" | "low" | "medium" | "heavy"
-  }
-}
-```
-
-**Mapping:**
-| Pi thinking level | `parallel_reasoning_mode` |
-|-------------------|------------------------|
-| Off | `"none"` |
-| Low | `"low"` |
-| Medium | `"medium"` |
-| High | `"heavy"` |
-
-### 5.5 `minimax-inline` (Native)
+### 5.4 `minimax-inline` (Native)
 
 **Models:** `minimaxai/minimax-m2.7`, `minimaxai/minimax-m2.5`
 
@@ -323,7 +297,7 @@ Unlike `deepseek-v4`, these models do NOT support `reasoning_effort` inside `cha
 
 No `chat_template_kwargs` injection needed — the model always reasons inline.
 
-### 5.6 `reasoning-effort` (Native)
+### 5.5 `reasoning-effort` (Native)
 
 **Models:** `openai/gpt-oss-120b`, `openai/gpt-oss-20b`
 
@@ -375,7 +349,6 @@ The actual thinking transforms are implemented in `handlers/thinking.ts`:
 |--------|-----------|
 | `deepseek-v4` | `thinking` + `reasoning_effort` → `chat_template_kwargs { thinking, reasoning_effort }`, deletes originals |
 | `deepseek-nim` | `thinking` → `chat_template_kwargs { thinking }`, deletes `thinking` + `reasoning_effort` |
-| `stepfun-parallel` | `reasoning_effort` → `chat_template_kwargs { parallel_reasoning_mode }`, maps effort values |
 | `qwen-chat-template` | No-op (pi handles natively) |
 | `minimax-inline` | No-op (pi handles natively) |
 | `reasoning-effort` | No-op (pi handles natively) |
@@ -400,7 +373,6 @@ The actual thinking transforms are implemented in `handlers/thinking.ts`:
 | Feature | Description |
 |---------|-------------|
 | `deepseek-v4` format | Special V4 Flash/Pro handling with `reasoning_effort` in `chat_template_kwargs` |
-| `stepfun-parallel` format | Step 3.5 Flash `parallel_reasoning_mode` injection |
 | `minimax-inline` format | MiniMax M2.x `<antha>` tag handling |
 | GLM-5.1 `clear_thinking` | Extra injection via `exampleRequestExtra` beyond pi's native handling |
 | Mistral `requiresToolResultName` | Tool result messages must include `name` field |
@@ -436,12 +408,11 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 | 1 | **Model list verification** | All ~80 | P0 |
 | 2 | **Basic streaming** | Llama-3.3-70b, Gemma-3-12b, Mistral-Large-2, Nemotron-4-340b, Granite-3.3-8b | P0 |
 | 3 | **DeepSeek V4 thinking** | `deepseek-v4-flash`, `deepseek-v4-pro` | **P0** |
-| 4 | **DeepSeek V3/Kimi/Nemotron thinking** | `deepseek-v3.1`, `deepseek-v3.2`, `kimi-k2-thinking`, `nemotron-ultra-253b` | P0 |
+| 4 | **DeepSeek V3/Kimi/StepFun/Nemotron thinking** | `deepseek-v3.1`, `deepseek-v3.2`, `kimi-k2-thinking`, `kimi-k2.6`, `step-3.5-flash`, `nemotron-ultra-253b` | P0 |
 | 5 | **Qwen-chat-template thinking** | `qwen3-coder-480b`, `glm-5.1`, `magistral-small-2506`, `seed-oss-36b` | P1 |
-| 6 | **StepFun parallel thinking** | `step-3.5-flash` | P1 |
-| 7 | **MiniMax inline thinking** | `minimax-m2.7` | P1 |
-| 8 | **GPT-OSS reasoning effort** | `gpt-oss-120b` | P2 |
-| 9 | **Vision models** | `llama-3.2-11b-vision`, `gemma-3-27b-it` | P2 |
+| 6 | **MiniMax inline thinking** | `minimax-m2.7` | P1 |
+| 7 | **GPT-OSS reasoning effort** | `gpt-oss-120b` | P2 |
+| 8 | **Vision models** | `llama-3.2-11b-vision`, `gemma-3-27b-it` | P2 |
 | 10 | **Non-NVIDIA regression** | Any OpenRouter/OpenAI model | **P0** |
 | 12 | **Error handling** | Invalid model, no API key | P2 |
 | 13 | **Tool calling** | `deepseek-v4-flash`, `qwen3-coder-480b` | P1 |
@@ -450,7 +421,7 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 
 1. **Category 10** — Non-NVIDIA regression (must not break existing setup)
 2. **Category 3** — DeepSeek V4 thinking panel (the known bug we fixed)
-3. **Category 4** — DeepSeek V3/Kimi/Nemotron thinking (same handler, different format)
+3. **Category 4** — DeepSeek V3/Kimi/StepFun/Nemotron thinking (same handler, different format)
 4. **Category 2** — Basic streaming sanity check
 5. **Category 5** — Qwen-chat-template (most models use this)
 
@@ -460,11 +431,9 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 
 **DeepSeek V4 thinking:** *"What is 15% of 847? Think step by step."* → Verify thinking appears in pi's **thinking panel** (separate collapsible section), NOT in main response text.
 
-**DeepSeek V3/Kimi/Nemotron:** *"Is 9.11 bigger than 9.9? Think carefully."* → Verify thinking panel shows reasoning.
+**DeepSeek V3/Kimi/StepFun/Nemotron:** *"Is 9.11 bigger than 9.9? Think carefully."* → Verify thinking panel shows reasoning.
 
 **Qwen-chat-template:** *"Explain why the sky is blue in 2 sentences. Think about it first."*
-
-**StepFun:** *"Write a Python function to find the longest palindromic substring. Think through your approach first."* → Verify `chat_template_kwargs.parallel_reasoning_mode` is set.
 
 **MiniMax:** *"What is the capital of France? Think about it."* → Verify `<antha>` tags don't leak into main response.
 
@@ -531,7 +500,7 @@ npx tsx test/capture_raw.ts --all
 2. **Family-based config** — 36 families in `MODEL_FAMILIES`, ordered specific→general, first match wins
 3. **Two-tier merge** — Family `compat` under model-level `compat` from metadata: `{ ...family, ...model }`
 4. **Handler fixes old bug** — `before_provider_request` looks up raw model ID, not provider-prefixed
-5. **6 thinking formats** — 2 native (qwen-chat-template, minimax-inline, reasoning-effort) + 3 handler-based (deepseek-v4, deepseek-nim, stepfun-parallel)
+5. **5 thinking formats** — 2 native (qwen-chat-template, minimax-inline, reasoning-effort) + 2 handler-based (deepseek-v4, deepseek-nim)
 6. **All costs = $0** — NVIDIA NIM free tier
 7. **`metadata.json` autogenerated** — Edit via `fetch_nim_metadata.ts`, never by hand
 8. **Full docs** — `docs/README.md` (design), `AGENTS.md` (quick ref), `docs/audit-findings.md` (pi API comparison)

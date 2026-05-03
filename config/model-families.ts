@@ -1,9 +1,9 @@
-import type { NimModelConfig } from "../models/types";
+import type { NimModelConfig, NimModelCompat } from "../models/types";
 
 export interface ModelFamily {
   name: string;
   pattern: RegExp;
-  compat: NonNullable<NimModelConfig["compat"]>;
+  compat: NimModelCompat;
   thinkingLevelMap?: NimModelConfig["thinkingLevelMap"];
   reasoningBudget?: number;
 }
@@ -152,6 +152,16 @@ export const MODEL_FAMILIES: ModelFamily[] = [
   },
 
   {
+    name: "kimi-k2.6",
+    pattern: /^moonshotai\/kimi-k2\.6/,
+    compat: {
+      supportsDeveloperRole: false,
+      thinkingFormat: "deepseek",
+      maxTokensField: "max_tokens",
+    },
+  },
+
+  {
     name: "kimi",
     pattern: /^moonshotai\/kimi/,
     compat: {
@@ -172,13 +182,13 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     thinkingLevelMap: { minimal: "low" },
   },
 
-  // StepFun remaps reasoning_effort to parallel_reasoning_mode.
+  // Step 3.5 Flash on NIM always does full thinking.
   {
     name: "stepfun",
     pattern: /^stepfun-ai\//,
     compat: {
       supportsDeveloperRole: false,
-      supportsReasoningEffort: true,
+      thinkingFormat: "deepseek",
       maxTokensField: "max_tokens",
     },
   },
@@ -405,9 +415,9 @@ export function findFamily(modelId: string): ModelFamily | undefined {
 // Resolve the internal handler format for a model.
 export function classifyThinkingFormat(
   modelId: string,
-  compat: Record<string, unknown> | undefined
+  compat: NimModelCompat | undefined
 ): string {
-  const tf = compat?.thinkingFormat as string | undefined;
+  const tf = compat?.thinkingFormat;
   if (tf === "qwen-chat-template") return "qwen-chat-template";
   if (tf === "deepseek") {
     if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
@@ -416,9 +426,9 @@ export function classifyThinkingFormat(
 
   if (/^moonshotai\/kimi-k2-thinking/.test(modelId)) return "deepseek-nim";
   if (/^moonshotai\/kimi-k2\.5/.test(modelId)) return "deepseek-nim";
+  if (/^moonshotai\/kimi-k2\.6/.test(modelId)) return "deepseek-nim";
   if (/^nvidia\/llama-3\.\d-nemotron-(ultra|super)/.test(modelId))
     return "deepseek-nim";
-  if (/^stepfun-ai\//.test(modelId)) return "stepfun-parallel";
   if (/^minimaxai\/minimax-m2/.test(modelId)) return "minimax-inline";
   return "none";
 }
@@ -440,6 +450,9 @@ export function applyFamilyCompat(
       }
       if (family.reasoningBudget != null || model.reasoningBudget != null) {
         providerModel.reasoningBudget = model.reasoningBudget ?? family.reasoningBudget;
+      }
+      if (family.compat?.thinkingFormat || family.compat?.supportsReasoningEffort) {
+        providerModel.reasoning = true;
       }
     }
     return providerModel;

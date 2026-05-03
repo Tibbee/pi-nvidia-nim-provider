@@ -127,7 +127,7 @@ function recommendedThinkingFormat(modelId: string): string | undefined {
   if (/^moonshotai\/kimi-k2-thinking/.test(modelId)) return "deepseek-nim";
   if (/^moonshotai\/kimi-k2\.5/.test(modelId)) return "deepseek-nim";
   if (/^nvidia\/llama-3\.\d-nemotron-(ultra|super)/.test(modelId)) return "deepseek-nim";
-  if (/^stepfun-ai\//.test(modelId)) return "stepfun-parallel";
+  if (/^stepfun-ai\//.test(modelId)) return "deepseek-nim";
   if (/^minimaxai\/minimax-m2\.5/.test(modelId)) return "minimax-inline";
   if (/^openai\/gpt-oss/.test(modelId)) return "reasoning-effort";
   if (/^z-ai\/glm/.test(modelId)) return "qwen-chat-template";

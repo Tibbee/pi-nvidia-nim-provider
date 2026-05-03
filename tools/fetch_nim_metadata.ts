@@ -326,7 +326,7 @@ function detectThinkingFormat(modelId: string, text: string): string | undefined
   if (/^moonshotai\/kimi-k2-thinking/.test(modelId)) return "deepseek-nim";
   if (/^moonshotai\/kimi-k2\.5/.test(modelId)) return "deepseek-nim";
   if (/^nvidia\/llama-3\.\d-nemotron-(ultra|super)/.test(modelId)) return "deepseek-nim";
-  if (/^stepfun-ai\//.test(modelId)) return "stepfun-parallel";
+  if (/^stepfun-ai\//.test(modelId)) return "deepseek-nim";
   // m2.7 has no thinking; only m2.5 does.
   if (/^minimaxai\/minimax-m2\.5/.test(modelId)) return "minimax-inline";
   if (/^openai\/gpt-oss/.test(modelId)) return "reasoning-effort";
@@ -337,7 +337,7 @@ function detectThinkingFormat(modelId: string, text: string): string | undefined
   if (/^nvidia\/nemotron-3-super/.test(modelId)) return "qwen-chat-template";
   if (/^qwen\/qwen3/.test(modelId)) return "qwen-chat-template";
 
-  if (/parallel_reasoning_mode/.test(text)) return "stepfun-parallel";
+  if (/parallel_reasoning_mode/.test(text)) return "deepseek-nim";
   if (/chat_template_kwargs.*(?:enable_thinking|clear_thinking)/.test(text)) return "qwen-chat-template";
   if (/chat_template_kwargs.*thinking.*true/.test(text)) return "deepseek-nim";
   if (/reasoning_effort/.test(text)) return "reasoning-effort";
@@ -510,7 +510,7 @@ function classifyThinkingFromSchema(
   if (ctkw) {
     const combined = (ctkw.description ?? "") + " " + JSON.stringify(ctkw.example ?? "");
     if (/enable_thinking/.test(combined)) return "qwen-chat-template";
-    if (/parallel_reasoning_mode/.test(combined)) return "stepfun-parallel";
+    if (/parallel_reasoning_mode/.test(combined)) return "deepseek-nim";
     if (/\bthinking\b/.test(combined)) return "deepseek-nim";
   }
 

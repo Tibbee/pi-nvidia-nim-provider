@@ -27,19 +27,28 @@ export default async function (pi: ExtensionAPI) {
     const format = classifyThinkingFormat(modelId, modelConfig.compat);
     let modified = applyCustomThinkingFormat(payload, format);
 
-    // GLM-5.1 also needs clear_thinking: false.
-    if (/^z-ai\/glm/.test(modelId)) {
-      const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
-      if (kwargs?.enable_thinking === true) {
-        payload.chat_template_kwargs = {
-          ...kwargs,
-          clear_thinking: false,
-        };
-        modified = true;
+    // Inject model-specific extra kwargs from metadata
+    // (e.g. GLM clear_thinking, or any future model with unique kwargs)
+    if (modelConfig.exampleRequestExtra && hasEnabledThinking(payload)) {
+      const exampleKwargs = modelConfig.exampleRequestExtra.chat_template_kwargs as Record<string, unknown> | undefined;
+      if (exampleKwargs) {
+        const kwargs = (payload.chat_template_kwargs as Record<string, unknown>) || {};
+        let injected = false;
+        for (const [key, value] of Object.entries(exampleKwargs)) {
+          // Only inject keys not already set by pi or applyCustomThinkingFormat
+          if (!(key in kwargs)) {
+            kwargs[key] = value;
+            injected = true;
+          }
+        }
+        if (injected) {
+          payload.chat_template_kwargs = kwargs;
+          modified = true;
+        }
       }
     }
 
-    // Nemotron exposes an internal reasoning budget.
+    // Expose reasoning/thinking budget when available (schema-extracted)
     if (modelConfig.reasoningBudget != null && hasEnabledThinking(payload)) {
       payload.reasoning_budget = modelConfig.reasoningBudget;
       modified = true;

@@ -16,8 +16,8 @@ const DOCS_BASE_URL = "https://docs.api.nvidia.com/nim/reference";
 const BUILD_BASE_URL = "https://build.nvidia.com";
 const OUTPUT_FILE = path.join(__dirname, "../models/metadata.json");
 
-const BATCH_SIZE = 5;
-const DELAY_MS = 300;
+const BATCH_SIZE = 15;
+const DELAY_MS = 100;
 
 const verbose = process.argv.includes("--verbose");
 const fetchCards = process.argv.includes("--cards");
@@ -55,6 +55,8 @@ interface ModelMetadata {
 
   recommendedTemperature?: number;
   recommendedTopP?: number;
+
+  exampleRequestExtra?: Record<string, unknown>;
 
   modelCategory: ModelCategory;
 }
@@ -515,6 +517,52 @@ function classifyThinkingFromSchema(
   return undefined;
 }
 
+// Standard OpenAI params — everything else in requestJson is model-specific.
+const STANDARD_OPENAI_PARAMS = new Set([
+  "model", "messages", "temperature", "top_p", "max_tokens",
+  "max_completion_tokens", "seed", "stream", "stop", "n",
+  "presence_penalty", "frequency_penalty", "logit_bias", "user",
+  "top_k", "repetition_penalty", "response_format", "tools", "tool_choice",
+]);
+
+// Find ALL named example request bodies in SSR props.
+// Returns the one with thinking enabled (most complete kwargs), falling back to any.
+function findBestRequestJson(obj: any): string | null {
+  const examples: Array<{ name?: string; rj: string }> = [];
+  
+  function collect(o: any) {
+    if (!o || typeof o !== "object") return;
+    if (typeof o.name === "string" && typeof o.requestJson === "string") {
+      examples.push({ name: o.name, rj: o.requestJson });
+    }
+    // Also catch unnamed requestJson at any level
+    if (typeof o.requestJson === "string" && !o.name) {
+      examples.push({ rj: o.requestJson });
+    }
+    for (const k in o) collect(o[k]);
+  }
+  collect(obj);
+  
+  if (examples.length === 0) return null;
+  
+  // Prefer the example with thinking ENABLED (reveals complete kwargs structure)
+  for (const ex of examples) {
+    try {
+      const parsed = JSON.parse(ex.rj);
+      const ctkw = parsed.chat_template_kwargs;
+      if (ctkw && typeof ctkw === "object") {
+        const hasThinking = Object.entries(ctkw).some(
+          ([k, v]) => (k === "enable_thinking" || k === "thinking") && v === true
+        );
+        if (hasThinking) return ex.rj;
+      }
+    } catch {}
+  }
+  
+  // Fallback: first example (disabled/default state)
+  return examples[0].rj;
+}
+
 // Merge build/docs/fallback data for one model.
 async function fetchModelData(modelId: string, owned_by: string): Promise<ModelMetadata> {
   const meta: ModelMetadata = {
@@ -598,8 +646,9 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
                   if (reProp.default != null) meta.reasoningEffortDefault = reProp.default;
                 }
 
-                // ---- reasoning budget ----
-                const rbProp = reqProps.reasoning_budget;
+                // ---- reasoning/thinking budget ----
+                // Different model families use different names for the same concept
+                const rbProp = reqProps.reasoning_budget ?? reqProps.thinking_budget;
                 if (rbProp) {
                   meta.reasoningBudget = rbProp.maximum ?? rbProp.default;
                 }
@@ -626,6 +675,39 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
               if (!meta.supportsVision) {
                 if (Object.keys(schemas).some(n => /NIMVLMChatCompletionContentPartImage/i.test(n))) {
                   meta.supportsVision = true;
+                }
+              }
+
+              // ---- extract ALL non-standard params from the THINKING-ENABLED example ----
+              // Picks the requestJson where thinking=true (e.g. "Which number is larger…"),
+              // which reveals the complete chat_template_kwargs structure including
+              // model-specific keys like clear_thinking, low_effort, etc.
+              const rj = findBestRequestJson(ssrProps);
+              if (rj) {
+                try {
+                  const example = JSON.parse(rj);
+                  const extra: Record<string, unknown> = {};
+                  for (const [key, value] of Object.entries(example)) {
+                    if (!STANDARD_OPENAI_PARAMS.has(key)) {
+                      extra[key] = value;
+                    }
+                  }
+                  if (Object.keys(extra).length > 0) {
+                    meta.exampleRequestExtra = extra;
+                  }
+                } catch {}
+              }
+              // Extract chat_template_kwargs defaults from schema — always merge
+              // because the schema is authoritative for the complete default object,
+              // even when requestJson provides partial thinking examples
+              if (reqProps?.chat_template_kwargs) {
+                const ctkw = reqProps.chat_template_kwargs;
+                // Prefer the parent-level .default (e.g. {"enable_thinking": true})
+                if (ctkw.default && typeof ctkw.default === "object") {
+                  meta.exampleRequestExtra = {
+                    chat_template_kwargs: ctkw.default,
+                    ...(meta.exampleRequestExtra ?? {}),
+                  };
                 }
               }
             }
@@ -676,7 +758,12 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   if (!meta.supportsReasoning) meta.supportsReasoning = detectReasoningSupport(combinedHtmlStr);
   meta.thinkingFormat = meta.thinkingFormat ?? detectThinkingFormat(modelId, combinedHtmlStr);
   if (meta.thinkingFormat) meta.supportsReasoning = true;
-  if (meta.reasoningBudget == null) meta.reasoningBudget = parseReasoningBudget(combinedHtmlStr);
+  const htmlBudget = parseReasoningBudget(combinedHtmlStr);
+  if (htmlBudget != null) {
+    meta.reasoningBudget = meta.reasoningBudget != null
+      ? Math.max(meta.reasoningBudget, htmlBudget)
+      : htmlBudget;
+  }
   if (!meta.reasoningEffortValues) {
     const reasoningEffort = parseReasoningEffortValues(combinedHtmlStr);
     meta.reasoningEffortValues = reasoningEffort.values;
@@ -772,6 +859,7 @@ async function main() {
       console.log(`  recommendedTopP:         ${meta.recommendedTopP ?? "?"}`);
       console.log(`  reasoningBudget:         ${meta.reasoningBudget ?? "?"}`);
       console.log(`  reasoningEffort:         ${meta.reasoningEffortValues?.join(", ") ?? "?"}`);
+      console.log(`  exampleRequestExtra:     ${meta.exampleRequestExtra ? JSON.stringify(meta.exampleRequestExtra) : "?"}`);
       return;
     }
 

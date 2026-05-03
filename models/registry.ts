@@ -14,6 +14,7 @@ interface MetadataEntry {
   reasoningEffortValues?: string[];
   reasoningEffortDefault?: string;
   thinkingFormat?: string;
+  exampleRequestExtra?: Record<string, unknown>;
 }
 
 const REASONING_EFFORT_ORDER = ["none", "low", "medium", "high", "max"] as const;
@@ -95,6 +96,7 @@ function metadataToModelConfig(entry: MetadataEntry): NimModelConfig {
     reasoningBudget: entry.reasoningBudget,
     thinkingLevelMap,
     compat,
+    exampleRequestExtra: entry.exampleRequestExtra,
   };
 }
 
@@ -184,6 +186,7 @@ export function applyMetadata(
         : model.thinkingLevelMap,
     input,
     compat,
+    exampleRequestExtra: metadata.exampleRequestExtra ?? model.exampleRequestExtra,
   };
 }
 

@@ -14,6 +14,7 @@ export interface NimModelConfig {
   thinkingLevelMap?: Partial<Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh", string | null>>;
   headers?: Record<string, string>;
   compat?: Record<string, unknown>;
+  exampleRequestExtra?: Record<string, unknown>;
 }
 
 // Internal labels for NIM thinking routing.

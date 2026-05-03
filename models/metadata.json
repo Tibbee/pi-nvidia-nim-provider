@@ -102,6 +102,10 @@
     "maxOutputTokens": 32768,
     "recommendedTemperature": 1.1,
     "recommendedTopP": 0.95,
+    "reasoningBudget": 16384,
+    "exampleRequestExtra": {
+      "thinking_budget": 512
+    },
     "supportsToolCalling": true,
     "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true,
@@ -147,6 +151,11 @@
     "maxOutputTokens": 16384,
     "recommendedTemperature": 0.2,
     "recommendedTopP": 0.7,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "thinking": true
+      }
+    },
     "supportsToolCalling": true,
     "thinkingFormat": "deepseek-nim",
     "contextWindow": 131072,
@@ -165,6 +174,11 @@
     "maxOutputTokens": 16384,
     "recommendedTemperature": 1,
     "recommendedTopP": 0.95,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "thinking": true
+      }
+    },
     "supportsToolCalling": true,
     "thinkingFormat": "deepseek-nim",
     "contextWindow": 131072,
@@ -191,6 +205,12 @@
     ],
     "reasoningEffortDefault": "high",
     "thinkingFormat": "deepseek-v4",
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "thinking": true,
+        "reasoning_effort": "max"
+      }
+    },
     "supportsToolCalling": true,
     "contextWindow": 1000000,
     "toolCallFormat": "openai",
@@ -215,6 +235,12 @@
     ],
     "reasoningEffortDefault": "high",
     "thinkingFormat": "deepseek-v4",
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "thinking": true,
+        "reasoning_effort": "max"
+      }
+    },
     "supportsToolCalling": true,
     "contextWindow": 1000000,
     "toolCallFormat": "openai",
@@ -393,6 +419,11 @@
     "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true,
     "supportsVision": true,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": true
+      }
+    },
     "supportsToolCalling": true,
     "contextWindow": 262144,
     "toolCallFormat": "openai",
@@ -1098,6 +1129,11 @@
     "thinkingFormat": "deepseek-nim",
     "supportsReasoning": true,
     "supportsVision": true,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "thinking": true
+      }
+    },
     "contextWindow": 262144,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true
@@ -1160,6 +1196,15 @@
       "text"
     ],
     "modelCategory": "guard",
+    "exampleRequestExtra": {
+      "labels": [
+        "first_name",
+        "last_name",
+        "address",
+        "date"
+      ],
+      "threshold": 0.4
+    },
     "supportsReasoning": false,
     "supportsToolCalling": false,
     "supportsStructuredOutput": true,
@@ -1177,6 +1222,11 @@
     "recommendedTemperature": 0.2,
     "recommendedTopP": 1,
     "supportsVision": true,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": true
+      }
+    },
     "supportsToolCalling": true,
     "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true,
@@ -1336,6 +1386,12 @@
       "text"
     ],
     "modelCategory": "embedding",
+    "exampleRequestExtra": {
+      "input": "What is the capital of France?",
+      "input_type": "query",
+      "encoding_format": "float",
+      "truncate": "NONE"
+    },
     "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
@@ -1351,6 +1407,12 @@
       "text"
     ],
     "modelCategory": "embedding",
+    "exampleRequestExtra": {
+      "input": "What is the capital of France?",
+      "input_type": "query",
+      "encoding_format": "float",
+      "truncate": "NONE"
+    },
     "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
@@ -1366,6 +1428,12 @@
       "text"
     ],
     "modelCategory": "embedding",
+    "exampleRequestExtra": {
+      "input": "What is the capital of France?",
+      "input_type": "query",
+      "encoding_format": "float",
+      "truncate": "NONE"
+    },
     "supportsToolCalling": true,
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
@@ -1417,6 +1485,12 @@
       "text"
     ],
     "modelCategory": "embedding",
+    "exampleRequestExtra": {
+      "input": "What is the capital of France?",
+      "input_type": "query",
+      "encoding_format": "float",
+      "truncate": "NONE"
+    },
     "supportsReasoning": false,
     "supportsToolCalling": false,
     "supportsStructuredOutput": false,
@@ -1430,6 +1504,14 @@
       "text | image (for documents)"
     ],
     "modelCategory": "embedding",
+    "exampleRequestExtra": {
+      "input": "What is the civil caseload in South Dakota courts?",
+      "input_type": "query",
+      "image": "https://assets.ngc.nvidia.com/products/api-catalog/nemo-retriever/embedding/court-sizing-metrics.png",
+      "image_name": "court-sizing-metrics.png",
+      "encoding_format": "float",
+      "truncate": "NONE"
+    },
     "supportsReasoning": false,
     "supportsToolCalling": false,
     "supportsStructuredOutput": false,
@@ -1492,9 +1574,9 @@
     "recommendedTemperature": 0.2,
     "recommendedTopP": 0.7,
     "supportsVision": true,
+    "supportsToolCalling": true,
     "thinkingFormat": "deepseek-nim",
     "supportsReasoning": true,
-    "supportsToolCalling": false,
     "supportsStructuredOutput": true
   },
   {
@@ -1507,6 +1589,11 @@
     "maxOutputTokens": 32768,
     "recommendedTemperature": 1,
     "recommendedTopP": 1,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": true
+      }
+    },
     "supportsToolCalling": true,
     "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true,
@@ -1529,6 +1616,12 @@
     "recommendedTopP": 0.95,
     "reasoningBudget": 32768,
     "supportsVision": true,
+    "exampleRequestExtra": {
+      "reasoning_budget": 16384,
+      "chat_template_kwargs": {
+        "enable_thinking": true
+      }
+    },
     "supportsToolCalling": true,
     "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true,
@@ -1555,6 +1648,12 @@
     "reasoningEffortDefault": "high",
     "reasoningBudget": 32768,
     "thinkingFormat": "deepseek-nim",
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": true
+      },
+      "reasoning_budget": 8192
+    },
     "supportsToolCalling": true,
     "contextWindow": 1000000,
     "toolCallFormat": "openai",
@@ -1695,8 +1794,14 @@
       "text"
     ],
     "modelCategory": "embedding",
-    "supportsToolCalling": true,
+    "exampleRequestExtra": {
+      "input": "What is the capital of France?",
+      "input_type": "query",
+      "encoding_format": "float",
+      "truncate": "NONE"
+    },
     "supportsReasoning": false,
+    "supportsToolCalling": false,
     "supportsStructuredOutput": false,
     "supportsVision": false
   },
@@ -1707,6 +1812,12 @@
       "code or text"
     ],
     "modelCategory": "embedding",
+    "exampleRequestExtra": {
+      "input": "What is the capital of France?",
+      "input_type": "query",
+      "encoding_format": "float",
+      "truncate": "NONE"
+    },
     "supportsReasoning": false,
     "supportsToolCalling": false,
     "supportsStructuredOutput": false,
@@ -1719,6 +1830,12 @@
       "text"
     ],
     "modelCategory": "embedding",
+    "exampleRequestExtra": {
+      "input": "What is the capital of France?",
+      "input_type": "query",
+      "encoding_format": "float",
+      "truncate": "NONE"
+    },
     "supportsReasoning": false,
     "supportsToolCalling": false,
     "supportsStructuredOutput": false,
@@ -1831,6 +1948,22 @@
       "high"
     ],
     "reasoningEffortDefault": "medium",
+    "exampleRequestExtra": {
+      "input": [
+        {
+          "type": "message",
+          "role": "user",
+          "content": [
+            {
+              "type": "input_text",
+              "text": "Solve this step by step: What is 15 * 24?"
+            }
+          ]
+        }
+      ],
+      "reasoning_effort": "medium",
+      "max_output_tokens": 1000
+    },
     "thinkingFormat": "reasoning-effort",
     "contextWindow": 128000,
     "toolCallFormat": "openai",
@@ -1855,6 +1988,22 @@
       "high"
     ],
     "reasoningEffortDefault": "medium",
+    "exampleRequestExtra": {
+      "input": [
+        {
+          "type": "message",
+          "role": "user",
+          "content": [
+            {
+              "type": "input_text",
+              "text": "Solve this step by step: What is 15 * 24?"
+            }
+          ]
+        }
+      ],
+      "reasoning_effort": "medium",
+      "max_output_tokens": 1000
+    },
     "thinkingFormat": "reasoning-effort",
     "contextWindow": 128000,
     "toolCallFormat": "openai",
@@ -1948,6 +2097,11 @@
     "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true,
     "supportsVision": true,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": true
+      }
+    },
     "contextWindow": 262144,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true
@@ -1968,6 +2122,11 @@
     "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true,
     "supportsVision": true,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": true
+      }
+    },
     "contextWindow": 262144,
     "toolCallFormat": "openai",
     "supportsStructuredOutput": true
@@ -2116,6 +2275,12 @@
     "maxOutputTokens": 32768,
     "recommendedTemperature": 1,
     "recommendedTopP": 1,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": true,
+        "clear_thinking": false
+      }
+    },
     "supportsToolCalling": true,
     "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true,
@@ -2134,6 +2299,12 @@
     "maxOutputTokens": 32768,
     "recommendedTemperature": 1,
     "recommendedTopP": 1,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": true,
+        "clear_thinking": false
+      }
+    },
     "thinkingFormat": "qwen-chat-template",
     "contextWindow": 128000,
     "supportsReasoning": true,

@@ -1,6 +1,6 @@
 # NVIDIA NIM Provider Extension — Complete Documentation
 
-> **Last updated:** 2026-04-28
+> **Last updated:** 2026-05-03
 > **Project:** `E:/Munka/Programming/TypeJavaScript/NvidiaProvider`
 
 ---
@@ -13,9 +13,10 @@
 - [2. Architecture & Design Decisions](#2-architecture--design-decisions)
   - [2.1 Why `openai-completions` Not `streamSimple`](#21-why-openai-completions-not-streamsimple)
   - [2.2 Family-Based Compat Configuration](#22-family-based-compat-configuration)
-  - [3. Directory Structure](#3-directory-structure)
+  - [2.3 Model Pipeline](#23-model-pipeline)
+- [3. Directory Structure](#3-directory-structure)
 - [4. Model Curation](#4-model-curation)
-  - [4.1 Included Models (~80 LLMs)](#41-included-models)
+  - [4.1 Included Models (~95 LLMs)](#41-included-models)
   - [4.2 Excluded Categories](#42-excluded-categories)
   - [4.3 Model Family Compat Reference](#43-model-family-compat-reference)
 - [5. Thinking Format Handling](#5-thinking-format-handling)
@@ -38,15 +39,17 @@
 
 ## 1. Overview
 
-This extension registers **NVIDIA NIM** as a custom model provider (`nvidia-nim`) in the pi coding agent. It makes 50+ chat, coding, reasoning, and vision LLMs available through pi's `/model` picker, using NVIDIA's free-tier inference API at:
+This extension registers **NVIDIA NIM** as a custom model provider (`nvidia-nim`) in the pi coding agent. It makes ~95 chat, coding, reasoning, and vision LLMs available through pi's `/model` picker, using NVIDIA's free-tier inference API at:
 
 ```
 https://integrate.api.nvidia.com/v1
 ```
 
-**Key design insight:** NVIDIA NIM exposes an OpenAI-compatible API, so we use pi's built-in `openai-completions` streaming handler — no custom streaming implementation needed. This avoids a critical bug in the previous extension where a custom `streamSimple` handler broke other providers (like OpenRouter).
+**Key design insight:** NVIDIA NIM exposes an OpenAI-compatible API, so we use pi's built-in `openai-completions` streaming handler — no custom streaming implementation needed.
 
 **Key architectural decision:** Model-specific quirks (thinking formats, extra body parameters, compat flags) are handled through pi's `compat` system and a `before_provider_request` event hook, not custom streaming code.
+
+**Model pipeline:** `metadata.json` (135 scraped entries) → `isLLMModel()` filter → dedup → `metadataToModelConfig()` → `applyFamilyCompat()` → `STATIC_MODELS[]` (~95 models). Family patterns are applied **first match wins** in a specific-to-general ordering.
 
 ### 1.5 Quick Start
 
@@ -91,13 +94,29 @@ Models are grouped by **family** (e.g., `deepseek`, `qwen`, `mistral`, `llama`).
 
 This is defined in `config/model-families.ts` with 30+ families covering ~80 models.
 
-### 2.3 Static Model List
+### 2.3 Model Pipeline
 
-| Mode | How | When |
-|------|-----|------|
-| **Static** | Hand-curated model list with verified metadata | Startup — no API calls, instant |
+Models are built at module init time from `metadata.json`:
 
-Model list is maintained via the `tools/fetch_nim_metadata.ts` metadata gathering tool and manual curation.
+```
+metadata.json (135 raw entries)
+    │  isLLMModel() — excludes embeddings, TTS, ASR, guardrails, etc.
+    ▼
+~95 LLM entries
+    │  deduplicate by ID
+    ▼
+unique LLM entries
+    │  metadataToModelConfig() — compat flags, thinkingLevelMap, display name
+    ▼
+NimModelConfig[]
+    │  applyFamilyCompat() — merges family compat { ...family.compat, ...model.compat }
+    ▼
+STATIC_MODELS[] + STATIC_MODEL_MAP<id, config>
+```
+
+**Merge order:** Family defaults under model overrides. Model-level values from `metadata.json` take priority over family-level defaults. Family patterns in `MODEL_FAMILIES` are ordered **specific → general**, first match wins. Insert new patterns before broader catch-alls like `/^nvidia\//` or `/.*/`.
+
+All models have `cost: $0` (NVIDIA NIM free tier).
 
 ---
 
@@ -107,17 +126,24 @@ Model list is maintained via the `tools/fetch_nim_metadata.ts` metadata gatherin
 NvidiaProvider/
 ├── index.ts                          # Extension entry + before_provider_request handler
 ├── package.json                      # Pi package manifest
+├── handlers/
+│   └── thinking.ts                   # applyCustomThinkingFormat(), hasEnabledThinking()
 ├── models/
-│   ├── types.ts                      # NimModelConfig type + NimThinkingFormat enum
-│   ├── registry.ts                   # Loads from metadata.json, applies family compat
-│   └── metadata.json                 # ~87 models with discovered metadata
+│   ├── types.ts                      # NimModelConfig, NimThinkingFormat
+│   ├── registry.ts                   # STATIC_MODELS pipeline (metadata → family compat)
+│   ├── metadata.ts                   # Back-compat re-export shim for registry.ts
+│   └── metadata.json                 # ~135 models with scraped metadata (DO NOT edit manually)
 ├── config/
-│   ├── model-families.ts             # 30+ families with compat + thinking format classification
+│   ├── model-families.ts             # 36 families (first match wins) + classifyThinkingFormat()
 │   └── defaults.ts                   # NIM_BASE_URL, NIM_API_KEY_ENV
 ├── tools/
-│   └── fetch_nim_metadata.ts         # Comprehensive metadata fetcher (API + docs scraping)
+│   ├── fetch_nim_metadata.ts         # NVIDIA docs scraper (API + build pages)
+│   └── fetch_modelsdev_nvidia.ts     # Comparison tool against models.dev public API
+├── test/
+│   └── capture_raw.ts               # Raw HTTP response capture for debugging
 └── docs/
-    └── README.md                     # This file
+    ├── README.md                     # This file
+    └── audit-findings.md             # Pi library API comparison audit (v0.72.1)
 ```
 
 ---
@@ -161,30 +187,35 @@ These are filtered out from the NIM catalog:
 
 ### 4.3 Model Family Compat Reference
 
-| Family | Pattern | `supportsDeveloperRole` | `thinkingFormat` | Extra Notes |
-|--------|---------|------------------------|-----------------|-------------|
-| `deepseek` | `deepseek-ai/deepseek-v[34]` | `false` | `"deepseek"` | — |
-| `qwen3-coder` | `qwen/qwen3-coder` | `false` | `"qwen-chat-template"` | — |
-| `qwen3-next` | `qwen/qwen3-next` | `false` | `"qwen-chat-template"` | — |
-| `qwen3.5` | `qwen/qwen3.5` | `false` | `"qwen-chat-template"` | — |
-| `qwen2.5-coder` | `qwen/qwen2.5-coder` | `false` | — | — |
-| `glm` | `z-ai/glm` | `false` | `"qwen-chat-template"` | `clear_thinking: false` injected via handler |
-| `minimax` | `minimaxai/minimax` | `false` | `"qwen-chat-template"` | — |
-| `kimi` | `moonshotai/kimi` | `false` | `"qwen-chat-template"` | — |
-| `gpt-oss` | `openai/gpt-oss` | `false` | `"reasoning-effort"` | `minimal→low` mapping |
-| `llama` | `meta/llama` | `false` | — | — |
-| `mistral` | `mistralai/` | `false` | — | `requiresToolResultName: true` |
-| `nemotron` | `nvidia/.*nemotron` | `false` | — | — |
-| `gemma` | `google/gemma` | `false` | — | — |
-| `phi` | `microsoft/phi` | `false` | — | — |
-| `seed` | `bytedance/seed` | `false` | `"qwen-chat-template"` | — |
-| `step` | `stepfun-ai/` | `false` | — | Handler injects `parallel_reasoning_mode` |
-| `solar` | `upstage/solar` | `false` | — | — |
-| `stockmark` | `stockmark/` | `false` | — | — |
-| `dracarys` | `abacusai/` | `false` | — | — |
-| `sarvam` | `sarvamai/` | `false` | — | — |
+All families set `supportsDeveloperRole: false` and `maxTokensField: "max_tokens"`. The table shows only unique fields per family.
 
-All families also set `maxTokensField: "max_tokens"`.
+| Family | Pattern | `thinkingFormat` | `supportsReasoningEffort` | Extra Notes |
+|--------|---------|-----------------|--------------------------|-------------|
+| `deepseek-v4` | `deepseek-ai/deepseek-v4` | `"deepseek"` | — | `thinkingLevelMap`: off→none, xhigh→max |
+| `deepseek-v3` | `deepseek-ai/deepseek-(v3\|r1)` | `"deepseek"` | — | — |
+| `qwen3-coder` | `qwen/qwen3-coder` | `"qwen-chat-template"` | — | — |
+| `qwen3-next` | `qwen/qwen3-next` | `"qwen-chat-template"` | — | — |
+| `qwen3.5` | `qwen/qwen3.5` | `"qwen-chat-template"` | — | — |
+| `qwen3` | `qwen/qwen3-` | `"qwen-chat-template"` | — | — |
+| `qwq` | `qwen/qwq` | `"qwen-chat-template"` | — | — |
+| `glm` | `z-ai/glm` | `"qwen-chat-template"` | — | `exampleRequestExtra` injects `clear_thinking: false` |
+| `minimax-m2` | `minimaxai/minimax-m2` | — | — | `requiresThinkingAsText: true`, inline `<antha>` tags |
+| `kimi-thinking` | `moonshotai/kimi-k2-thinking` | `"deepseek"` | — | — |
+| `kimi-k2.5` | `moonshotai/kimi-k2\.5` | `"deepseek"` | — | — |
+| `kimi` | `moonshotai/kimi` | — | — | Non-thinking base models |
+| `gpt-oss` | `openai/gpt-oss` | — | `true` | `thinkingLevelMap: { minimal: "low" }` |
+| `stepfun` | `stepfun-ai/` | — | `true` | Handler remaps → `parallel_reasoning_mode` |
+| `seed` | `bytedance/` | `"qwen-chat-template"` | — | — |
+| `nemotron-nano` | `nvidia/nvidia-nemotron-nano` | `"qwen-chat-template"` | — | — |
+| `nemotron-thinking` | `nvidia/llama-3.\d-nemotron-(ultra\|super)` | `"deepseek"` | — | — |
+| `nemotron` | `nvidia/.*nemotron` | — | `false` | `reasoningBudget: 32768` |
+| `mistral` | `mistralai/` | — | — | `requiresToolResultName: true`, `requiresThinkingAsText: true` |
+| `mixtral` | `mistralai/mixtral` | — | `false` | `requiresToolResultName: true` |
+| `llama` | `meta/llama` | — | `false` | — |
+| `gemma` | `google/gemma` | — | `false` | — |
+| `phi` | `microsoft/phi` | — | — | — |
+
+All models: `cost: $0`, `supportsDeveloperRole: false`, `maxTokensField: "max_tokens"`.
 
 ---
 
@@ -265,8 +296,8 @@ Unlike `deepseek-v4`, these models do NOT support `reasoning_effort` inside `cha
 **Models:** `stepfun-ai/step-3.5-flash`
 
 **How it works:**
-1. `thinkingFormat: "deepseek"` (closest match) makes pi send top-level `reasoning_effort`
-2. Our handler maps `reasoning_effort` → `chat_template_kwargs.parallel_reasoning_mode`:
+1. `supportsReasoningEffort: true` in family compat tells pi to send top-level `reasoning_effort`
+2. Our `before_provider_request` handler converts to `chat_template_kwargs.parallel_reasoning_mode`:
 
 ```json
 {
@@ -328,54 +359,26 @@ const family = classifyThinkingFormat(modelId);
 
 ### 6.2 Handler Implementation
 
-Located in `index.ts`, the handler:
+Located in `index.ts`, the handler performs these steps in order:
 
 1. **Early return** for non-NIM providers (`event.provider !== "nvidia-nim"`)
-2. **Classifies** the model by family using regex patterns from `config/model-families.ts`
-3. **Converts** thinking parameters based on the classified format:
-   - `deepseek-v4`: Move `thinking` + `reasoning_effort` → `chat_template_kwargs`
-   - `deepseek-nim`: Move `thinking` → `chat_template_kwargs` (drop `reasoning_effort`)
-   - `stepfun-parallel`: Map `reasoning_effort` → `parallel_reasoning_mode`
-   - `glm`: Inject `clear_thinking: false` alongside pi's native `enable_thinking`
-4. **Cleans up** top-level `thinking` and `reasoning_effort` after conversion
-5. **Deep-merges** `chat_template_kwargs` to avoid overwriting pi's native injections
+2. **Looks up** model config from `STATIC_MODEL_MAP.get(modelId)` (O(1))
+3. **Classifies** thinking format via `classifyThinkingFormat(modelId, modelConfig.compat)`
+4. **Applies custom thinking transform** via `applyCustomThinkingFormat(payload, format)` — defined in `handlers/thinking.ts`
+5. **Injects model-specific extra kwargs** from `modelConfig.exampleRequestExtra.chat_template_kwargs` (e.g., GLM-5.1 `clear_thinking: false`) — only keys not already present, only when thinking is enabled
+6. **Injects reasoning budget** from `modelConfig.reasoningBudget` (e.g., nemotron `32768`) — only when thinking enabled
+7. **Returns** modified payload if any step changed it, `undefined` otherwise (pi keeps original)
 
-```typescript
-pi.on("before_provider_request", (event, ctx) => {
-  if (event.provider !== "nvidia-nim") return;
-  const modelId = event.payload.model as string | undefined;
-  if (!modelId) return;
+The actual thinking transforms are implemented in `handlers/thinking.ts`:
 
-  const format = classifyThinkingFormat(modelId);
-  const payload = { ...event.payload };
-
-  switch (format) {
-    case "deepseek-v4": {
-      const reasoningEffort = mapThinkingLevelToReasoningEffort(payload.reasoning_effort);
-      payload.chat_template_kwargs = {
-        ...payload.chat_template_kwargs,
-        thinking: true,
-        reasoning_effort: reasoningEffort,
-      };
-      delete payload.thinking;
-      delete payload.reasoning_effort;
-      break;
-    }
-    case "deepseek-nim": {
-      payload.chat_template_kwargs = {
-        ...payload.chat_template_kwargs,
-        thinking: true,
-      };
-      delete payload.thinking;
-      delete payload.reasoning_effort;
-      break;
-    }
-    // ... etc
-  }
-
-  return payload;
-});
-```
+| Format | Transform |
+|--------|-----------|
+| `deepseek-v4` | `thinking` + `reasoning_effort` → `chat_template_kwargs { thinking, reasoning_effort }`, deletes originals |
+| `deepseek-nim` | `thinking` → `chat_template_kwargs { thinking }`, deletes `thinking` + `reasoning_effort` |
+| `stepfun-parallel` | `reasoning_effort` → `chat_template_kwargs { parallel_reasoning_mode }`, maps effort values |
+| `qwen-chat-template` | No-op (pi handles natively) |
+| `minimax-inline` | No-op (pi handles natively) |
+| `reasoning-effort` | No-op (pi handles natively) |
 
 ---
 
@@ -384,17 +387,13 @@ pi.on("before_provider_request", (event, ctx) => {
 | Phase | Description | Status |
 |-------|-------------|--------|
 | **Phase 1** | Core extension structure (`package.json`, `index.ts`) | ✅ Complete |
-| **Phase 2** | Model registry (`types.ts`, `registry.ts`, `metadata.json`) | ✅ Complete (~87 models from NIM API) |
-| **Phase 3** | Family compat configuration (`model-families.ts`, `defaults.ts`) | ✅ Complete (30+ families) |
-| **Phase 4** | `before_provider_request` handler | ✅ Complete (6 thinking formats) |
-| **Phase 5** | Model metadata gathering | ⚠️ Partial (`fetch_nim_metadata.ts` works but needs improvement) |
-
-### What's Missing
-
-| Item | Status | Notes |
-|------|--------|-------|
-| Cost data research | ❌ Not done | All costs set to $0 (free tier). Update if paid tiers appear. |
-| `fetch_nim_metadata.ts` improvements | ⚠️ Needs work | Only 13/87 context windows detected. Reasoning detection misses many models. |
+| **Phase 2** | Model registry (`types.ts`, `registry.ts`, `metadata.json`) | ✅ Complete (135 raw entries, ~95 LLMs) |
+| **Phase 3** | Family compat configuration (`model-families.ts`, `defaults.ts`) | ✅ Complete (36 families) |
+| **Phase 4** | `before_provider_request` handler + thinking transforms | ✅ Complete (6 thinking formats) |
+| **Phase 5** | Model metadata scraping (`fetch_nim_metadata.ts`) | ✅ Complete (context window, output tokens, reasoning budget, effort values, exampleRequestExtra) |
+| **Phase 6** | Comparison tool (`fetch_modelsdev_nvidia.ts`) | ✅ Complete (cross-reference against models.dev) |
+| **Phase 7** | Debug capture tool (`capture_raw.ts`) | ✅ Complete |
+| **Phase 8** | Pi library API audit | ✅ Complete (`docs/audit-findings.md`) |
 
 ### Extra Features (Not in Original Plan)
 
@@ -403,9 +402,15 @@ pi.on("before_provider_request", (event, ctx) => {
 | `deepseek-v4` format | Special V4 Flash/Pro handling with `reasoning_effort` in `chat_template_kwargs` |
 | `stepfun-parallel` format | Step 3.5 Flash `parallel_reasoning_mode` injection |
 | `minimax-inline` format | MiniMax M2.x `<antha>` tag handling |
-| GLM-5.1 `clear_thinking` | Extra injection beyond pi's native handling |
+| GLM-5.1 `clear_thinking` | Extra injection via `exampleRequestExtra` beyond pi's native handling |
 | Mistral `requiresToolResultName` | Tool result messages must include `name` field |
-| Documentation scraper | `fetch_nim_metadata.ts` scrapes NVIDIA docs pages directly, no external API needed |
+| Mistral `requiresThinkingAsText` | Thinking blocks converted to `<thinking>` delimited text |
+| Nemotron `reasoningBudget: 32768` | Reasoning budget injected on payload |
+| DeepSeek V4 `thinkingLevelMap` | Custom mapping: off→none, xhigh→max |
+| GPT-OSS `thinkingLevelMap` | Partial override: `{ minimal: "low" }` |
+| Documentation scraper | `fetch_nim_metadata.ts` scrapes NVIDIA build pages + docs, no external API needed |
+| Comparison tool | `fetch_modelsdev_nvidia.ts` cross-references against models.dev public API |
+| Debug capturer | `test/capture_raw.ts` captures raw HTTP responses for selected/investigated models |
 
 ---
 
@@ -471,21 +476,25 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 
 ## 9. Known Issues & Remaining Work
 
-### High Priority (Blocking)
+### Pi Library API Audit Findings (see `docs/audit-findings.md`)
 
-- [ ] **DeepSeek V4 thinking panel** — Fix applied (`thinkingFormat: "deepseek"` + handler conversion), but **not yet tested**. Needs verification that reasoning content appears in pi's thinking panel, not as regular text.
-- [ ] **Verify all thinking formats** — Each of the 6 formats needs manual testing.
+- [ ] **`"reasoning-effort"` not valid `thinkingFormat`** — `mapThinkingFormatToCompat` sets `thinkingFormat: "reasoning-effort"` which is not a recognized pi value. Affects scraper-detected models with that label.
+- [ ] **`reasoning` field not merged by family compat** — `applyFamilyCompat` doesn't force `reasoning: true` when a family adds `thinkingFormat` or `supportsReasoningEffort`. Models scraped with `supportsReasoning: false` but matched to thinking families won't show the thinking toggle.
+- [ ] **`classifyThinkingFormat` duplicate regexes** — Hardcoded model-ID checks duplicate family patterns. Changing a family pattern requires updating classify too.
+- [ ] **`compat` typed as `Record<string, unknown>`** — Should use `OpenAICompletionsCompat` for type safety.
+- [ ] **`event.provider` missing from pi type** — `BeforeProviderRequestEvent` declares only `type` + `payload`, but runtime carries `provider`. Use type assertion or update pi.
 
-### Medium Priority
+### Testing
 
-- [ ] **Improve `fetch_nim_metadata.ts`** — Context window detection only works for 13/87 models. Reasoning detection misses many.
-
-### Low Priority / Future
-
-- [ ] **Cost data** — Research paid tier pricing if available.
+- [ ] **Verify all thinking formats** — Each of the 6 formats needs manual testing with a real API key.
+- [ ] **Non-NVIDIA regression** — Must not break existing providers (OpenRouter, Anthropic, etc.).
 - [ ] **Automated testing** — Script that verifies `before_provider_request` output for each thinking format.
+
+### Future
+
+- [ ] **Cost data** — Research paid tier pricing if/when available.
+- [ ] **`after_provider_response` hook** — Use for logging rate-limit headers or debugging.
 - [ ] **Model card caching** — Cache documentation page results to avoid re-fetching.
-- [ ] **GitHub repo** — Create public repo and push.
 
 ---
 
@@ -497,34 +506,35 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 |----------|----------|-------------|
 | `NVIDIA_API_KEY` | Yes | API key from https://build.nvidia.com/ |
 
-### Running the Extension
+### Commands
 
 ```bash
-# Basic usage
+# Run with extension
 pi -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider
-
 
 # List models
 pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nvidia-nim
-```
 
-### Fetching Metadata
+# Fetch/update metadata (DO NOT edit metadata.json by hand)
+npx tsx tools/fetch_nim_metadata.ts --cards --output models/metadata.json
 
-```bash
-# Basic mode
-npx tsx tools/fetch_nim_metadata.ts --output models/metadata.json
+# Compare against models.dev
+npx tsx tools/fetch_modelsdev_nvidia.ts --compare
 
-# Full mode (with documentation page scraping)
-npx tsx tools/fetch_nim_metadata.ts --cards --verbose --output models/metadata.json
+# Capture raw HTTP responses (5 representative models, or --all)
+npx tsx test/capture_raw.ts --all
 ```
 
 ### Key Architecture Points
 
-1. **No custom streaming** — Uses `api: "openai-completions"`
-2. **Family-based config** — `config/model-families.ts` groups models by regex pattern
-3. **Handler fixes old bug** — `before_provider_request` checks raw model ID, not prefixed ID
-4. **6 thinking formats** — 2 native (qwen-chat-template, reasoning-effort, minimax-inline) + 4 handler-based (deepseek-v4, deepseek-nim, stepfun-parallel, glm-clear_thinking)
-5. **All costs = $0** — NVIDIA NIM free tier
+1. **No custom streaming** — Uses `api: "openai-completions"`, pi handles API calls
+2. **Family-based config** — 36 families in `MODEL_FAMILIES`, ordered specific→general, first match wins
+3. **Two-tier merge** — Family `compat` under model-level `compat` from metadata: `{ ...family, ...model }`
+4. **Handler fixes old bug** — `before_provider_request` looks up raw model ID, not provider-prefixed
+5. **6 thinking formats** — 2 native (qwen-chat-template, minimax-inline, reasoning-effort) + 3 handler-based (deepseek-v4, deepseek-nim, stepfun-parallel)
+6. **All costs = $0** — NVIDIA NIM free tier
+7. **`metadata.json` autogenerated** — Edit via `fetch_nim_metadata.ts`, never by hand
+8. **Full docs** — `docs/README.md` (design), `AGENTS.md` (quick ref), `docs/audit-findings.md` (pi API comparison)
 
 ---
 

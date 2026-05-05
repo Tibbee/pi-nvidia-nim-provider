@@ -513,7 +513,15 @@ export function applyFamilyCompat(
       if (family.reasoningBudget != null || model.reasoningBudget != null) {
         providerModel.reasoningBudget = model.reasoningBudget ?? family.reasoningBudget;
       }
-      if (family.compat?.thinkingFormat || family.compat?.supportsReasoningEffort) {
+      const familyEnablesReasoning = Boolean(
+        family.compat?.thinkingFormat ||
+          family.compat?.supportsReasoningEffort ||
+          family.compat?.requiresThinkingAsText ||
+          family.reasoningBudget != null ||
+          family.thinkingLevelMap ||
+          model.thinkingLevelMap
+      );
+      if (familyEnablesReasoning) {
         providerModel.reasoning = true;
       }
     }

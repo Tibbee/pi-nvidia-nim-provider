@@ -6,11 +6,14 @@
 - **pi library:** `@mariozechner/pi-coding-agent` v0.72.1 at `E:\Munka\Node\PI\node_modules\@mariozechner\...`
 - **Date:** 2026-05-03
 
+> Note: this is a historical audit. Some findings have since been fixed in the working tree; keep the current codebase and this report in sync.
+
 ---
 
 ## 1. `"reasoning-effort"` is NOT a valid `thinkingFormat` value
 
 **Severity:** Critical (bug)
+**Status:** Resolved in current branch
 **File:** `models/registry.ts:43`
 
 `mapThinkingFormatToCompat` maps the scraper label `"reasoning-effort"` to:
@@ -42,6 +45,7 @@ with **no** `thinkingFormat` key at all. Then `classifyThinkingFormat` returns `
 ## 2. `reasoning` field not merged by `applyFamilyCompat` for thinking models
 
 **Severity:** High (bug)
+**Status:** Resolved in current branch
 **File:** `config/model-families.ts:427-446`
 
 `applyFamilyCompat` merges `compat`, `thinkingLevelMap`, and `reasoningBudget` from family into each model, but never touches the `reasoning` field.

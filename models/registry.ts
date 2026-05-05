@@ -119,6 +119,7 @@ function isLLMModel(entry: MetadataEntry): boolean {
   const id = entry.id.toLowerCase();
   return (
     !/embed|rerank|asr|tts|whisper|parakeet|conformer|transcribe|voice/i.test(id) &&
+    !/^baai\/bge(?:-|$)/i.test(id) &&
     !/guard|safety|jailbreak|pii|content-safety/i.test(id) &&
     !/fuyu|kosmos|deplot|neva|nvclip/i.test(id) &&
     !/reward|arctic-embed/i.test(id) &&

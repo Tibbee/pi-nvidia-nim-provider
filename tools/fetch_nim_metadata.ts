@@ -21,6 +21,7 @@ const DELAY_MS = 100;
 
 const verbose = process.argv.includes("--verbose");
 const fetchCards = process.argv.includes("--cards");
+const fullMode = process.argv.includes("--full");
 const singleModel = process.argv
   .find(arg => arg.startsWith("--model=") || arg.startsWith("-m=") || arg.startsWith("--model-name="))
   ?.replace(/^--?model[=-]?/, "");
@@ -61,9 +62,8 @@ interface ModelMetadata {
   modelCategory: ModelCategory;
 }
 
-// Strip metadata fields that the extension never reads at runtime.
-// Keeps metadata.json lean and avoids dead-weight data.
-const UNUSED_METADATA_KEYS = new Set([
+// Intermediate scraping artifacts — never written to metadata.json.
+const INTERNAL_SCRAPE_KEYS = new Set([
   "discovered_at",
   "card_fetched",
   "build_fetched",
@@ -81,13 +81,95 @@ const UNUSED_METADATA_KEYS = new Set([
   "shortDescription",
 ]);
 
+// Fields present in ModelMetadata but never consumed by the extension or pi at runtime.
+// Stripped by default; preserved with --full flag for debugging/inspection.
+const EXTRA_FULL_MODE_FIELDS = new Set([
+  "owned_by",
+  "inputModalities",
+  "modelCategory",
+  "supportsToolCalling",
+  "toolCallFormat",
+  "supportsStructuredOutput",
+  "recommendedTemperature",
+  "recommendedTopP",
+  "reasoningEffortDefault",
+]);
+
 function stripUnusedFields(results: ModelMetadata[]): ModelMetadata[] {
   for (const entry of results) {
-    for (const key of UNUSED_METADATA_KEYS) {
+    for (const key of INTERNAL_SCRAPE_KEYS) {
       delete (entry as any)[key];
+    }
+    if (!fullMode) {
+      for (const key of EXTRA_FULL_MODE_FIELDS) {
+        delete (entry as any)[key];
+      }
     }
   }
   return results;
+}
+
+// Map build page label names to model categories.
+// Priority order: first match wins (embedding > guard > vision > code > reasoning > chat).
+const LABEL_CATEGORY_PRIORITY: [RegExp, ModelCategory][] = [
+  [/\b(?:embed|rerank|retriev)\b/i, "embedding"],
+  [/\b(?:guard|safety|jailbreak|content.safety|pii)\b/i, "guard"],
+  [/\b(?:vision assistant|visual question answering|image-to-text|image captioning|vlm|vision language model|visual grounding|visual qa|omni)\b/i, "vision"],
+  [/\b(?:reasoning|advanced reasoning|thinking budget)\b/i, "reasoning"],
+  [/\b(?:code generation|coding|coder|codestral|starcoder|devstral|deepseek-coder|text-to-code|agentic coding)\b/i, "code"],
+  [/\b(?:language generation|chat|text generation|text-to-text|conversational|instruction following|function calling|tool calling|tool use|math|multilingual|long context|large language model|slm)\b/i, "chat"],
+];
+
+// Extract plain (non-prefixed) use-case labels from the build page JSON data.
+// Labels are found in the model artifact JSON inside the Next.js RSC payload,
+// anchored right after "shortDescription": the JSON is string-escaped
+// as: \"labels\":[\"value1\",\"value2\",...]
+function parseBuildPageLabels(buildHtml: string): string[] {
+  const plainLabels = new Set<string>();
+  // Anchor on shortDescription to find the model-specific artifact labels
+  // (the build page contains many labels arrays from catalog listings;
+  //  the model-specific one is right after shortDescription)
+  const sdIdx = buildHtml.indexOf('shortDescription');
+  if (sdIdx === -1) return [];
+  
+  // Search within a window after shortDescription (max 3000 chars)
+  const searchEnd = Math.min(sdIdx + 3000, buildHtml.length);
+  const window = buildHtml.substring(sdIdx, searchEnd);
+  
+  // Find the escaped labels array: \"labels\":[\"...\",\"...\"]
+  const labelArrayRe = /\\"labels\\"\s*:\s*\[(.*?)\]/;
+  const match = labelArrayRe.exec(window);
+  if (!match) return [];
+  
+  const raw = match[1];
+  // Extract individual items: \"value\"
+  const itemRe = /\\"([^"\\]+?)\\"/g;
+  let itemMatch: RegExpExecArray | null;
+  while ((itemMatch = itemRe.exec(raw)) !== null) {
+    const val = itemMatch[1];
+    // Only collect plain labels (no colons — those are prefixed metadata like
+    // cloudPartnerType:endpoint:cloud_partner_type_bitdeer)
+    if (!val.includes(":")) {
+      plainLabels.add(val);
+    }
+  }
+  return Array.from(plainLabels);
+}
+
+// Map plain labels to the best model category (highest priority match wins).
+// Iterates patterns in priority order (embedding > guard > vision > code > reasoning > chat).
+function labelToCategory(plainLabels: string[]): ModelCategory | undefined {
+  for (const [pattern, category] of LABEL_CATEGORY_PRIORITY) {
+    for (const label of plainLabels) {
+      if (pattern.test(label)) return category;
+    }
+  }
+  return undefined;
+}
+
+// Check if any plain label indicates reasoning support.
+function labelHasReasoning(plainLabels: string[]): boolean {
+  return plainLabels.some(l => /\breasoning\b/i.test(l));
 }
 
 // Fallback limits when docs are incomplete.
@@ -620,8 +702,9 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
                 const mtProp = reqProps.max_tokens ?? reqProps.max_completion_tokens;
                 if (mtProp) {
                   const limit: number =
-                    mtProp.maximum ?? mtProp.default ??
-                    (mtProp.anyOf as any[])?.find((s: any) => s.maximum != null)?.maximum;
+                    mtProp.maximum ??
+                    (mtProp.anyOf as any[])?.find((s: any) => s.maximum != null)?.maximum ??
+                    mtProp.default;
                   if (limit != null && isFinite(limit) && limit >= MIN_REASONABLE_MAX_OUTPUT) {
                     meta.maxOutputTokens = limit;
                   }
@@ -731,6 +814,7 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   }
 
   const buildData = await fetchBuildPageData(modelId);
+  const plainLabels: string[] = [];
   if (buildData.found) {
     const nextData = extractNextData(buildData.html);
     const buildHtml = buildData.html;
@@ -740,13 +824,25 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     if (!meta.thinkingFormat) {
       meta.thinkingFormat = detectThinkingFormat(modelId, buildHtml);
     }
-    // Fallback: check build page meta description for "reasoning" keyword
-    // (catches models like MiniMax M2.7 that have no reasoning params in their API schema)
-    if (!meta.supportsReasoning) {
-      const metaMatch = buildHtml.match(/<meta\s+name="description"\s+content="([^"]+)"/i);
-      if (metaMatch && /\breasoning\b/i.test(metaMatch[1])) {
-        meta.supportsReasoning = true;
-      }
+    // Parse plain use-case labels from the build page JSON data
+    // (e.g., "coding", "reasoning", "Language Generation", "Vision Assistant")
+    plainLabels.push(...parseBuildPageLabels(buildHtml));
+    if (plainLabels.length > 0 && verbose) {
+      console.log(`    labels: ${plainLabels.join(", ")}`);
+    }
+
+    // Set modelCategory from labels if we have them (more precise than ID heuristics)
+    const labelCategory = labelToCategory(plainLabels);
+    if (labelCategory) {
+      meta.modelCategory = labelCategory;
+      if (verbose) console.log(`    → modelCategory from label: ${labelCategory}`);
+    }
+
+    // Fallback: use "reasoning" label to set supportsReasoning
+    // (catches models like MiniMax M2.7 that have reasoning in their labels but no reasoning params in schema)
+    if (!meta.supportsReasoning && labelHasReasoning(plainLabels)) {
+      meta.supportsReasoning = true;
+      if (verbose) console.log(`    → supportsReasoning from label`);
     }
     void nextData;
   }
@@ -810,11 +906,14 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     if (fb != null) meta.maxOutputTokens = fb;
   }
 
-  meta.modelCategory = detectModelCategory(
-    modelId,
-    combinedHtmlStr + structuredHtml,
-    !!meta.supportsReasoning
-  );
+  // Build page labels take precedence; fall back to ID heuristics only if labels gave no match.
+  if (meta.modelCategory === "chat") {
+    const labelCat = labelToCategory(plainLabels);
+    if (!labelCat || labelCat === "chat") {
+      const idCat = detectModelCategory(modelId, combinedHtmlStr + structuredHtml, !!meta.supportsReasoning);
+      if (idCat !== "chat") meta.modelCategory = idCat;
+    }
+  }
 
   if (verbose) {
     console.log(
@@ -839,27 +938,45 @@ async function main() {
       models = [{ id: singleModel, owned_by: org }];
 
       const meta = await fetchModelData(singleModel, org);
-      stripUnusedFields([meta]);
+
+      // Capture debug values before stripUnusedFields may remove them.
+      const debug = {
+        contextWindow: meta.contextWindow,
+        maxOutputTokens: meta.maxOutputTokens,
+        inputModalities: meta.inputModalities,
+        supportsToolCalling: meta.supportsToolCalling,
+        toolCallFormat: meta.toolCallFormat,
+        supportsStructuredOutput: meta.supportsStructuredOutput,
+        supportsReasoning: meta.supportsReasoning,
+        thinkingFormat: meta.thinkingFormat,
+        modelCategory: meta.modelCategory,
+        recommendedTemperature: meta.recommendedTemperature,
+        recommendedTopP: meta.recommendedTopP,
+        reasoningBudget: meta.reasoningBudget,
+        reasoningEffortValues: meta.reasoningEffortValues,
+        exampleRequestExtra: meta.exampleRequestExtra,
+      };
 
       const output = outputFile.includes(".json")
         ? outputFile
         : `test-${singleModel.replace(/\//g, "-")}.json`;
+      stripUnusedFields([meta]);
       fs.writeFileSync(output, JSON.stringify([meta], null, 2));
       console.log(`\nWritten to: ${output}`);
-      console.log(`  contextWindow:           ${meta.contextWindow ?? "?"}`);
-      console.log(`  maxOutputTokens:         ${meta.maxOutputTokens ?? "?"}`);
-      console.log(`  inputModalities:         ${meta.inputModalities.join(", ")}`);
-      console.log(`  supportsToolCalling:     ${meta.supportsToolCalling}`);
-      console.log(`  toolCallFormat:          ${meta.toolCallFormat ?? "none"}`);
-      console.log(`  supportsStructuredOut:   ${meta.supportsStructuredOutput}`);
-      console.log(`  supportsReasoning:       ${meta.supportsReasoning}`);
-      console.log(`  thinkingFormat:          ${meta.thinkingFormat ?? "none"}`);
-      console.log(`  modelCategory:           ${meta.modelCategory}`);
-      console.log(`  recommendedTemperature:  ${meta.recommendedTemperature ?? "?"}`);
-      console.log(`  recommendedTopP:         ${meta.recommendedTopP ?? "?"}`);
-      console.log(`  reasoningBudget:         ${meta.reasoningBudget ?? "?"}`);
-      console.log(`  reasoningEffort:         ${meta.reasoningEffortValues?.join(", ") ?? "?"}`);
-      console.log(`  exampleRequestExtra:     ${meta.exampleRequestExtra ? JSON.stringify(meta.exampleRequestExtra) : "?"}`);
+      console.log(`  contextWindow:           ${debug.contextWindow ?? "?"}`);
+      console.log(`  maxOutputTokens:         ${debug.maxOutputTokens ?? "?"}`);
+      console.log(`  inputModalities:         ${debug.inputModalities?.join(", ") ?? "?"}`);
+      console.log(`  supportsToolCalling:     ${debug.supportsToolCalling ?? "?"}`);
+      console.log(`  toolCallFormat:          ${debug.toolCallFormat ?? "none"}`);
+      console.log(`  supportsStructuredOut:   ${debug.supportsStructuredOutput ?? "?"}`);
+      console.log(`  supportsReasoning:       ${debug.supportsReasoning}`);
+      console.log(`  thinkingFormat:          ${debug.thinkingFormat ?? "none"}`);
+      console.log(`  modelCategory:           ${debug.modelCategory}`);
+      console.log(`  recommendedTemperature:  ${debug.recommendedTemperature ?? "?"}`);
+      console.log(`  recommendedTopP:         ${debug.recommendedTopP ?? "?"}`);
+      console.log(`  reasoningBudget:         ${debug.reasoningBudget ?? "?"}`);
+      console.log(`  reasoningEffort:         ${debug.reasoningEffortValues?.join(", ") ?? "?"}`);
+      console.log(`  exampleRequestExtra:     ${debug.exampleRequestExtra ? JSON.stringify(debug.exampleRequestExtra) : "?"}`);
       return;
     }
 

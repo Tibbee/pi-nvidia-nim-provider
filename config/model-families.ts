@@ -462,6 +462,10 @@ export function findFamily(modelId: string): ModelFamily | undefined {
   return MODEL_FAMILIES.find((f) => f.pattern.test(modelId));
 }
 
+// Maps family name → internal handler format.
+// Add new entries here whenever you add a family that needs custom
+// before_provider_request transformation (e.g., new system-message-based
+// thinking, new kwarg structures).
 const FAMILY_HANDLER_FORMATS: Partial<Record<string, NimThinkingFormat>> = {
   "deepseek-v4": "deepseek-v4",
   "deepseek-v3": "deepseek-nim",
@@ -473,6 +477,20 @@ const FAMILY_HANDLER_FORMATS: Partial<Record<string, NimThinkingFormat>> = {
   "seed-oss": "thinking-budget",
   "nemotron-ultra-deprecated": "deepseek-nim",
 };
+
+// Init-time safety check: every family that sets thinkingFormat: "deepseek"
+// MUST have a FAMILY_HANDLER_FORMATS entry, because pi's native deepseek
+// format uses top-level params (`thinking` + `reasoning_effort`) that NIM
+// doesn't understand without the extension's chat_template_kwargs conversion.
+const FAMILIES_MISSING_HANDLER = MODEL_FAMILIES
+  .filter((f) => f.compat?.thinkingFormat === "deepseek" && !FAMILY_HANDLER_FORMATS[f.name])
+  .map((f) => f.name);
+if (FAMILIES_MISSING_HANDLER.length > 0) {
+  console.warn(
+    "[nvidia-nim] Warning: families with thinkingFormat=deepseek missing from FAMILY_HANDLER_FORMATS:",
+    FAMILIES_MISSING_HANDLER.join(", ")
+  );
+}
 
 // Resolve the internal handler format for a model.
 export function classifyThinkingFormat(modelId: string): NimThinkingFormat {

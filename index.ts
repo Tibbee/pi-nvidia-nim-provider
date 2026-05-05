@@ -9,6 +9,12 @@ interface BeforeProviderRequestEventLike {
   payload: unknown;
 }
 
+interface AfterProviderResponseEventLike {
+  provider?: string;
+  status: number;
+  headers?: Record<string, string | undefined>;
+}
+
 export function handleBeforeProviderRequest(event: BeforeProviderRequestEventLike) {
   if (event.provider !== "nvidia-nim") return;
 
@@ -20,7 +26,8 @@ export function handleBeforeProviderRequest(event: BeforeProviderRequestEventLik
   const modelConfig = STATIC_MODEL_MAP.get(modelId);
   if (!modelConfig) return;
 
-  const format = classifyThinkingFormat(modelId, modelConfig.compat);
+  const thinkingEnabledBeforeTransform = hasEnabledThinking(payload);
+  const format = classifyThinkingFormat(modelId);
   let modified = applyCustomThinkingFormat(payload, format);
 
   // Inject model-specific extra kwargs from metadata
@@ -46,7 +53,7 @@ export function handleBeforeProviderRequest(event: BeforeProviderRequestEventLik
 
   // Expose reasoning/thinking budget when available (schema-extracted).
   // Different models use different parameter names for the same concept.
-  if (modelConfig.reasoningBudget != null && hasEnabledThinking(payload)) {
+  if (modelConfig.reasoningBudget != null && thinkingEnabledBeforeTransform) {
     const budgetParamName = format === "thinking-budget" ? "thinking_budget" : "reasoning_budget";
     payload[budgetParamName] = modelConfig.reasoningBudget;
     modified = true;
@@ -56,6 +63,16 @@ export function handleBeforeProviderRequest(event: BeforeProviderRequestEventLik
   delete (payload as any)._systemThinkingEnabled;
 
   return modified ? payload : undefined;
+}
+
+export function handleAfterProviderResponse(event: AfterProviderResponseEventLike): string | undefined {
+  if (event.provider !== "nvidia-nim") return undefined;
+  if (event.status !== 429) return undefined;
+
+  const retryAfter = event.headers?.["retry-after"];
+  return retryAfter
+    ? `NVIDIA NIM rate-limited. Retry after ${retryAfter}.`
+    : "NVIDIA NIM rate-limited.";
 }
 
 export default async function (pi: ExtensionAPI) {
@@ -68,4 +85,8 @@ export default async function (pi: ExtensionAPI) {
   });
 
   pi.on("before_provider_request", (event) => handleBeforeProviderRequest(event as BeforeProviderRequestEventLike));
+  pi.on("after_provider_response", (event, ctx) => {
+    const notice = handleAfterProviderResponse(event as AfterProviderResponseEventLike);
+    if (notice) ctx.ui.notify(notice, "warning");
+  });
 }

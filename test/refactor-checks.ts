@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { handleBeforeProviderRequest } from "../index";
+import { handleAfterProviderResponse, handleBeforeProviderRequest } from "../index";
 import { classifyThinkingFormat, mapThinkingFormatToCompat, STATIC_MODELS, STATIC_MODEL_MAP } from "../models/registry";
 import { applyFamilyCompat } from "../config/model-families";
 import type { NimModelConfig } from "../models/types";
@@ -37,11 +37,11 @@ assert.equal(STATIC_MODELS.some((model) => model.id === "baai/bge-m3"), false);
 
 // 4) Known models should still classify as expected.
 assert.equal(
-  classifyThinkingFormat("deepseek-ai/deepseek-v4-flash", STATIC_MODEL_MAP.get("deepseek-ai/deepseek-v4-flash")?.compat),
+  classifyThinkingFormat("deepseek-ai/deepseek-v4-flash"),
   "deepseek-v4"
 );
 assert.equal(
-  classifyThinkingFormat("openai/gpt-oss-120b", STATIC_MODEL_MAP.get("openai/gpt-oss-120b")?.compat),
+  classifyThinkingFormat("openai/gpt-oss-120b"),
   "none"
 );
 assert.equal(STATIC_MODEL_MAP.get("stepfun-ai/step-3.5-flash")?.reasoning, true);
@@ -52,7 +52,21 @@ assert.equal(
   undefined
 );
 
-// 6) DeepSeek V4 rewrite should move thinking fields into chat_template_kwargs.
+// 6) after_provider_response should only warn for NVIDIA rate limits.
+assert.equal(
+  handleAfterProviderResponse({ provider: "openrouter", status: 429, headers: { "retry-after": "3" } }),
+  undefined
+);
+assert.equal(
+  handleAfterProviderResponse({ provider: "nvidia-nim", status: 200, headers: { "retry-after": "3" } }),
+  undefined
+);
+assert.equal(
+  handleAfterProviderResponse({ provider: "nvidia-nim", status: 429, headers: { "retry-after": "3" } }),
+  "NVIDIA NIM rate-limited. Retry after 3."
+);
+
+// 7) DeepSeek V4 rewrite should move thinking fields into chat_template_kwargs.
 const deepseekPayload = {
   model: "deepseek-ai/deepseek-v4-flash",
   thinking: { type: "enabled" },

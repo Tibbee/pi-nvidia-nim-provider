@@ -19,8 +19,8 @@ Bring the NVIDIA NIM provider extension to a more reliable, testable, and mainta
 
 ### P2 — Maintainability
 - Reduce duplicated regex logic between `MODEL_FAMILIES` and `classifyThinkingFormat()`.
-- Replace loose `Record<string, unknown>` compat usage with stronger typing where possible.
-- Remove dead intermediate fields that do not reach the final registry.
+- [x] Replace loose `Record<string, unknown>` compat usage with stronger typing where possible.
+- [x] Remove dead intermediate fields that do not reach the final registry.
 
 ### P3 — Documentation sync
 - Update docs after behavior changes.

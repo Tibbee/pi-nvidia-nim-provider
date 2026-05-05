@@ -1,4 +1,4 @@
-import type { NimModelConfig, NimModelCompat } from "../models/types";
+import type { NimModelConfig, NimModelCompat, NimThinkingFormat } from "../models/types";
 
 export interface ModelFamily {
   name: string;
@@ -205,6 +205,16 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     thinkingLevelMap: { off: null }, // Cannot disable thinking
   },
 
+  // Seed OSS uses top-level thinking_budget.
+  {
+    name: "seed-oss",
+    pattern: /^bytedance\/seed-oss/,
+    compat: {
+      supportsDeveloperRole: false,
+      maxTokensField: "max_tokens",
+    },
+  },
+
   {
     name: "seed",
     pattern: /^bytedance\//,
@@ -248,16 +258,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
   {
     name: "nemotron-3-super-effort",
     pattern: /^nvidia\/nemotron-3-super-120b-a12b/,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  // Seed OSS uses top-level thinking_budget.
-  {
-    name: "seed-oss",
-    pattern: /^bytedance\/seed-oss/,
     compat: {
       supportsDeveloperRole: false,
       maxTokensField: "max_tokens",
@@ -462,37 +462,21 @@ export function findFamily(modelId: string): ModelFamily | undefined {
   return MODEL_FAMILIES.find((f) => f.pattern.test(modelId));
 }
 
+const FAMILY_HANDLER_FORMATS: Partial<Record<string, NimThinkingFormat>> = {
+  "deepseek-v4": "deepseek-v4",
+  "deepseek-v3": "deepseek-nim",
+  "kimi-k2.5": "deepseek-nim",
+  "kimi-k2.6": "deepseek-nim",
+  "nemotron-super-detailed": "nemotron-system-detailed",
+  "nemotron-system-think": "nemotron-system-think",
+  "nemotron-3-super-effort": "nemotron-3-super-effort",
+  "seed-oss": "thinking-budget",
+  "nemotron-ultra-deprecated": "deepseek-nim",
+};
+
 // Resolve the internal handler format for a model.
-export function classifyThinkingFormat(
-  modelId: string,
-  compat: NimModelCompat | undefined
-): string {
-  const tf = compat?.thinkingFormat;
-  if (tf === "qwen-chat-template") return "qwen-chat-template";
-  if (tf === "deepseek") {
-    if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
-    return "deepseek-nim";
-  }
-
-  // New format dispatch — checked by model ID before falling back to compat.
-  if (/^bytedance\/seed-oss/.test(modelId)) return "thinking-budget";
-  if (/^nvidia\/nemotron-3-super-120b-a12b/.test(modelId)) return "nemotron-3-super-effort";
-  if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1$/.test(modelId)) return "nemotron-system-detailed";
-  if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1\.5/.test(modelId)) return "nemotron-system-think";
-  if (/^nvidia\/nvidia-nemotron-nano-9b-v2/.test(modelId)) return "nemotron-system-think";
-
-  // Deepseek-nim dispatch — models that use chat_template_kwargs.thinking
-  if (/^moonshotai\/kimi-k2\.6/.test(modelId)) return "deepseek-nim";
-  if (/^moonshotai\/kimi-k2\.5/.test(modelId)) return "deepseek-nim";
-  if (/^nvidia\/llama-3\.1-nemotron-ultra/.test(modelId)) return "deepseek-nim";
-
-  // Minimax dispatch
-  if (/^minimaxai\/minimax-m2/.test(modelId)) {
-    // m2.5 and m2.7 always think with inline tags — handled by requiresThinkingAsText in family
-    return "none";
-  }
-
-  return "none";
+export function classifyThinkingFormat(modelId: string): NimThinkingFormat {
+  return FAMILY_HANDLER_FORMATS[findFamily(modelId)?.name ?? ""] ?? "none";
 }
 
 // Merge family compat into each model.

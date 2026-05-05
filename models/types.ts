@@ -1,16 +1,7 @@
-// Internal model shape used while building the provider list.
+import type { OpenAICompletionsCompat } from "@mariozechner/pi-ai";
 
-export interface NimModelCompat {
-  thinkingFormat?: "openai" | "openrouter" | "deepseek" | "zai" | "qwen" | "qwen-chat-template";
-  supportsReasoningEffort?: boolean;
-  supportsDeveloperRole?: boolean;
-  supportsUsageInStreaming?: boolean;
-  maxTokensField?: "max_completion_tokens" | "max_tokens";
-  requiresToolResultName?: boolean;
-  requiresAssistantAfterToolResult?: boolean;
-  requiresThinkingAsText?: boolean;
-  requiresReasoningContentOnAssistantMessages?: boolean;
-}
+// Internal model shape used while building the provider list.
+export type NimModelCompat = OpenAICompletionsCompat;
 
 export interface NimModelConfig {
   id: string;

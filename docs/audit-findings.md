@@ -91,6 +91,7 @@ export function applyFamilyCompat(models: NimModelConfig[]): NimModelConfig[] {
 ## 3. StepFun dispatch duplicated across family definition and `classifyThinkingFormat`
 
 **Severity:** Medium (maintenance risk)
+**Status:** Resolved in current branch
 **Files:** `config/model-families.ts:177-184`, `config/model-families.ts:421`
 
 The `stepfun` family has `supportsReasoningEffort: true` with **no** `thinkingFormat`:
@@ -119,28 +120,18 @@ This means:
 
 If someone changes the family pattern but forgets `classifyThinkingFormat`, the StepFun API would receive `reasoning_effort` at top-level instead of `chat_template_kwargs.parallel_reasoning_mode` — breaking thinking.
 
-**Suggested fix:** Store the resolved handler format in compat during model building, eliminating the need for model-ID regex in `classifyThinkingFormat`. For example, the stepfun family could set a custom field:
-
-```typescript
-compat: {
-  supportsReasoningEffort: true,
-  // Custom extension-internal field:
-  nimThinkingFormat: "stepfun-parallel",
-  // ...
-}
-```
-
-Then `classifyThinkingFormat` reads from compat instead of repeating model-ID regexes.
+**Resolution:** The matched family now carries the resolved handler format in a lookup table, and `classifyThinkingFormat` reads that resolved family result instead of repeating regex checks.
 
 ---
 
 ## 4. `compat` typed as `Record<string, unknown>` loses type safety
 
 **Severity:** Low (type safety)
+**Status:** Resolved in current branch
 **File:** `models/types.ts:16`
 
 ```typescript
-compat?: Record<string, unknown>;
+compat?: OpenAICompletionsCompat;
 ```
 
 Pi v0.72.1 exports the strongly-typed `OpenAICompletionsCompat` interface with all known fields. Using it would catch misspellings at compile time — e.g., `"requireToolResultName"` instead of `"requiresToolResultName"`, or `"thinkingFormat"` with a value that isn't in the union.
@@ -155,59 +146,39 @@ compat?: OpenAICompletionsCompat;
 
 ---
 
-## 5. Dead fields on `NimModelConfig`
+## 5. Dead fields on registry metadata
 
 **Severity:** Low (cleanup)
-**File:** `models/types.ts:12-13`
+**Status:** Partially resolved in current branch
+**File:** `models/registry.ts:14-15`
 
 ```typescript
 reasoningEffortValues?: string[];
-reasoningEffortDefault?: string;
 ```
 
-These are set during `metadataToModelConfig` but are **never read** after `buildReasoningEffortThinkingLevelMap` runs at model build time (which produces `thinkingLevelMap`). After that, only `thinkingLevelMap` is used by pi.
+`reasoningEffortDefault` was removed from the registry metadata shape, but `reasoningEffortValues` is still used during model build to create `thinkingLevelMap` and therefore is not dead.
 
-They're not part of pi's `ProviderModelConfig`, so they don't leak into pi's model registry, but they take up memory on every model object in `STATIC_MODELS`. Consider removing them from `NimModelConfig` or marking them as intermediate-only (never stored on the final config).
+The final provider registry only stores `thinkingLevelMap`, so any remaining metadata-only fields should stay confined to the build pipeline. Consider trimming `MetadataEntry` further only if the build logic no longer needs them.
 
 ---
 
 ## 6. `BeforeProviderRequestEvent` lacks `provider` field in pi's type definition
 
 **Severity:** Low (type assertion needed)
+**Status:** Resolved in current branch
 **Files:** `index.ts:17`, `pi-coding-agent/dist/core/extensions/types.d.ts:457-460`
 
-The extension accesses `event.provider`:
-
-```typescript
-if (event.provider !== "nvidia-nim") return;
-```
-
-But the published type is:
-
-```typescript
-export interface BeforeProviderRequestEvent {
-    type: "before_provider_request";
-    payload: unknown;
-}
-```
-
-No `provider` field. This works at runtime because the runtime object carries extra properties, but TypeScript may flag it under strict settings. The extension should use a type assertion:
-
-```typescript
-const provider = (event as BeforeProviderRequestEvent & { provider?: string }).provider;
-if (provider !== "nvidia-nim") return;
-```
-
-Or pi should publish the `provider` field in the type definition.
+The extension now wraps the untyped event in a local `{ provider?: string }` shape before checking `nvidia-nim`, so the runtime-only field is handled without relying on the published pi type.
 
 ---
 
 ## 7. Duplicate model-ID regex in `classifyThinkingFormat`
 
 **Severity:** Low (maintenance risk)
+**Status:** Resolved in current branch
 **File:** `config/model-families.ts:406-424`
 
-The function repeats model-ID checks that already exist in family patterns:
+The function previously repeated model-ID checks that already exist in family patterns:
 
 | Model pattern | Family pattern (line) | classify check (line) |
 |---|---|---|
@@ -223,24 +194,20 @@ These are only needed because `compat.thinkingFormat: "deepseek"` is ambiguous: 
 ## 8. No `after_provider_response` hook usage
 
 **Severity:** Low (observability)
+**Status:** Resolved in current branch
 **File:** `index.ts`
 
-Pi supports `pi.on("after_provider_response", handler)` which fires after each HTTP response. Could be used for:
-
-- Logging NVIDIA rate-limit headers (`x-ratelimit-remaining`, etc.)
-- Debugging response status codes for new models
-- Emitting warnings when `content-filter` error codes appear
-
-Currently unused. Consider it for diagnostics in future.
+Pi supports `pi.on("after_provider_response", handler)` which fires after each HTTP response. The extension now uses it to warn on NVIDIA 429 rate-limit responses and surface retry-after hints.
 
 ---
 
 ## 9. No `reasoningBudget` for models that need it via family compat
 
 **Severity:** Low (consistency)
+**Status:** Resolved in current branch
 **Files:** `config/model-families.ts:248`, `index.ts:52-54`
 
-The `nemotron` family sets `reasoningBudget: 32768`, and the handler sets `payload.reasoning_budget` only when thinking is enabled. This is correct, but other families (Kimi, DeepSeek) support thinking with potentially different budgets. If NVIDIA's API schema documents per-model reasoning budgets, these should be populated from metadata and/or family defaults for all thinking models.
+The handler already injects `reasoningBudget` for any model that provides it in metadata, not just Nemotron. Current metadata covers Seed OSS, Nemotron 3 Nano Omni reasoning, and Nemotron 3 Super.
 
 ---
 
@@ -250,10 +217,10 @@ The `nemotron` family sets `reasoningBudget: 32768`, and the handler sets `paylo
 |---|----------|-------------|
 | 1 | **Critical** | `"reasoning-effort"` not a valid `thinkingFormat` — breaks models with that scraper label |
 | 2 | **High** | `reasoning` field not merged by `applyFamilyCompat` — hides thinking toggle for StepFun and similar |
-| 3 | **Medium** | StepFun dispatch duplicated across family + classify function |
-| 4 | **Medium** | `compat` typed as `Record<string, unknown>` loses TS compile-time checks |
-| 5 | **Low** | Dead fields `reasoningEffortValues`/`reasoningEffortDefault` on NimModelConfig |
-| 6 | **Low** | `event.provider` missing from pi's `BeforeProviderRequestEvent` type |
-| 7 | **Low** | `classifyThinkingFormat` duplicates model-ID regexes from family patterns |
-| 8 | **Low** | `after_provider_response` hook available but unused |
-| 9 | **Low** | `reasoningBudget` only set for nemotron, not other thinking models |
+| 3 | **Medium** | Resolved: family lookup now supplies the handler format |
+| 4 | **Medium** | Resolved: `compat` now uses `OpenAICompletionsCompat` |
+| 5 | **Low** | Partially resolved: `reasoningEffortDefault` removed; `reasoningEffortValues` remains build-time metadata |
+| 6 | **Low** | Resolved: local event wrapper handles `provider` safely |
+| 7 | **Low** | Resolved: `classifyThinkingFormat` now reads the matched family handler format |
+| 8 | **Low** | Resolved: `after_provider_response` now warns on rate limits |
+| 9 | **Low** | Resolved: reasoning budgets are data-driven from metadata when present |

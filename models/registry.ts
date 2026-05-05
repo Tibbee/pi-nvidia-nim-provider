@@ -12,7 +12,6 @@ interface MetadataEntry {
   supportsReasoning?: boolean;
   reasoningBudget?: number;
   reasoningEffortValues?: string[];
-  reasoningEffortDefault?: string;
   thinkingFormat?: string;
   exampleRequestExtra?: Record<string, unknown>;
 }

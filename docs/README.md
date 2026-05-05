@@ -337,7 +337,7 @@ Located in `index.ts`, the handler performs these steps in order:
 
 1. **Early return** for non-NIM providers (`event.provider !== "nvidia-nim"`)
 2. **Looks up** model config from `STATIC_MODEL_MAP.get(modelId)` (O(1))
-3. **Classifies** thinking format via `classifyThinkingFormat(modelId, modelConfig.compat)`
+3. **Classifies** thinking format via `classifyThinkingFormat(modelId)`
 4. **Applies custom thinking transform** via `applyCustomThinkingFormat(payload, format)` — defined in `handlers/thinking.ts`
 5. **Injects model-specific extra kwargs** from `modelConfig.exampleRequestExtra.chat_template_kwargs` (e.g., GLM-5.1 `clear_thinking: false`) — only keys not already present, only when thinking is enabled
 6. **Injects reasoning budget** from `modelConfig.reasoningBudget` (e.g., nemotron `32768`) — only when thinking enabled
@@ -449,20 +449,20 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 
 - [x] **`"reasoning-effort"` compat handling** — fixed in code; `reasoning-effort` models now map to supported compat only.
 - [x] **`reasoning` field merged by family compat** — fixed in code; families that add thinking support now surface `reasoning: true`.
-- [ ] **`classifyThinkingFormat` duplicate regexes** — Hardcoded model-ID checks duplicate family patterns. Changing a family pattern requires updating classify too.
-- [ ] **`compat` typed as `Record<string, unknown>`** — Should use `OpenAICompletionsCompat` for type safety.
-- [ ] **`event.provider` missing from pi type** — `BeforeProviderRequestEvent` declares only `type` + `payload`, but runtime carries `provider`. Use type assertion or update pi.
+- [x] **`classifyThinkingFormat` duplicate regexes** — Resolved in code by looking up the matched family and its handler format instead of repeating regex checks.
+- [x] **`compat` typed as `Record<string, unknown>`** — Fixed by aliasing to `OpenAICompletionsCompat`.
+- [x] **`event.provider` missing from pi type** — handled in code via a local event wrapper/type assertion.
 
 ### Testing
 
 - [ ] **Verify all thinking formats** — Each of the 6 formats needs manual testing with a real API key.
 - [ ] **Non-NVIDIA regression** — Must not break existing providers (OpenRouter, Anthropic, etc.).
-- [ ] **Automated testing** — Script that verifies `before_provider_request` output for each thinking format.
+- [x] **Automated testing** — Added `test/refactor-checks.ts` and `test/before-provider-request-snapshots.ts` for core routing and payload rewrites.
 
 ### Future
 
 - [ ] **Cost data** — Research paid tier pricing if/when available.
-- [ ] **`after_provider_response` hook** — Use for logging rate-limit headers or debugging.
+- [x] **`after_provider_response` hook** — now used for NVIDIA 429 rate-limit warnings.
 - [ ] **Model card caching** — Cache documentation page results to avoid re-fetching.
 
 ---

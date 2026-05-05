@@ -47,7 +47,7 @@
     "exampleRequestExtra": {
       "thinking_budget": 512
     },
-    "thinkingFormat": "qwen-chat-template",
+    "thinkingFormat": "thinking-budget",
     "supportsReasoning": true,
     "contextWindow": 524288,
     "supportsVision": false
@@ -64,32 +64,6 @@
     "contextWindow": 16384,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "deepseek-ai/deepseek-v3.1-terminus",
-    "maxOutputTokens": 16384,
-    "exampleRequestExtra": {
-      "chat_template_kwargs": {
-        "thinking": true
-      }
-    },
-    "thinkingFormat": "deepseek-nim",
-    "contextWindow": 131072,
-    "supportsReasoning": true,
-    "supportsVision": false
-  },
-  {
-    "id": "deepseek-ai/deepseek-v3.2",
-    "maxOutputTokens": 16384,
-    "exampleRequestExtra": {
-      "chat_template_kwargs": {
-        "thinking": true
-      }
-    },
-    "thinkingFormat": "deepseek-nim",
-    "contextWindow": 131072,
-    "supportsReasoning": true,
     "supportsVision": false
   },
   {
@@ -342,9 +316,8 @@
   {
     "id": "microsoft/phi-4-mini-instruct",
     "maxOutputTokens": 4096,
-    "thinkingFormat": "qwen-chat-template",
     "contextWindow": 131072,
-    "supportsReasoning": true,
+    "supportsReasoning": false,
     "supportsVision": false
   },
   {
@@ -357,7 +330,6 @@
   {
     "id": "minimaxai/minimax-m2.5",
     "maxOutputTokens": 16384,
-    "thinkingFormat": "minimax-inline",
     "supportsReasoning": true,
     "contextWindow": 204800,
     "supportsVision": false
@@ -379,15 +351,13 @@
   {
     "id": "mistralai/devstral-2-123b-instruct-2512",
     "maxOutputTokens": 16384,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsReasoning": true,
+    "supportsReasoning": false,
     "contextWindow": 262144,
     "supportsVision": false
   },
   {
     "id": "mistralai/magistral-small-2506",
     "maxOutputTokens": 40960,
-    "thinkingFormat": "deepseek-nim",
     "supportsReasoning": true,
     "contextWindow": 131072,
     "supportsVision": false
@@ -489,22 +459,20 @@
   {
     "id": "moonshotai/kimi-k2-instruct",
     "maxOutputTokens": 16384,
-    "supportsReasoning": true,
+    "supportsReasoning": false,
     "contextWindow": 131072,
     "supportsVision": false
   },
   {
     "id": "moonshotai/kimi-k2-instruct-0905",
     "maxOutputTokens": 16384,
-    "thinkingFormat": "deepseek-nim",
-    "supportsReasoning": true,
+    "supportsReasoning": false,
     "contextWindow": 262144,
     "supportsVision": false
   },
   {
     "id": "moonshotai/kimi-k2-thinking",
     "maxOutputTokens": 32768,
-    "thinkingFormat": "deepseek-nim",
     "supportsReasoning": true,
     "contextWindow": 262144,
     "supportsVision": false
@@ -677,7 +645,7 @@
   {
     "id": "nvidia/llama-3.3-nemotron-super-49b-v1",
     "maxOutputTokens": 16384,
-    "thinkingFormat": "deepseek-nim",
+    "thinkingFormat": "nemotron-system-detailed",
     "contextWindow": 131072,
     "supportsReasoning": true,
     "supportsVision": false
@@ -685,7 +653,7 @@
   {
     "id": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
     "maxOutputTokens": 65536,
-    "thinkingFormat": "deepseek-nim",
+    "thinkingFormat": "nemotron-system-think",
     "contextWindow": 131072,
     "supportsReasoning": true,
     "supportsVision": false
@@ -778,7 +746,7 @@
       "high"
     ],
     "reasoningBudget": 32768,
-    "thinkingFormat": "deepseek-nim",
+    "thinkingFormat": "nemotron-3-super-effort",
     "exampleRequestExtra": {
       "chat_template_kwargs": {
         "enable_thinking": true
@@ -889,7 +857,7 @@
   },
   {
     "id": "nvidia/nvidia-nemotron-nano-9b-v2",
-    "thinkingFormat": "deepseek-nim",
+    "thinkingFormat": "nemotron-system-think",
     "supportsReasoning": true,
     "contextWindow": 4096,
     "maxOutputTokens": 4096,
@@ -905,6 +873,12 @@
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
     "supportsVision": false
+  },
+  {
+    "id": "nvidia/vila",
+    "maxOutputTokens": 2048,
+    "supportsVision": true,
+    "supportsReasoning": false
   },
   {
     "id": "openai/gpt-oss-120b",
@@ -974,23 +948,20 @@
   {
     "id": "qwen/qwen3-coder-480b-a35b-instruct",
     "maxOutputTokens": 16384,
-    "thinkingFormat": "qwen-chat-template",
     "contextWindow": 262144,
-    "supportsReasoning": true,
+    "supportsReasoning": false,
     "supportsVision": false
   },
   {
     "id": "qwen/qwen3-next-80b-a3b-instruct",
     "maxOutputTokens": 4096,
-    "thinkingFormat": "qwen-chat-template",
     "contextWindow": 262144,
-    "supportsReasoning": true,
+    "supportsReasoning": false,
     "supportsVision": false
   },
   {
     "id": "qwen/qwen3-next-80b-a3b-thinking",
     "maxOutputTokens": 4096,
-    "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true,
     "contextWindow": 262144,
     "supportsVision": false
@@ -1024,8 +995,7 @@
   {
     "id": "sarvamai/sarvam-m",
     "maxOutputTokens": 16384,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsReasoning": true,
+    "supportsReasoning": false,
     "supportsVision": false
   },
   {
@@ -1036,7 +1006,6 @@
   {
     "id": "stepfun-ai/step-3.5-flash",
     "maxOutputTokens": 262144,
-    "thinkingFormat": "deepseek-nim",
     "supportsReasoning": true,
     "contextWindow": 256000,
     "supportsVision": false

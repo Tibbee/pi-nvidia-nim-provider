@@ -19,7 +19,11 @@ export function hasEnabledThinking(payload: Payload): boolean {
   if (kwargs?.enable_thinking === true) return true;
   if (kwargs?.thinking === true) return true;
   if (isDeepSeekThinkingEnabled(payload)) return true;
-  return getReasoningEffort(payload) != null;
+  if (getReasoningEffort(payload) != null) return true;
+  // Check for system-message-based thinking injected by the handler.
+  const systemThinking = (payload as any)._systemThinkingEnabled;
+  if (systemThinking === true) return true;
+  return false;
 }
 
 export function applyCustomThinkingFormat(
@@ -28,7 +32,8 @@ export function applyCustomThinkingFormat(
 ): boolean {
   switch (format) {
     case "deepseek-v4": {
-      // DeepSeek V4 needs thinking + effort in chat_template_kwargs.
+      // DeepSeek V4: thinking + reasoning_effort in chat_template_kwargs.
+      // When thinking is off, only set thinking: false (no reasoning_effort).
       const thinking = isDeepSeekThinkingEnabled(payload);
       const effort = getReasoningEffort(payload);
       const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
@@ -39,8 +44,11 @@ export function applyCustomThinkingFormat(
       payload.chat_template_kwargs = {
         ...(kwargs ?? {}),
         thinking,
-        reasoning_effort: thinking ? (effort ?? "high") : "none",
       };
+
+      if (thinking) {
+        payload.chat_template_kwargs.reasoning_effort = effort ?? "high";
+      }
       return true;
     }
 
@@ -56,6 +64,96 @@ export function applyCustomThinkingFormat(
         ...(kwargs ?? {}),
         thinking,
       };
+      return true;
+    }
+
+    case "thinking-budget": {
+      // Always-on thinking with top-level thinking_budget param (Seed OSS).
+      // Clean up any pi-injected params; the budget is injected by index.ts.
+      delete payload.thinking;
+      delete payload.reasoning_effort;
+      return true;
+    }
+
+    case "nemotron-3-super-effort": {
+      // Nemotron 3 Super 120B: enable_thinking + low_effort + reasoning_budget.
+      // Pi sends reasoning_effort (none/low/high); convert to kwargs.
+      const effort = getReasoningEffort(payload);
+      const thinking = !!effort;
+      const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
+
+      delete payload.thinking;
+      delete payload.reasoning_effort;
+
+      payload.chat_template_kwargs = {
+        ...(kwargs ?? {}),
+        enable_thinking: thinking,
+      };
+
+      // Set low_effort flag only when effort is "low".
+      if (thinking && effort === "low") {
+        payload.chat_template_kwargs.low_effort = true;
+      } else {
+        delete (payload.chat_template_kwargs as Record<string, unknown>).low_effort;
+      }
+
+      return true;
+    }
+
+    case "nemotron-system-detailed": {
+      // Llama 3.3 Nemotron Super 49B v1: system message "detailed thinking on/off".
+      const thinking = getReasoningEffort(payload) != null;
+
+      delete payload.thinking;
+      delete payload.reasoning_effort;
+
+      // Store thinking state for hasEnabledThinking to check.
+      (payload as any)._systemThinkingEnabled = thinking;
+
+      const messages = (payload.messages as any[]) || [];
+      // Remove any existing "detailed thinking" system messages.
+      const filtered = messages.filter((m: any) =>
+        !(m.role === "system" && typeof m.content === "string" &&
+          (m.content.includes("detailed thinking on") || m.content.includes("detailed thinking off")))
+      );
+      // Inject the appropriate system message at the beginning.
+      filtered.unshift({
+        role: "system",
+        content: thinking ? "detailed thinking on" : "detailed thinking off",
+      });
+      payload.messages = filtered;
+      return true;
+    }
+
+    case "nemotron-system-think": {
+      // Nemotron Super v1.5 / Nano 9B v2: system message /think or /no_think.
+      const thinking = getReasoningEffort(payload) != null;
+
+      delete payload.thinking;
+      delete payload.reasoning_effort;
+
+      // Store thinking state for hasEnabledThinking to check.
+      (payload as any)._systemThinkingEnabled = thinking;
+
+      const messages = (payload.messages as any[]) || [];
+      // Remove any existing /think or /no_think system messages.
+      const filtered = messages.filter((m: any) =>
+        !(m.role === "system" && typeof m.content === "string" &&
+          (m.content === "/think" || m.content === "/no_think"))
+      );
+      // Inject the appropriate system message at the beginning.
+      filtered.unshift({
+        role: "system",
+        content: thinking ? "/think" : "/no_think",
+      });
+      payload.messages = filtered;
+
+      // For Nano 9B v2: inject min/max_thinking_tokens when thinking is on.
+      if (thinking && /nvidia-nemotron-nano-9b-v2/.test(payload.model as string || "")) {
+        payload.min_thinking_tokens = 1024;
+        payload.max_thinking_tokens = 4096;
+      }
+
       return true;
     }
 

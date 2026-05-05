@@ -45,7 +45,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     pattern: /^qwen\/qwen3-coder/,
     compat: {
       supportsDeveloperRole: false,
-      thinkingFormat: "qwen-chat-template",
       maxTokensField: "max_tokens",
     },
   },
@@ -55,9 +54,9 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     pattern: /^qwen\/qwen3-next/,
     compat: {
       supportsDeveloperRole: false,
-      thinkingFormat: "qwen-chat-template",
       maxTokensField: "max_tokens",
     },
+    thinkingLevelMap: { off: null }, // qwen3-next-*-thinking always thinks
   },
 
   {
@@ -119,7 +118,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // MiniMax M2 thinks inline via <antha> tags.
+  // MiniMax M2 always thinks inline via <antha> tags — no toggle.
   {
     name: "minimax-m2",
     pattern: /^minimaxai\/minimax-m2/,
@@ -128,17 +127,30 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       requiresThinkingAsText: true,
       maxTokensField: "max_tokens",
     },
+    thinkingLevelMap: { off: null }, // Cannot disable thinking
+  },
+
+  // Magistral always thinks — no toggle, no params.
+  {
+    name: "magistral",
+    pattern: /^mistralai\/magistral/,
+    compat: {
+      supportsDeveloperRole: false,
+      maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: { off: null }, // Cannot disable thinking
   },
 
   // Kimi/Nemotron deepseek-style thinking.
+  // kimi-k2-thinking always thinks — no toggle, no params.
   {
-    name: "kimi-thinking",
+    name: "kimi-k2-thinking",
     pattern: /^moonshotai\/kimi-k2-thinking/,
     compat: {
       supportsDeveloperRole: false,
-      thinkingFormat: "deepseek",
       maxTokensField: "max_tokens",
     },
+    thinkingLevelMap: { off: null }, // Cannot disable thinking
   },
 
   {
@@ -182,15 +194,15 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     thinkingLevelMap: { minimal: "low" },
   },
 
-  // Step 3.5 Flash on NIM always does full thinking.
+  // Step 3.5 Flash always thinks on NIM — no toggle, no API params.
   {
     name: "stepfun",
     pattern: /^stepfun-ai\//,
     compat: {
       supportsDeveloperRole: false,
-      thinkingFormat: "deepseek",
       maxTokensField: "max_tokens",
     },
+    thinkingLevelMap: { off: null }, // Cannot disable thinking
   },
 
   {
@@ -198,26 +210,64 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     pattern: /^bytedance\//,
     compat: {
       supportsDeveloperRole: false,
-      thinkingFormat: "qwen-chat-template",
       maxTokensField: "max_tokens",
     },
   },
 
-  // Nemotron Nano uses qwen-chat-template.
+  // Nemotron Nano (non-v2 variants) — no structured thinking parameters.
   {
-    name: "nvidia-nemotron-nano-thinking",
-    pattern: /^nvidia\/nvidia-nemotron-nano/,
+    name: "nvidia-nemotron-nano-vl",
+    pattern: /^nvidia\/nvidia-nemotron-nano-vl/,
     compat: {
       supportsDeveloperRole: false,
-      thinkingFormat: "qwen-chat-template",
       maxTokensField: "max_tokens",
     },
   },
 
-  // Nemotron Ultra/Super use deepseek-style thinking.
+  // Nemotron Ultra/Super use system-message-based thinking (detailed thinking on/off).
   {
-    name: "nemotron-thinking",
-    pattern: /^nvidia\/llama-3\.\d-nemotron-(ultra|super)/,
+    name: "nemotron-super-detailed",
+    pattern: /^nvidia\/llama-3\.3-nemotron-super-49b-v1$/,
+    compat: {
+      supportsDeveloperRole: false,
+      maxTokensField: "max_tokens",
+    },
+  },
+
+  // Nemotron Super v1.5 and Nemotron Nano 9B v2 use system message /think or /no_think.
+  {
+    name: "nemotron-system-think",
+    pattern: /^nvidia\/llama-3\.3-nemotron-super-49b-v1\.5$|^nvidia\/nvidia-nemotron-nano-9b-v2/,
+    compat: {
+      supportsDeveloperRole: false,
+      maxTokensField: "max_tokens",
+    },
+  },
+
+  // Nemotron 3 Super 120B uses enable_thinking + low_effort flag + reasoning_budget.
+  {
+    name: "nemotron-3-super-effort",
+    pattern: /^nvidia\/nemotron-3-super-120b-a12b/,
+    compat: {
+      supportsDeveloperRole: false,
+      maxTokensField: "max_tokens",
+    },
+  },
+
+  // Seed OSS uses top-level thinking_budget.
+  {
+    name: "seed-oss",
+    pattern: /^bytedance\/seed-oss/,
+    compat: {
+      supportsDeveloperRole: false,
+      maxTokensField: "max_tokens",
+    },
+  },
+
+  // Nemotron Ultra (unsuffixed) — deprecated/legacy, use deepseek-style as fallback.
+  {
+    name: "nemotron-ultra-deprecated",
+    pattern: /^nvidia\/llama-3\.1-nemotron-ultra/,
     compat: {
       supportsDeveloperRole: false,
       thinkingFormat: "deepseek",
@@ -424,12 +474,24 @@ export function classifyThinkingFormat(
     return "deepseek-nim";
   }
 
-  if (/^moonshotai\/kimi-k2-thinking/.test(modelId)) return "deepseek-nim";
-  if (/^moonshotai\/kimi-k2\.5/.test(modelId)) return "deepseek-nim";
+  // New format dispatch — checked by model ID before falling back to compat.
+  if (/^bytedance\/seed-oss/.test(modelId)) return "thinking-budget";
+  if (/^nvidia\/nemotron-3-super-120b-a12b/.test(modelId)) return "nemotron-3-super-effort";
+  if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1$/.test(modelId)) return "nemotron-system-detailed";
+  if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1\.5/.test(modelId)) return "nemotron-system-think";
+  if (/^nvidia\/nvidia-nemotron-nano-9b-v2/.test(modelId)) return "nemotron-system-think";
+
+  // Deepseek-nim dispatch — models that use chat_template_kwargs.thinking
   if (/^moonshotai\/kimi-k2\.6/.test(modelId)) return "deepseek-nim";
-  if (/^nvidia\/llama-3\.\d-nemotron-(ultra|super)/.test(modelId))
-    return "deepseek-nim";
-  if (/^minimaxai\/minimax-m2/.test(modelId)) return "minimax-inline";
+  if (/^moonshotai\/kimi-k2\.5/.test(modelId)) return "deepseek-nim";
+  if (/^nvidia\/llama-3\.1-nemotron-ultra/.test(modelId)) return "deepseek-nim";
+
+  // Minimax dispatch
+  if (/^minimaxai\/minimax-m2/.test(modelId)) {
+    // m2.5 and m2.7 always think with inline tags — handled by requiresThinkingAsText in family
+    return "none";
+  }
+
   return "none";
 }
 

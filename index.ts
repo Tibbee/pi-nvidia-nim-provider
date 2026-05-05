@@ -48,11 +48,16 @@ export default async function (pi: ExtensionAPI) {
       }
     }
 
-    // Expose reasoning/thinking budget when available (schema-extracted)
+    // Expose reasoning/thinking budget when available (schema-extracted).
+    // Different models use different parameter names for the same concept.
     if (modelConfig.reasoningBudget != null && hasEnabledThinking(payload)) {
-      payload.reasoning_budget = modelConfig.reasoningBudget;
+      const budgetParamName = format === "thinking-budget" ? "thinking_budget" : "reasoning_budget";
+      payload[budgetParamName] = modelConfig.reasoningBudget;
       modified = true;
     }
+
+    // Clean up internal flags that must not reach the API.
+    delete (payload as any)._systemThinkingEnabled;
 
     return modified ? payload : undefined;
   });

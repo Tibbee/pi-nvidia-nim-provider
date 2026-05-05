@@ -35,4 +35,8 @@ export type NimThinkingFormat =
   | "deepseek-nim"
   | "minimax-inline"
   | "reasoning-effort"
+  | "thinking-budget"          // Top-level thinking_budget param (Seed OSS)
+  | "nemotron-3-super-effort"  // enable_thinking + low_effort + reasoning_budget (Nemotron 3 Super 120B)
+  | "nemotron-system-detailed" // System msg "detailed thinking on/off" (Llama 3.3 Nemotron Super 49B v1)
+  | "nemotron-system-think"    // System msg /think or /no_think (Nemotron Super v1.5, Nemotron Nano 9B v2)
   | "none";

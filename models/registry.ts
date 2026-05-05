@@ -37,6 +37,14 @@ export function mapThinkingFormatToCompat(
       return { thinkingFormat: "deepseek" };
     case "minimax-inline":
       return { requiresThinkingAsText: true };
+    case "thinking-budget":
+      return {}; // Handled by before_provider_request handler
+    case "nemotron-3-super-effort":
+      return { supportsReasoningEffort: true }; // Pi sends reasoning_effort, handler converts to enable_thinking + low_effort
+    case "nemotron-system-detailed":
+      return {}; // Handled by before_provider_request handler (system message injection)
+    case "nemotron-system-think":
+      return {}; // Handled by before_provider_request handler (system message injection)
     case "reasoning-effort":
       return { supportsReasoningEffort: true };
     case "none":

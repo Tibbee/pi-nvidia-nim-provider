@@ -403,22 +403,48 @@ function detectReasoningSupport(text: string): boolean {
 
 // Prefer exact IDs; HTML only backs it up.
 function detectThinkingFormat(modelId: string, text: string): string | undefined {
+  // Known formats with explicit API parameters — checked by model ID.
   if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
-  if (/^deepseek-ai\/deepseek-(v3|r1)/.test(modelId)) return "deepseek-nim";
-  if (/^moonshotai\/kimi-k2-thinking/.test(modelId)) return "deepseek-nim";
-  if (/^moonshotai\/kimi-k2\.5/.test(modelId)) return "deepseek-nim";
-  if (/^nvidia\/llama-3\.\d-nemotron-(ultra|super)/.test(modelId)) return "deepseek-nim";
-  if (/^stepfun-ai\//.test(modelId)) return "deepseek-nim";
-  // m2.7 has no thinking; only m2.5 does.
-  if (/^minimaxai\/minimax-m2\.5/.test(modelId)) return "minimax-inline";
   if (/^openai\/gpt-oss/.test(modelId)) return "reasoning-effort";
-  if (/^z-ai\/glm/.test(modelId)) return "qwen-chat-template";
-  if (/^microsoft\/phi-4-mini/.test(modelId)) return "qwen-chat-template";
-  if (/^bytedance\/seed-oss/.test(modelId)) return "qwen-chat-template";
-  if (/^nvidia\/nemotron-nano-9b/.test(modelId)) return "qwen-chat-template";
-  if (/^nvidia\/nemotron-3-super/.test(modelId)) return "qwen-chat-template";
-  if (/^qwen\/qwen3/.test(modelId)) return "qwen-chat-template";
 
+  // System-message-based thinking (no chat_template_kwargs).
+  if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1$/.test(modelId)) return "nemotron-system-detailed";
+  if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1\.5/.test(modelId)) return "nemotron-system-think";
+  if (/^nvidia\/nvidia-nemotron-nano-9b-v2/.test(modelId)) return "nemotron-system-think";
+
+  // enable_thinking + effort flags + reasoning_budget.
+  if (/^nvidia\/nemotron-3-super-120b-a12b/.test(modelId)) return "nemotron-3-super-effort";
+
+  // Top-level thinking_budget param.
+  if (/^bytedance\/seed-oss/.test(modelId)) return "thinking-budget";
+
+  // chat_template_kwargs.thinking (toggle-able, deepseek-style).
+  if (/^deepseek-ai\/deepseek-(v3|r1)/.test(modelId)) return "deepseek-nim";
+  if (/^moonshotai\/kimi-k2\.5/.test(modelId)) return "deepseek-nim";
+  if (/^moonshotai\/kimi-k2\.6/.test(modelId)) return "deepseek-nim";
+  if (/^nvidia\/llama-3\.1-nemotron-ultra/.test(modelId)) return "deepseek-nim";
+
+  // qwen-chat-template: only models confirmed to have enable_thinking.
+  if (/^z-ai\/glm/.test(modelId)) return "qwen-chat-template";
+  if (/^qwen\/qwen3\.5/.test(modelId)) return "qwen-chat-template";  // qwen3.5 series only
+  if (/^google\/gemma-4/.test(modelId)) return "qwen-chat-template";
+  if (/^nvidia\/nemotron-3-nano/.test(modelId)) return "qwen-chat-template";
+
+  // Models known to have no structured thinking API — skip HTML fallback.
+  // These either always think (no toggle) or have no reasoning at all.
+  if (/^stepfun-ai\//.test(modelId) ||
+      /^mistralai\/magistral/.test(modelId) ||
+      /^moonshotai\/kimi-k2-thinking/.test(modelId) ||
+      /^moonshotai\/kimi-k2-instruct-0905/.test(modelId) ||
+      /^qwen\/qwen3-next/.test(modelId) ||
+      /^qwen\/qwen3-coder/.test(modelId) ||
+      /^microsoft\/phi-4-mini/.test(modelId) ||
+      /^mistralai\/devstral/.test(modelId) ||
+      /^sarvamai\//.test(modelId) ||
+      /^minimaxai\//.test(modelId) ||
+      /^moonshotai\/kimi-k2-instruct$/.test(modelId)) return undefined;
+
+  // Fallback: detect from schema/HTML content.
   if (/parallel_reasoning_mode/.test(text)) return "deepseek-nim";
   if (/chat_template_kwargs.*(?:enable_thinking|clear_thinking)/.test(text)) return "qwen-chat-template";
   if (/chat_template_kwargs.*thinking.*true/.test(text)) return "deepseek-nim";
@@ -580,6 +606,23 @@ function classifyThinkingFromSchema(
   modelId: string,
   props: Record<string, any>
 ): string | undefined {
+  // ── Models known to have no structured thinking API (always-on or no reasoning) ──
+  if (/^stepfun-ai\//.test(modelId)) return undefined;
+  if (/^mistralai\/magistral/.test(modelId)) return undefined;
+  if (/^moonshotai\/kimi-k2-thinking/.test(modelId)) return undefined;
+  if (/^moonshotai\/kimi-k2-instruct-0905/.test(modelId)) return undefined;
+  if (/^qwen\/qwen3-next/.test(modelId)) return undefined;
+  if (/^qwen\/qwen3-coder/.test(modelId)) return undefined;
+  if (/^microsoft\/phi-4-mini/.test(modelId)) return undefined;
+  if (/^mistralai\/devstral/.test(modelId)) return undefined;
+  if (/^sarvamai\//.test(modelId)) return undefined;
+  if (/^minimaxai\//.test(modelId)) return undefined;
+  if (/^moonshotai\/kimi-k2-instruct$/.test(modelId)) return undefined;
+
+  // ── Known special formats ──
+  // Nemotron 3 Super 120B: enable_thinking + low_effort + reasoning_budget
+  if (/^nvidia\/nemotron-3-super-120b-a12b/.test(modelId)) return "nemotron-3-super-effort";
+
   // reasoning_effort with "chat_template_kwargs" in description → deepseek family
   const re = props.reasoning_effort;
   if (re?.description && /chat_template_kwargs/.test(re.description)) {
@@ -854,6 +897,31 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   if (!meta.supportsReasoning) meta.supportsReasoning = detectReasoningSupport(combinedHtmlStr);
   meta.thinkingFormat = meta.thinkingFormat ?? detectThinkingFormat(modelId, combinedHtmlStr);
   if (meta.thinkingFormat) meta.supportsReasoning = true;
+
+  // Override: known models that should NOT have reasoning despite label/schema detection.
+  if (/^mistralai\/devstral/.test(modelId) ||
+      /^moonshotai\/kimi-k2-instruct$/.test(modelId) ||
+      /^moonshotai\/kimi-k2-instruct-0905/.test(modelId) ||
+      /^qwen\/qwen3-next-80b-a3b-instruct$/.test(modelId) ||
+      /^sarvamai\//.test(modelId)) {
+    meta.supportsReasoning = false;
+    if (meta.thinkingFormat) {
+      if (verbose) console.log(`    → clearing thinkingFormat (was ${meta.thinkingFormat}) — model has no reasoning`);
+      meta.thinkingFormat = undefined;
+    }
+    if (meta.reasoningBudget != null) {
+      if (verbose) console.log(`    → clearing reasoningBudget — model has no reasoning`);
+      delete meta.reasoningBudget;
+    }
+    if (meta.reasoningEffortValues) {
+      if (verbose) console.log(`    → clearing reasoningEffortValues — model has no reasoning`);
+      delete meta.reasoningEffortValues;
+    }
+    if (meta.exampleRequestExtra) {
+      if (verbose) console.log(`    → clearing exampleRequestExtra — model has no reasoning`);
+      delete meta.exampleRequestExtra;
+    }
+  }
   const htmlBudget = parseReasoningBudget(combinedHtmlStr);
   if (htmlBudget != null) {
     meta.reasoningBudget = meta.reasoningBudget != null

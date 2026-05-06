@@ -1,6 +1,14 @@
 // Converts pi thinking payloads into NIM-specific kwargs.
 type Payload = Record<string, unknown>;
 
+export interface TransformResult {
+  modified: boolean;
+  // Set by cases where hasEnabledThinking(payload) would lose the thinking
+  // state after transformation (e.g. system-message-based models that delete
+  // top-level thinking/reasoning_effort params).
+  thinkingEnabled?: boolean;
+}
+
 function isDeepSeekThinkingEnabled(payload: Payload): boolean {
   const thinking = payload.thinking as { type?: string } | undefined;
   if (thinking?.type === "enabled") return true;
@@ -20,16 +28,13 @@ export function hasEnabledThinking(payload: Payload): boolean {
   if (kwargs?.thinking === true) return true;
   if (isDeepSeekThinkingEnabled(payload)) return true;
   if (getReasoningEffort(payload) != null) return true;
-  // Check for system-message-based thinking injected by the handler.
-  const systemThinking = (payload as any)._systemThinkingEnabled;
-  if (systemThinking === true) return true;
   return false;
 }
 
 export function applyCustomThinkingFormat(
   payload: Payload,
   format: string
-): boolean {
+): TransformResult {
   switch (format) {
     case "deepseek-v4": {
       // DeepSeek V4: thinking + reasoning_effort in chat_template_kwargs.
@@ -49,7 +54,7 @@ export function applyCustomThinkingFormat(
       if (thinking) {
         payload.chat_template_kwargs.reasoning_effort = effort ?? "high";
       }
-      return true;
+      return { modified: true, thinkingEnabled: thinking };
     }
 
     case "deepseek-nim": {
@@ -64,7 +69,7 @@ export function applyCustomThinkingFormat(
         ...(kwargs ?? {}),
         thinking,
       };
-      return true;
+      return { modified: true, thinkingEnabled: thinking };
     }
 
     case "thinking-budget": {
@@ -72,7 +77,7 @@ export function applyCustomThinkingFormat(
       // Clean up any pi-injected params; the budget is injected by index.ts.
       delete payload.thinking;
       delete payload.reasoning_effort;
-      return true;
+      return { modified: true, thinkingEnabled: true };
     }
 
     case "nemotron-3-super-effort": {
@@ -97,7 +102,7 @@ export function applyCustomThinkingFormat(
         delete (payload.chat_template_kwargs as Record<string, unknown>).low_effort;
       }
 
-      return true;
+      return { modified: true, thinkingEnabled: thinking };
     }
 
     case "nemotron-system-detailed": {
@@ -106,9 +111,6 @@ export function applyCustomThinkingFormat(
 
       delete payload.thinking;
       delete payload.reasoning_effort;
-
-      // Store thinking state for hasEnabledThinking to check.
-      (payload as any)._systemThinkingEnabled = thinking;
 
       const messages = (payload.messages as any[]) || [];
       // Remove any existing "detailed thinking" system messages.
@@ -122,7 +124,7 @@ export function applyCustomThinkingFormat(
         content: thinking ? "detailed thinking on" : "detailed thinking off",
       });
       payload.messages = filtered;
-      return true;
+      return { modified: true, thinkingEnabled: thinking };
     }
 
     case "nemotron-system-think": {
@@ -131,9 +133,6 @@ export function applyCustomThinkingFormat(
 
       delete payload.thinking;
       delete payload.reasoning_effort;
-
-      // Store thinking state for hasEnabledThinking to check.
-      (payload as any)._systemThinkingEnabled = thinking;
 
       const messages = (payload.messages as any[]) || [];
       // Remove any existing /think or /no_think system messages.
@@ -154,7 +153,7 @@ export function applyCustomThinkingFormat(
         payload.max_thinking_tokens = 4096;
       }
 
-      return true;
+      return { modified: true, thinkingEnabled: thinking };
     }
 
     case "qwen-chat-template":
@@ -162,6 +161,6 @@ export function applyCustomThinkingFormat(
     case "reasoning-effort":
     case "none":
     default:
-      return false;
+      return { modified: false };
   }
 }

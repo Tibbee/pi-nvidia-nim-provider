@@ -18,6 +18,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       supportsDeveloperRole: false,
       thinkingFormat: "deepseek",
       maxTokensField: "max_tokens",
+      requiresReasoningContentOnAssistantMessages: true,
     },
     thinkingLevelMap: {
       off: "none",
@@ -36,6 +37,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       supportsDeveloperRole: false,
       thinkingFormat: "deepseek",
       maxTokensField: "max_tokens",
+      requiresReasoningContentOnAssistantMessages: true,
     },
   },
 
@@ -285,6 +287,18 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
+  // Mixtral — before generic mistral catch-all (order matters: first match wins).
+  {
+    name: "mixtral",
+    pattern: /^mistralai\/mixtral/,
+    compat: {
+      supportsDeveloperRole: false,
+      supportsReasoningEffort: false,
+      maxTokensField: "max_tokens",
+      requiresToolResultName: true,
+    },
+  },
+
   // Mistral needs tool result names and thinking-as-text.
   {
     name: "mistral",
@@ -407,17 +421,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
   },
 
   {
-    name: "mixtral",
-    pattern: /^mistralai\/mixtral/,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      maxTokensField: "max_tokens",
-      requiresToolResultName: true,
-    },
-  },
-
-  {
     name: "dbrx",
     pattern: /^databricks\//,
     compat: {
@@ -452,6 +455,8 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     pattern: /.*/,
     compat: {
       supportsDeveloperRole: false,
+      supportsStore: false,
+      supportsReasoningEffort: false,
       maxTokensField: "max_tokens",
     },
   },

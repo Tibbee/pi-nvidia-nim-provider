@@ -1,38 +1,33 @@
 // Provider entry + request hook.
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { NIM_API_KEY_ENV, NIM_BASE_URL } from "./config/defaults";
 import { applyCustomThinkingFormat, hasEnabledThinking } from "./handlers/thinking";
+import type { TransformResult } from "./handlers/thinking";
 import { STATIC_MODELS, STATIC_MODEL_MAP, classifyThinkingFormat } from "./models/registry";
 
-interface BeforeProviderRequestEventLike {
-  provider?: string;
-  payload: unknown;
-}
-
-interface AfterProviderResponseEventLike {
-  provider?: string;
-  status: number;
-  headers?: Record<string, string | undefined>;
-}
-
-export function handleBeforeProviderRequest(event: BeforeProviderRequestEventLike) {
-  if (event.provider !== "nvidia-nim") return;
-
+// Gate: pi v0.73.0 BeforeProviderRequestEvent has no `provider` field,
+// so we identify NIM requests by checking whether payload.model is in our registry.
+export function handleBeforeProviderRequest(event: { payload: unknown }) {
   const payload = event.payload as Record<string, unknown>;
   // payload.model is the raw NIM model ID.
   const modelId = payload.model as string | undefined;
-  if (!modelId) return;
+  if (!modelId || !STATIC_MODEL_MAP.has(modelId)) return;
 
-  const modelConfig = STATIC_MODEL_MAP.get(modelId);
-  if (!modelConfig) return;
+  const modelConfig = STATIC_MODEL_MAP.get(modelId)!;
 
   const thinkingEnabledBeforeTransform = hasEnabledThinking(payload);
   const format = classifyThinkingFormat(modelId);
-  let modified = applyCustomThinkingFormat(payload, format);
+  const result: TransformResult = applyCustomThinkingFormat(payload, format);
+  let modified = result.modified;
+
+  // Use the post-transform thinking state if the handler provides it
+  // (for cases where top-level thinking params were deleted and replaced).
+  const thinkingEnabledAfterTransform =
+    result.thinkingEnabled !== undefined ? result.thinkingEnabled : hasEnabledThinking(payload);
 
   // Inject model-specific extra kwargs from metadata
   // (e.g. GLM clear_thinking, or any future model with unique kwargs)
-  if (modelConfig.exampleRequestExtra && hasEnabledThinking(payload)) {
+  if (modelConfig.exampleRequestExtra && thinkingEnabledAfterTransform) {
     const exampleKwargs = modelConfig.exampleRequestExtra.chat_template_kwargs as Record<string, unknown> | undefined;
     if (exampleKwargs) {
       const kwargs = (payload.chat_template_kwargs as Record<string, unknown>) || {};
@@ -59,20 +54,21 @@ export function handleBeforeProviderRequest(event: BeforeProviderRequestEventLik
     modified = true;
   }
 
-  // Clean up internal flags that must not reach the API.
-  delete (payload as any)._systemThinkingEnabled;
-
   return modified ? payload : undefined;
 }
 
-export function handleAfterProviderResponse(event: AfterProviderResponseEventLike): string | undefined {
-  if (event.provider !== "nvidia-nim") return undefined;
-  if (event.status !== 429) return undefined;
+export function handleAfterProviderResponse(
+  event: { status: number; headers?: Record<string, string | undefined> },
+  ctx: ExtensionContext,
+): void {
+  if (ctx.model?.provider !== "nvidia-nim") return;
+  if (event.status !== 429) return;
 
   const retryAfter = event.headers?.["retry-after"];
-  return retryAfter
+  const notice = retryAfter
     ? `NVIDIA NIM rate-limited. Retry after ${retryAfter}.`
     : "NVIDIA NIM rate-limited.";
+  ctx.ui.notify(notice, "warning");
 }
 
 export default async function (pi: ExtensionAPI) {
@@ -80,13 +76,12 @@ export default async function (pi: ExtensionAPI) {
     baseUrl: NIM_BASE_URL,
     apiKey: NIM_API_KEY_ENV,
     api: "openai-completions",
-    authHeader: true,
     models: STATIC_MODELS,
   });
 
-  pi.on("before_provider_request", (event) => handleBeforeProviderRequest(event as BeforeProviderRequestEventLike));
-  pi.on("after_provider_response", (event, ctx) => {
-    const notice = handleAfterProviderResponse(event as AfterProviderResponseEventLike);
-    if (notice) ctx.ui.notify(notice, "warning");
-  });
+  pi.on("before_provider_request", (event) => handleBeforeProviderRequest(event as { payload: unknown }));
+  pi.on("after_provider_response", (event, ctx) => handleAfterProviderResponse(
+    event as { status: number; headers?: Record<string, string | undefined> },
+    ctx,
+  ));
 }

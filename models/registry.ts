@@ -165,37 +165,3 @@ export function getAllMetadata(): MetadataEntry[] {
 export function hasMetadata(modelId: string): boolean {
   return metadataMap.has(modelId);
 }
-
-export function applyMetadata(
-  model: NimModelConfig,
-  metadata: MetadataEntry | undefined
-): NimModelConfig {
-  if (!metadata) return model;
-
-  const compat = {
-    ...(model.compat ?? {}),
-    ...mapThinkingFormatToCompat(metadata.thinkingFormat),
-  };
-
-  const input: ("text" | "image")[] = ["text"];
-  if (metadata.supportsVision) input.push("image");
-
-  return {
-    ...model,
-    contextWindow: metadata.contextWindow ?? model.contextWindow,
-    maxTokens: metadata.maxOutputTokens ?? model.maxTokens,
-    reasoningBudget: metadata.reasoningBudget ?? model.reasoningBudget,
-    reasoning: metadata.supportsReasoning ?? model.reasoning,
-    thinkingLevelMap:
-      metadata.thinkingFormat === "reasoning-effort"
-        ? buildReasoningEffortThinkingLevelMap(metadata.reasoningEffortValues)
-        : model.thinkingLevelMap,
-    input,
-    compat,
-    exampleRequestExtra: metadata.exampleRequestExtra ?? model.exampleRequestExtra,
-  };
-}
-
-export function applyMetadataToModels(models: NimModelConfig[]): NimModelConfig[] {
-  return models.map((model) => applyMetadata(model, metadataMap.get(model.id)));
-}

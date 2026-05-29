@@ -1,6 +1,6 @@
 // Provider entry + request hook.
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { NIM_API_KEY_ENV, NIM_BASE_URL } from "./config/defaults";
+import { NIM_API_KEY_REF, NIM_BASE_URL } from "./config/defaults";
 import { applyCustomThinkingFormat, hasEnabledThinking } from "./handlers/thinking";
 import type { TransformResult } from "./handlers/thinking";
 import { STATIC_MODELS, STATIC_MODEL_MAP, classifyThinkingFormat } from "./models/registry";
@@ -74,7 +74,7 @@ export function handleAfterProviderResponse(
 export default async function (pi: ExtensionAPI) {
   pi.registerProvider("nvidia-nim", {
     baseUrl: NIM_BASE_URL,
-    apiKey: NIM_API_KEY_ENV,
+    apiKey: NIM_API_KEY_REF,
     api: "openai-completions",
     models: STATIC_MODELS,
   });

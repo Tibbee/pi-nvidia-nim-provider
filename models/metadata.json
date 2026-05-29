@@ -142,13 +142,6 @@
     "supportsVision": true
   },
   {
-    "id": "google/gemma-3-27b-it",
-    "maxOutputTokens": 4096,
-    "supportsVision": true,
-    "contextWindow": 131072,
-    "supportsReasoning": false
-  },
-  {
     "id": "google/gemma-3-4b-it",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
@@ -215,13 +208,6 @@
   },
   {
     "id": "meta/codellama-70b",
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "meta/llama-3.1-405b-instruct",
-    "contextWindow": 131072,
-    "maxOutputTokens": 8192,
     "supportsReasoning": false,
     "supportsVision": false
   },
@@ -328,13 +314,6 @@
     "supportsVision": true
   },
   {
-    "id": "minimaxai/minimax-m2.5",
-    "maxOutputTokens": 16384,
-    "supportsReasoning": true,
-    "contextWindow": 204800,
-    "supportsVision": false
-  },
-  {
     "id": "minimaxai/minimax-m2.7",
     "maxOutputTokens": 16384,
     "supportsReasoning": true,
@@ -346,20 +325,6 @@
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "mistralai/devstral-2-123b-instruct-2512",
-    "maxOutputTokens": 16384,
-    "supportsReasoning": false,
-    "contextWindow": 262144,
-    "supportsVision": false
-  },
-  {
-    "id": "mistralai/magistral-small-2506",
-    "maxOutputTokens": 40960,
-    "supportsReasoning": true,
-    "contextWindow": 131072,
     "supportsVision": false
   },
   {
@@ -398,13 +363,6 @@
     "supportsReasoning": false
   },
   {
-    "id": "mistralai/mistral-medium-3-instruct",
-    "maxOutputTokens": 8192,
-    "supportsVision": true,
-    "contextWindow": 131072,
-    "supportsReasoning": false
-  },
-  {
     "id": "mistralai/mistral-medium-3.5-128b",
     "maxOutputTokens": 32768,
     "supportsReasoning": true,
@@ -436,13 +394,6 @@
     "contextWindow": 131072
   },
   {
-    "id": "mistralai/mixtral-8x22b-instruct-v0.1",
-    "contextWindow": 65536,
-    "maxOutputTokens": 4096,
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
     "id": "mistralai/mixtral-8x22b-v0.1",
     "contextWindow": 65536,
     "maxOutputTokens": 4096,
@@ -454,27 +405,6 @@
     "contextWindow": 32768,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "moonshotai/kimi-k2-instruct",
-    "maxOutputTokens": 16384,
-    "supportsReasoning": false,
-    "contextWindow": 131072,
-    "supportsVision": false
-  },
-  {
-    "id": "moonshotai/kimi-k2-instruct-0905",
-    "maxOutputTokens": 16384,
-    "supportsReasoning": false,
-    "contextWindow": 262144,
-    "supportsVision": false
-  },
-  {
-    "id": "moonshotai/kimi-k2-thinking",
-    "maxOutputTokens": 32768,
-    "supportsReasoning": true,
-    "contextWindow": 262144,
     "supportsVision": false
   },
   {
@@ -598,16 +528,11 @@
   },
   {
     "id": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
-    "contextWindow": 131072,
-    "maxOutputTokens": 8192,
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "nvidia/llama-3.2-nemoretriever-300m-embed-v1",
     "exampleRequestExtra": {
-      "input": "What is the capital of France?",
+      "input": "What is the civil caseload in South Dakota courts?",
       "input_type": "query",
+      "image": "https://assets.ngc.nvidia.com/products/api-catalog/nemo-retriever/embedding/court-sizing-metrics.png",
+      "image_name": "court-sizing-metrics.png",
       "encoding_format": "float",
       "truncate": "NONE"
     },
@@ -618,19 +543,6 @@
   },
   {
     "id": "nvidia/llama-3.2-nv-embedqa-1b-v1",
-    "exampleRequestExtra": {
-      "input": "What is the capital of France?",
-      "input_type": "query",
-      "encoding_format": "float",
-      "truncate": "NONE"
-    },
-    "contextWindow": 131072,
-    "maxOutputTokens": 8192,
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "nvidia/llama-3.2-nv-embedqa-1b-v2",
     "exampleRequestExtra": {
       "input": "What is the capital of France?",
       "input_type": "query",
@@ -939,13 +851,6 @@
     "supportsVision": false
   },
   {
-    "id": "qwen/qwen2.5-coder-32b-instruct",
-    "maxOutputTokens": 4000,
-    "contextWindow": 131072,
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
     "id": "qwen/qwen3-coder-480b-a35b-instruct",
     "maxOutputTokens": 16384,
     "contextWindow": 262144,
@@ -957,13 +862,6 @@
     "maxOutputTokens": 4096,
     "contextWindow": 262144,
     "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "qwen/qwen3-next-80b-a3b-thinking",
-    "maxOutputTokens": 4096,
-    "supportsReasoning": true,
-    "contextWindow": 262144,
     "supportsVision": false
   },
   {
@@ -1011,9 +909,16 @@
     "supportsVision": false
   },
   {
+    "id": "stepfun-ai/step-3.7-flash",
+    "maxOutputTokens": 262144,
+    "supportsReasoning": true,
+    "contextWindow": 256000,
+    "supportsVision": true
+  },
+  {
     "id": "stockmark/stockmark-2-100b-instruct",
+    "maxOutputTokens": 4096,
     "contextWindow": 32768,
-    "maxOutputTokens": 8192,
     "supportsReasoning": false,
     "supportsVision": false
   },
@@ -1064,28 +969,6 @@
     "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true,
     "contextWindow": 131072,
-    "supportsVision": false
-  },
-  {
-    "id": "z-ai/glm4.7",
-    "maxOutputTokens": 32768,
-    "exampleRequestExtra": {
-      "chat_template_kwargs": {
-        "enable_thinking": true,
-        "clear_thinking": false
-      }
-    },
-    "thinkingFormat": "qwen-chat-template",
-    "contextWindow": 128000,
-    "supportsReasoning": true,
-    "supportsVision": false
-  },
-  {
-    "id": "z-ai/glm5",
-    "thinkingFormat": "qwen-chat-template",
-    "supportsReasoning": true,
-    "contextWindow": 128000,
-    "maxOutputTokens": 8192,
     "supportsVision": false
   },
   {

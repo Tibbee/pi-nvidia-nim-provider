@@ -171,6 +171,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     compat: {
       supportsDeveloperRole: false,
       thinkingFormat: "deepseek",
+      requiresReasoningContentOnAssistantMessages: true,
       maxTokensField: "max_tokens",
     },
   },

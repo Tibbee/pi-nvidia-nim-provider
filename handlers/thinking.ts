@@ -168,7 +168,7 @@ export function applyCustomThinkingFormat(
           payload.chat_template_kwargs = { ...(kwargs ?? {}), enable_thinking: true, clear_thinking: false };
           return { modified: true, thinkingEnabled: true };
         } else {
-          payload.chat_template_kwargs = { ...(kwargs ?? {}), enable_thinking: false };
+          payload.chat_template_kwargs = { ...(kwargs ?? {}), enable_thinking: false, clear_thinking: true };
           return { modified: true, thinkingEnabled: false };
         }
       }

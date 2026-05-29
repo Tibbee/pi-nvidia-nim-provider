@@ -228,13 +228,19 @@ This strips `[{type:"text", text:"..."}]` wrappers for older NIM models that rej
 
 ## Implementation Status
 
-| # | Item | Status | Source |
-|---|------|--------|--------|
-| 1 | `NVIDIA_NIM_API_KEY` primary env var + `NVIDIA_API_KEY` fallback | ✅ Done | pi-nvidia-nim-main |
-| 2 | `normalizeContentArrays()` in `index.ts` | ✅ Done | pi-nvidia-nim-main |
-| 3 | GLM `disableKwargs` in `handlers/thinking.ts` | 🔄 Pending | pi-nvidia-nim-main |
-| 4 | Known 404 model list into `models/metadata.ts` | ⏳ Not started | pi-free-master |
-| 5 | `session_start` dynamic enrichment | ⏳ Not started | pi-nvidia-nim-main |
-| 6 | `requiresReasoningContentOnAssistantMessages` for DeepSeek families | ⏳ Not started | pi-free-master |
+| # | Item | Status | Source | Notes |
+|---|------|--------|--------|-------|
+| 1 | `NVIDIA_NIM_API_KEY` primary env var + `NVIDIA_API_KEY` fallback | ✅ Done | pi-nvidia-nim-main | Commit `31fb2e6` |
+| 2 | `normalizeContentArrays()` in `index.ts` | ✅ Done | pi-nvidia-nim-main | Commit `31fb2e6` |
+| 3 | GLM `disableKwargs` in `handlers/thinking.ts` | ✅ Done | pi-nvidia-nim-main | Includes `clear_thinking: true` when reasoning off |
+| 4 | Known 404 model list into `models/metadata.ts` | ❌ Skipped | pi-free-master | Community-reported, needs API verification |
+| 5 | `session_start` dynamic enrichment | ❌ Skipped | pi-nvidia-nim-main | Skipped — static metadata + release cadence preferred |
+| 6 | `requiresReasoningContentOnAssistantMessages` for DeepSeek families | ✅ Done | pi-free-master | Only `kimi-k2.6` (K2.5/K2.5-thinking removed from NIM) |
+| 7 | Structured logging (`lib/logger.ts`) | ⏳ Not started | pi-free-master | — |
+| 8 | `isLikelyReasoningModel` heuristic | ⏳ Not started | pi-free-master | — |
+| 9 | `lib/provider-cache.ts` for offline startup | ⏳ Not started | pi-free-master | — |
+| 10 | `DeepSeekProxyCompat` pattern | ⏳ Not started | pi-free-master | Verify if needed |
+| — | Package readiness | ⏳ Not started | — | Remove `private:true`, add README, `files`, `pi-package` keyword, `license` |
+| — | `docs/README.md` §9 update | ⏳ Not started | — | Sync integration checklist |
 
-See `docs/README.md` §9 for detailed testing plan and known issues.
+> Commit `31fb2e6`: feat: add NVIDIA_NIM_API_KEY primary env fallback, content normalization, and GLM disableKwargs

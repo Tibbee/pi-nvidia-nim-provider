@@ -1,14 +1,30 @@
 {
-  "name": "pi-extension-nvidia-nim",
-  "private": true,
-  "version": "1.0.0",
-  "type": "module",
-  "pi": {
-    "extensions": ["./index.ts"]
-  },
-  "peerDependencies": {
-    "@mariozechner/pi-ai": "*",
-    "@mariozechner/pi-coding-agent": "*",
-    "typebox": "*"
-  }
+    "name": "pi-extension-nvidia-nim",
+    "private": false,
+    "version": "1.0.0",
+    "type": "module",
+    "files": [
+        "README.md",
+        "config/",
+        "handlers/",
+        "lib/",
+        "models/",
+        "index.ts",
+        "package.json"
+    ],
+    "pi": {
+        "extensions": [
+            "./index.ts"
+        ]
+    },
+    "peerDependencies": {
+        "@mariozechner/pi-ai": "*",
+        "@mariozechner/pi-coding-agent": "*",
+        "typebox": "*"
+    },
+    "license": "MIT",
+    "keywords": [
+        "pi-package"
+    ],
+    "description": "NVIDIA NIM provider for pi coding agent"
 }

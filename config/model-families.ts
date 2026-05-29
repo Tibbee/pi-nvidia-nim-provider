@@ -1,4 +1,5 @@
 import type { NimModelConfig, NimModelCompat, NimThinkingFormat } from "../models/types";
+import { createLogger } from "../lib/logger";
 
 export interface ModelFamily {
   name: string;
@@ -492,8 +493,9 @@ const FAMILIES_MISSING_HANDLER = MODEL_FAMILIES
   .filter((f) => f.compat?.thinkingFormat === "deepseek" && !FAMILY_HANDLER_FORMATS[f.name])
   .map((f) => f.name);
 if (FAMILIES_MISSING_HANDLER.length > 0) {
-  console.warn(
-    "[nvidia-nim] Warning: families with thinkingFormat=deepseek missing from FAMILY_HANDLER_FORMATS:",
+  const log = createLogger("model-families");
+  log.warn(
+    "families with thinkingFormat=deepseek missing from FAMILY_HANDLER_FORMATS:",
     FAMILIES_MISSING_HANDLER.join(", ")
   );
 }

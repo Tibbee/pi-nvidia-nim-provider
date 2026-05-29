@@ -7,7 +7,7 @@ Registers **`nvidia-nim`** as a model provider backed by `https://integrate.api.
 ## Install
 
 ```bash
-pi install nvidia-nim
+pi install npm:pi-extension-nvidia-nim
 ```
 
 ## Configure
@@ -15,10 +15,10 @@ pi install nvidia-nim
 Set the API key:
 
 ```bash
-export NVIDIA_API_KEY="nvapi-..."
+export NVIDIA_NIM_API_KEY="nvapi-..."
 ```
 
-The provider also accepts `NVIDIA_NIM_API_KEY` as the primary env var, with `NVIDIA_API_KEY` as fallback.
+The provider also accepts `NVIDIA_API_KEY` as fallback for backward compatibility.
 
 ## Usage
 

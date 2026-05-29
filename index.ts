@@ -1,5 +1,5 @@
 // Provider entry + request hook.
-import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { NIM_API_KEY_REF, NIM_BASE_URL } from "./config/defaults";
 import { applyCustomThinkingFormat, hasEnabledThinking } from "./handlers/thinking";
 import type { TransformResult } from "./handlers/thinking";
@@ -76,7 +76,28 @@ export function handleAfterProviderResponse(
   ctx.ui.notify(notice, "warning");
 }
 
-// Older/smaller NIM models (solar, baichuan, falcon, etc.) reject // multipart content arrays and require plain strings. Normalize text-only // arrays inline so multi-modal messages with images are left untouched. function normalizeContentArrays(payload: Record<string, unknown>): void { const messages = payload.messages as Array<Record<string, unknown>> | undefined; if (!messages) return; for (const msg of messages) { const content = msg.content; if (Array.isArray(content)) { const allText = content.every((part) => (part as Record<string, unknown>).type === "text"); if (allText) { msg.content = content.map((part) => (part as Record<string, unknown>).text as string).join("\n"); } } } } export default async function (pi: ExtensionAPI) {
+// Older/smaller NIM models (e.g. solar, baichuan, falcon) reject
+// multipart content arrays and require plain strings. Normalize text-only
+// arrays inline so multi-modal messages with images are left untouched.
+function normalizeContentArrays(payload: Record<string, unknown>): void {
+  const messages = payload.messages as Array<Record<string, unknown>> | undefined;
+  if (!messages) return;
+  for (const msg of messages) {
+    const content = msg.content;
+    if (Array.isArray(content)) {
+      const allText = content.every(
+        (part) => (part as Record<string, unknown>).type === "text",
+      );
+      if (allText) {
+        msg.content = content
+          .map((part) => (part as Record<string, unknown>).text as string)
+          .join("\n");
+      }
+    }
+  }
+}
+
+export default async function (pi: ExtensionAPI) {
   pi.registerProvider("nvidia-nim", {
     baseUrl: NIM_BASE_URL,
     apiKey: NIM_API_KEY_REF,

@@ -1,4 +1,4 @@
-import type { OpenAICompletionsCompat } from "@mariozechner/pi-ai";
+import type { OpenAICompletionsCompat } from "@earendil-works/pi-ai";
 
 // Internal model shape used while building the provider list.
 export type NimModelCompat = OpenAICompletionsCompat;

@@ -12,6 +12,11 @@ export function handleBeforeProviderRequest(event: { payload: unknown }) {
   // payload.model is the raw NIM model ID.
   const modelId = payload.model as string | undefined;
   if (!modelId || !STATIC_MODEL_MAP.has(modelId)) return;
+  // Older/smaller NIM models (e.g. solar, baichuan, falcon) reject
+  // [{type:"text", text:"..."}] content arrays and require a plain
+  // string. Normalize here so all models receive a universally-accepted
+  // payload without needing a custom streamSimple.
+  normalizeContentArrays(payload);
 
   const modelConfig = STATIC_MODEL_MAP.get(modelId)!;
 
@@ -71,7 +76,7 @@ export function handleAfterProviderResponse(
   ctx.ui.notify(notice, "warning");
 }
 
-export default async function (pi: ExtensionAPI) {
+// Older/smaller NIM models (solar, baichuan, falcon, etc.) reject // multipart content arrays and require plain strings. Normalize text-only // arrays inline so multi-modal messages with images are left untouched. function normalizeContentArrays(payload: Record<string, unknown>): void { const messages = payload.messages as Array<Record<string, unknown>> | undefined; if (!messages) return; for (const msg of messages) { const content = msg.content; if (Array.isArray(content)) { const allText = content.every((part) => (part as Record<string, unknown>).type === "text"); if (allText) { msg.content = content.map((part) => (part as Record<string, unknown>).text as string).join("\n"); } } } } export default async function (pi: ExtensionAPI) {
   pi.registerProvider("nvidia-nim", {
     baseUrl: NIM_BASE_URL,
     apiKey: NIM_API_KEY_REF,

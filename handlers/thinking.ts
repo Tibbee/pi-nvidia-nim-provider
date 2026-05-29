@@ -156,11 +156,25 @@ export function applyCustomThinkingFormat(
       return { modified: true, thinkingEnabled: thinking };
     }
 
-    case "qwen-chat-template":
-    case "minimax-inline":
-    case "reasoning-effort":
-    case "none":
-    default:
+    case "qwen-chat-template": {
+      // GLM models think by default; explicitly disable when reasoning is off.                                                                                                                                                            
+      const modelId = (payload.model as string | undefined) || "";
+      if (/^z-ai\/glm/.test(modelId)) {
+        const enabled = hasEnabledThinking(payload);
+        const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
+        delete payload.thinking;
+        delete payload.reasoning_effort;
+        if (enabled) {
+          payload.chat_template_kwargs = { ...(kwargs ?? {}), enable_thinking: true, clear_thinking: false };
+          return { modified: true, thinkingEnabled: true };
+        } else {
+          payload.chat_template_kwargs = { ...(kwargs ?? {}), enable_thinking: false };
+          return { modified: true, thinkingEnabled: false };
+        }
+      }
+      // Other qwen-chat-template models are handled natively by pi.                                                                                                                                                                       
       return { modified: false };
+    }
+    case "minimax-inline": case "reasoning-effort": case "none": default: return { modified: false };
   }
 }

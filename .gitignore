@@ -29,3 +29,5 @@ npm-debug.log*
 Tools/nvidia_scrape_raw.txt
 Tools/nvidia_nim_models.txt
 Tools/nvidia_nim_models_by_category.txt
+
+alternative/

@@ -257,9 +257,24 @@ const FALLBACK_LIMITS_MAP: Record<string, { contextWindow?: number; maxOutputTok
  * Fetch wrapper with exponential backoff for 429 / non-OK responses.
  * When verbose is enabled, every non-OK attempt is logged.
  */
-async function fetchWithRetry(url: string, options?: RequestInit, retries = 3, backoff = 800): Promise<Response> {
+async function fetchWithRetry(url: string, options?: RequestInit, retries = 3, backoff = 2000): Promise<Response> {
+  // Add browser-like headers to avoid bot detection
+  const headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Cache-Control": "max-age=0",
+    ...(options?.headers || {}),
+  };
+
   for (let i = 0; i < retries; i++) {
-    const res = await fetch(url, options);
+    const res = await fetch(url, { ...options, headers });
     if (res.ok) return res;
     if (verbose) {
       console.log(`  ⚠ fetch attempt ${i + 1}/${retries} failed: ${url} → ${res.status} ${res.statusText}`);
@@ -750,7 +765,10 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   ];
 
   let combinedHtmlStr = "";
-  for (const slug of slugVariations) {
+  for (let slugIdx = 0; slugIdx < slugVariations.length; slugIdx++) {
+    const slug = slugVariations[slugIdx];
+    // Delay between slug variations to avoid rate limiting
+    if (slugIdx > 0) await new Promise(r => setTimeout(r, 1500));
     const url = `${DOCS_BASE_URL}/${slug}-infer`;
     try {
       const response = await fetchWithRetry(url);
@@ -884,7 +902,10 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   }
 
   let structuredHtml = "";
-  for (const slug of slugVariations) {
+  for (let slugIdx = 0; slugIdx < slugVariations.length; slugIdx++) {
+    const slug = slugVariations[slugIdx];
+    // Delay between slug variations to avoid rate limiting
+    if (slugIdx > 0) await new Promise(r => setTimeout(r, 1500));
     const url = `${DOCS_BASE_URL}/${slug}`;
     try {
       const response = await fetchWithRetry(url);

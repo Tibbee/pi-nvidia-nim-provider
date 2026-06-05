@@ -102,6 +102,7 @@ function metadataToModelConfig(entry: MetadataEntry): NimModelConfig {
     thinkingLevelMap,
     compat,
     exampleRequestExtra: entry.exampleRequestExtra,
+    headers: { "NVCF-POLL-SECONDS": "3600" },
   };
 }
 

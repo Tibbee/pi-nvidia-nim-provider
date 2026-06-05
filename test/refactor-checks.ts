@@ -53,18 +53,37 @@ assert.equal(
 );
 
 // 6) after_provider_response should only warn for NVIDIA rate limits.
-assert.equal(
-  handleAfterProviderResponse({ provider: "openrouter", status: 429, headers: { "retry-after": "3" } }),
-  undefined
-);
-assert.equal(
-  handleAfterProviderResponse({ provider: "nvidia-nim", status: 200, headers: { "retry-after": "3" } }),
-  undefined
-);
-assert.equal(
-  handleAfterProviderResponse({ provider: "nvidia-nim", status: 429, headers: { "retry-after": "3" } }),
-  "NVIDIA NIM rate-limited. Retry after 3."
-);
+// The function returns void and calls ctx.ui.notify(), so we mock the context.
+function mockCtx(provider: string) {
+  const notifications: Array<{ msg: string; level: string }> = [];
+  return {
+    model: { provider } as any,
+    ui: { notify: (msg: string, level: string) => { notifications.push({ msg, level }); } },
+    notifications,
+  };
+}
+
+const ctx1 = mockCtx("openrouter");
+handleAfterProviderResponse({ status: 429, headers: { "retry-after": "3" } }, ctx1 as any);
+assert.equal(ctx1.notifications.length, 0, "non-nvidia-nim should not notify");
+
+const ctx2 = mockCtx("nvidia-nim");
+handleAfterProviderResponse({ status: 200, headers: { "retry-after": "3" } }, ctx2 as any);
+assert.equal(ctx2.notifications.length, 0, "status 200 should not notify");
+
+const ctx3 = mockCtx("nvidia-nim");
+handleAfterProviderResponse({ status: 429, headers: { "retry-after": "3" } }, ctx3 as any);
+assert.equal(ctx3.notifications.length, 1, "status 429 should notify");
+assert.equal(ctx3.notifications[0].msg, "NVIDIA NIM rate-limited. Retry after 3.");
+assert.equal(ctx3.notifications[0].level, "warning");
+
+const ctx4 = mockCtx("nvidia-nim");
+handleAfterProviderResponse({ status: 429, headers: {} }, ctx4 as any);
+assert.equal(ctx4.notifications.length, 1, "429 without retry-after should notify");
+assert.equal(ctx4.notifications[0].msg, "NVIDIA NIM rate-limited.");
+
+// Also handle undefined ctx gracefully.
+handleAfterProviderResponse({ status: 429, headers: {} }, undefined as any);
 
 // 7) DeepSeek V4 rewrite should move thinking fields into chat_template_kwargs.
 const deepseekPayload = {

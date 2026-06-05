@@ -86,10 +86,10 @@ const cases = [
     expected: undefined,
   },
   {
-    name: "non-NVIDIA providers are untouched",
+    name: "non-NIM models are untouched",
     provider: "openrouter",
     payload: {
-      model: "deepseek-ai/deepseek-v4-flash",
+      model: "openai/gpt-4o",
       thinking: { type: "enabled" },
       reasoning_effort: "high",
       messages: [{ role: "user", content: "hello" }],

@@ -428,6 +428,26 @@
     "supportsVision": false
   },
   {
+    "id": "nvidia/nemotron-3-ultra-550b-a55b",
+    "maxOutputTokens": 32768,
+    "supportsReasoning": true,
+    "reasoningEffortValues": [
+      "none",
+      "medium",
+      "high"
+    ],
+    "reasoningBudget": 32768,
+    "thinkingFormat": "nemotron-3-super-effort",
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": true
+      },
+      "reasoning_budget": 16384
+    },
+    "contextWindow": 1000000,
+    "supportsVision": false
+  },
+  {
     "id": "nvidia/ai-synthetic-video-detector",
     "supportsReasoning": false,
     "supportsVision": false
@@ -977,5 +997,18 @@
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
     "supportsVision": false
+  },
+  {
+    "id": "google/diffusiongemma-26b-a4b-it",
+    "contextWindow": 262144,
+    "maxOutputTokens": 32678,
+    "supportsReasoning": true,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": true
+      }
+    },
+    "thinkingFormat": "qwen-chat-template",
+    "supportsVision": true
   }
 ]

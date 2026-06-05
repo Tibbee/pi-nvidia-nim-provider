@@ -44,16 +44,6 @@ pi
 
 Look for the `nvidia-nim/` prefix in the model picker.
 
-### Notable models
-
-| Category | Examples |
-|----------|----------|
-| Reasoning | `deepseek-ai/deepseek-v4-flash`, `nvidia/llama-3.1-nemotron-ultra-253b-v1` |
-| Chat | `meta/llama-3.3-70b-instruct`, `qwen/qwen3-235b-a14b` |
-| Code | `qwen/qwen3-coder`, `microsoft/phi-4-mini-instruct` |
-| Vision | `google/gemma-3-12b-it`, `microsoft/phi-4-multimodal-instruct` |
-| Chinese-optimized | `z-ai/glm-5.1`, `stepfun-ai/step-3.5-flash` |
-
 ## Design
 
 - Uses pi's built-in **`openai-completions`** streaming — no custom `streamSimple`.

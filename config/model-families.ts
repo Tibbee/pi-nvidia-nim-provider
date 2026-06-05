@@ -459,6 +459,8 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       supportsDeveloperRole: false,
       supportsStore: false,
       supportsReasoningEffort: false,
+      supportsStrictMode: false,
+      supportsLongCacheRetention: false,
       maxTokensField: "max_tokens",
     },
   },

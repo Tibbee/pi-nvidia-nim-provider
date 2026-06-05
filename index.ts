@@ -66,7 +66,7 @@ export function handleAfterProviderResponse(
   event: { status: number; headers?: Record<string, string | undefined> },
   ctx: ExtensionContext,
 ): void {
-  if (ctx.model?.provider !== "nvidia-nim") return;
+  if (ctx?.model?.provider !== "nvidia-nim") return;
   if (event.status !== 429) return;
 
   const retryAfter = event.headers?.["retry-after"];

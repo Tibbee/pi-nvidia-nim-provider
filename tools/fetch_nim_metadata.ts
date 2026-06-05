@@ -16,18 +16,34 @@ const DOCS_BASE_URL = "https://docs.api.nvidia.com/nim/reference";
 const BUILD_BASE_URL = "https://build.nvidia.com";
 const OUTPUT_FILE = path.join(__dirname, "../models/metadata.json");
 
-const BATCH_SIZE = 15;
-const DELAY_MS = 100;
+const DEFAULT_BATCH_SIZE = 3;
+const DEFAULT_DELAY_MS = 800;
+
+const getNumericArg = (prefixes: string[], def: number): number => {
+  for (const p of prefixes) {
+    const arg = process.argv.find(a => a.startsWith(p));
+    if (arg) {
+      const val = arg.split("=")[1]?.trim();
+      const n = val ? parseInt(val, 10) : NaN;
+      if (!isNaN(n) && n > 0) return n;
+    }
+  }
+  return def;
+};
 
 const verbose = process.argv.includes("--verbose");
 const fetchCards = process.argv.includes("--cards");
 const fullMode = process.argv.includes("--full");
+const resumeMode = process.argv.includes("--resume");
 const singleModel = process.argv
   .find(arg => arg.startsWith("--model=") || arg.startsWith("-m=") || arg.startsWith("--model-name="))
   ?.replace(/^--?model[=-]?/, "");
 const outputFile = process.argv
   .find(arg => arg.startsWith("--output=") || arg.startsWith("-o="))
   ?.replace(/^--?output[=-]?/, "") || OUTPUT_FILE;
+
+const BATCH_SIZE = getNumericArg(["--batch-size="], DEFAULT_BATCH_SIZE);
+const DELAY_MS   = getNumericArg(["--delay="], DEFAULT_DELAY_MS);
 
 // Scraper data shape — only fields actually used by the extension at runtime.
 type ModelCategory = "chat" | "code" | "reasoning" | "embedding" | "vision" | "guard" | "other";
@@ -236,6 +252,29 @@ const FALLBACK_LIMITS_MAP: Record<string, { contextWindow?: number; maxOutputTok
   "google/gemma-2b": { contextWindow: 8192, maxOutputTokens: 8192 },
   "deepseek-ai/deepseek-coder-6.7b-instruct": { contextWindow: 16384, maxOutputTokens: 4096 },
 };
+
+/**
+ * Fetch wrapper with exponential backoff for 429 / non-OK responses.
+ * When verbose is enabled, every non-OK attempt is logged.
+ */
+async function fetchWithRetry(url: string, options?: RequestInit, retries = 3, backoff = 800): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    const res = await fetch(url, options);
+    if (res.ok) return res;
+    if (verbose) {
+      console.log(`  ⚠ fetch attempt ${i + 1}/${retries} failed: ${url} → ${res.status} ${res.statusText}`);
+    }
+    if (res.status === 429 && i < retries - 1) {
+      const delay = backoff * (i + 1);
+      if (verbose) console.log(`  ⏳ backing off ${delay}ms before retry…`);
+      await new Promise(r => setTimeout(r, delay));
+      continue;
+    }
+    // Non-429 error; stop retry immediately
+    break;
+  }
+  return fetch(url, options); // return the final response (likely non-OK)
+}
 
 async function fetchModelIds(apiKey: string): Promise<{ id: string; owned_by: string }[]> {
   console.log("Fetching model IDs from NVIDIA NIM API...");
@@ -562,7 +601,7 @@ function parseStructuredContextWindow(html: string): number | undefined {
 async function fetchBuildPageData(modelId: string): Promise<{ html: string; found: boolean }> {
   const url = `${BUILD_BASE_URL}/${modelId}`;
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    const res = await fetchWithRetry(url, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) return { html: "", found: false };
     const html = await res.text();
     const hasData = html.length > 5000;
@@ -714,7 +753,7 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   for (const slug of slugVariations) {
     const url = `${DOCS_BASE_URL}/${slug}-infer`;
     try {
-      const response = await fetch(url);
+      const response = await fetchWithRetry(url);
       if (response.ok) {
         const html = await response.text();
         combinedHtmlStr += html;
@@ -848,7 +887,7 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   for (const slug of slugVariations) {
     const url = `${DOCS_BASE_URL}/${slug}`;
     try {
-      const response = await fetch(url);
+      const response = await fetchWithRetry(url);
       if (response.ok) {
         structuredHtml = await response.text();
         break;
@@ -1051,28 +1090,78 @@ async function main() {
     const rawModels = await fetchModelIds(NVIDIA_API_KEY!);
     const modelMap = new Map<string, { id: string; owned_by: string }>();
     for (const m of rawModels) modelMap.set(m.id, m);
-    models = Array.from(modelMap.values());
+    const allModels = Array.from(modelMap.values());
 
-    console.log(`Found ${models.length} unique models. Fetching technical metadata...`);
-
-    const results: ModelMetadata[] = [];
-    for (let i = 0; i < models.length; i += BATCH_SIZE) {
-      const batch = models.slice(i, i + BATCH_SIZE);
-      console.log(
-        `Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(models.length / BATCH_SIZE)}...`
-      );
-      const batchResults = await Promise.all(
-        batch.map(m => fetchModelData(m.id, m.owned_by))
-      );
-      results.push(...batchResults);
-      if (i + BATCH_SIZE < models.length) {
-        await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+    // Load existing metadata if resuming
+    let existingResults: ModelMetadata[] = [];
+    let modelsToFetch = allModels;
+    
+    if (resumeMode && fs.existsSync(outputFile)) {
+      try {
+        const existing = JSON.parse(fs.readFileSync(outputFile, "utf8"));
+        existingResults = existing as ModelMetadata[];
+        const existingIds = new Set(existingResults.map(r => r.id));
+        modelsToFetch = allModels.filter(m => !existingIds.has(m.id));
+        console.log(`Resume mode: ${existingResults.length} models already cached, ${modelsToFetch.length} to fetch`);
+      } catch (e) {
+        console.warn("Failed to load existing metadata, starting fresh");
       }
     }
 
+    if (modelsToFetch.length === 0) {
+      console.log("All models already cached. Use without --resume to refetch.");
+      return;
+    }
+
+    console.log(`Fetching ${modelsToFetch.length} models (batchSize=${BATCH_SIZE}, delay=${DELAY_MS}ms)...`);
+
+    const newResults: ModelMetadata[] = [];
+    for (let i = 0; i < modelsToFetch.length; i += BATCH_SIZE) {
+      const batch = modelsToFetch.slice(i, i + BATCH_SIZE);
+      const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(modelsToFetch.length / BATCH_SIZE);
+      console.log(
+        `Processing batch ${batchNum}/${totalBatches} (${i + 1}-${Math.min(i + BATCH_SIZE, modelsToFetch.length)} of ${modelsToFetch.length})...`
+      );
+      
+      try {
+        const batchResults = await Promise.all(
+          batch.map(m => fetchModelData(m.id, m.owned_by))
+        );
+        newResults.push(...batchResults);
+        
+        // Save progress after each batch in resume mode
+        if (resumeMode) {
+          const combined = [...existingResults, ...newResults];
+          const stripped = [...combined];
+          stripUnusedFields(stripped);
+          fs.writeFileSync(outputFile, JSON.stringify(stripped, null, 2));
+          console.log(`  ✓ Saved progress: ${stripped.length} models total`);
+        }
+        
+        if (i + BATCH_SIZE < modelsToFetch.length) {
+          await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+        }
+      } catch (error) {
+        console.error(`\nBatch ${batchNum} failed:`, error);
+        if (resumeMode) {
+          console.log(`Progress saved. Resume with: npm run fetch -- --resume`);
+          const combined = [...existingResults, ...newResults];
+          const stripped = [...combined];
+          stripUnusedFields(stripped);
+          fs.writeFileSync(outputFile, JSON.stringify(stripped, null, 2));
+        }
+        throw error;
+      }
+    }
+
+    const results = [...existingResults, ...newResults];
     stripUnusedFields(results);
     fs.writeFileSync(outputFile, JSON.stringify(results, null, 2));
     console.log(`\nWritten ${results.length} models to: ${outputFile}`);
+    if (resumeMode && newResults.length > 0) {
+      console.log(`  (${newResults.length} new, ${existingResults.length} existing)`);
+    }
 
     const summary = {
       total: results.length,

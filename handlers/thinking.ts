@@ -35,8 +35,16 @@ export function applyCustomThinkingFormat(
   payload: Payload,
   format: string
 ): TransformResult {
+  // Guard: only transform when there are thinking params to convert.
+  // If pi didn't send thinking/reasoning_effort, the API defaults to no thinking.
+  // Exception: qwen-chat-template for GLM needs explicit disabling (handled below).
+  const hasThinkingParams =
+    payload.thinking !== undefined ||
+    payload.reasoning_effort !== undefined;
+
   switch (format) {
     case "deepseek-v4": {
+      if (!hasThinkingParams) return { modified: false };
       // DeepSeek V4: thinking + reasoning_effort in chat_template_kwargs.
       // When thinking is off, only set thinking: false (no reasoning_effort).
       const thinking = isDeepSeekThinkingEnabled(payload);
@@ -58,6 +66,7 @@ export function applyCustomThinkingFormat(
     }
 
     case "deepseek-nim": {
+      if (!hasThinkingParams) return { modified: false };
       // DeepSeek/Nemotron/Kimi only need chat_template_kwargs.thinking.
       const thinking = isDeepSeekThinkingEnabled(payload);
       const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
@@ -73,6 +82,7 @@ export function applyCustomThinkingFormat(
     }
 
     case "thinking-budget": {
+      if (!hasThinkingParams) return { modified: false };
       // Always-on thinking with top-level thinking_budget param (Seed OSS).
       // Clean up any pi-injected params; the budget is injected by index.ts.
       delete payload.thinking;
@@ -81,6 +91,7 @@ export function applyCustomThinkingFormat(
     }
 
     case "nemotron-3-super-effort": {
+      if (!hasThinkingParams) return { modified: false };
       // Nemotron 3 Super 120B: enable_thinking + low_effort + reasoning_budget.
       // Pi sends reasoning_effort (none/low/high); convert to kwargs.
       const effort = getReasoningEffort(payload);
@@ -106,6 +117,7 @@ export function applyCustomThinkingFormat(
     }
 
     case "nemotron-system-detailed": {
+      if (!hasThinkingParams) return { modified: false };
       // Llama 3.3 Nemotron Super 49B v1: system message "detailed thinking on/off".
       const thinking = getReasoningEffort(payload) != null;
 
@@ -128,6 +140,7 @@ export function applyCustomThinkingFormat(
     }
 
     case "nemotron-system-think": {
+      if (!hasThinkingParams) return { modified: false };
       // Nemotron Super v1.5 / Nano 9B v2: system message /think or /no_think.
       const thinking = getReasoningEffort(payload) != null;
 

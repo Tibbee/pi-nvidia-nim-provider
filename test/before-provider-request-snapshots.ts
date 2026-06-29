@@ -76,7 +76,7 @@ const cases = [
       ],
       min_thinking_tokens: 1024,
       max_thinking_tokens: 4096,
-      max_tokens: 4096,
+      max_tokens: 8192,
     },
   },
   {

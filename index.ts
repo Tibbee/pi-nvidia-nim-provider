@@ -58,7 +58,7 @@ export function handleBeforeProviderRequest(event: { payload: unknown }) {
 
   // Expose reasoning/thinking budget when available (schema-extracted).
   // Different models use different parameter names for the same concept.
-  if (modelConfig.reasoningBudget != null && thinkingEnabledBeforeTransform) {
+  if (modelConfig.reasoningBudget != null && thinkingEnabledAfterTransform) {
     const budgetParamName = format === "thinking-budget" ? "thinking_budget" : "reasoning_budget";
     payload[budgetParamName] = modelConfig.reasoningBudget;
     modified = true;

@@ -284,10 +284,10 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // Nemotron 3 Super 120B uses enable_thinking + low_effort flag + reasoning_budget.
+  // Nemotron 3 Super 120B and Ultra 550B use enable_thinking + low_effort flag + reasoning_budget.
   {
     name: "nemotron-3-super-effort",
-    pattern: /^nvidia\/nemotron-3-super-120b-a12b/,
+    pattern: /^nvidia\/nemotron-3-(super-120b-a12b|ultra-550b-a55b)/,
     compat: {
       supportsDeveloperRole: false,
       maxTokensField: "max_tokens",

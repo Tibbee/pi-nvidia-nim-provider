@@ -8,8 +8,8 @@
   },
   {
     "id": "abacusai/dracarys-llama-3.1-70b-instruct",
-    "maxOutputTokens": 1024,
     "contextWindow": 131072,
+    "maxOutputTokens": 8192,
     "supportsReasoning": false,
     "supportsVision": false
   },
@@ -44,12 +44,9 @@
     "id": "bytedance/seed-oss-36b-instruct",
     "maxOutputTokens": 32768,
     "reasoningBudget": 16384,
-    "exampleRequestExtra": {
-      "thinking_budget": 512
-    },
-    "thinkingFormat": "thinking-budget",
     "supportsReasoning": true,
     "contextWindow": 524288,
+    "thinkingFormat": "thinking-budget",
     "supportsVision": false
   },
   {
@@ -69,39 +66,39 @@
   {
     "id": "deepseek-ai/deepseek-v4-flash",
     "maxOutputTokens": 16384,
-    "supportsReasoning": true,
     "reasoningEffortValues": [
       "none",
       "high",
       "max"
     ],
-    "thinkingFormat": "deepseek-v4",
     "exampleRequestExtra": {
       "chat_template_kwargs": {
         "thinking": true,
         "reasoning_effort": "max"
       }
     },
+    "supportsReasoning": true,
+    "thinkingFormat": "deepseek-v4",
     "contextWindow": 1000000,
     "supportsVision": false
   },
   {
     "id": "deepseek-ai/deepseek-v4-pro",
     "maxOutputTokens": 16384,
-    "supportsReasoning": true,
     "reasoningEffortValues": [
       "none",
       "high",
       "max"
     ],
-    "thinkingFormat": "deepseek-v4",
     "exampleRequestExtra": {
       "chat_template_kwargs": {
         "thinking": true,
         "reasoning_effort": "max"
       }
     },
-    "contextWindow": 1000000,
+    "supportsReasoning": true,
+    "contextWindow": 1048576,
+    "thinkingFormat": "deepseek-v4",
     "supportsVision": false
   },
   {
@@ -111,7 +108,6 @@
   },
   {
     "id": "google/codegemma-7b",
-    "maxOutputTokens": 1024,
     "supportsReasoning": false,
     "supportsVision": false
   },
@@ -121,9 +117,21 @@
     "supportsVision": false
   },
   {
+    "id": "google/diffusiongemma-26b-a4b-it",
+    "maxOutputTokens": 32768,
+    "supportsVision": true,
+    "supportsReasoning": true,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": true
+      }
+    },
+    "contextWindow": 262144
+  },
+  {
     "id": "google/gemma-2-2b-it",
     "maxOutputTokens": 4096,
-    "contextWindow": 8192,
+    "contextWindow": 4096,
     "supportsReasoning": false,
     "supportsVision": false
   },
@@ -139,41 +147,41 @@
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsVision": true
+    "supportsVision": false
   },
   {
     "id": "google/gemma-3-4b-it",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsVision": true
+    "supportsVision": false
   },
   {
     "id": "google/gemma-3n-e2b-it",
     "maxOutputTokens": 8192,
+    "supportsVision": true,
     "contextWindow": 131072,
-    "supportsReasoning": false,
-    "supportsVision": true
+    "supportsReasoning": false
   },
   {
     "id": "google/gemma-3n-e4b-it",
     "maxOutputTokens": 8192,
+    "supportsVision": true,
     "contextWindow": 131072,
-    "supportsReasoning": false,
-    "supportsVision": true
+    "supportsReasoning": false
   },
   {
     "id": "google/gemma-4-31b-it",
     "maxOutputTokens": 32768,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsReasoning": true,
     "supportsVision": true,
+    "supportsReasoning": true,
     "exampleRequestExtra": {
       "chat_template_kwargs": {
         "enable_thinking": true
       }
     },
-    "contextWindow": 262144
+    "contextWindow": 262144,
+    "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "google/recurrentgemma-2b",
@@ -227,10 +235,10 @@
   },
   {
     "id": "meta/llama-3.2-11b-vision-instruct",
-    "maxOutputTokens": 8192,
-    "supportsVision": true,
     "contextWindow": 131072,
-    "supportsReasoning": false
+    "maxOutputTokens": 8192,
+    "supportsReasoning": false,
+    "supportsVision": false
   },
   {
     "id": "meta/llama-3.2-1b-instruct",
@@ -248,35 +256,34 @@
   },
   {
     "id": "meta/llama-3.2-90b-vision-instruct",
-    "maxOutputTokens": 8192,
-    "supportsVision": true,
     "contextWindow": 131072,
-    "supportsReasoning": false
+    "maxOutputTokens": 8192,
+    "supportsReasoning": false,
+    "supportsVision": false
   },
   {
     "id": "meta/llama-3.3-70b-instruct",
-    "maxOutputTokens": 4096,
     "contextWindow": 131072,
+    "maxOutputTokens": 8192,
     "supportsReasoning": false,
     "supportsVision": false
   },
   {
     "id": "meta/llama-4-maverick-17b-128e-instruct",
-    "maxOutputTokens": 8192,
-    "supportsVision": true,
     "contextWindow": 131072,
-    "supportsReasoning": false
+    "maxOutputTokens": 8192,
+    "supportsReasoning": false,
+    "supportsVision": false
   },
   {
     "id": "meta/llama-guard-4-12b",
     "supportsVision": true,
-    "maxOutputTokens": 9223372036854776000,
     "supportsReasoning": false
   },
   {
     "id": "meta/llama2-70b",
-    "maxOutputTokens": 1024,
     "contextWindow": 4096,
+    "maxOutputTokens": 4096,
     "supportsReasoning": false,
     "supportsVision": false
   },
@@ -290,7 +297,7 @@
     "contextWindow": 131072,
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
-    "supportsVision": true
+    "supportsVision": false
   },
   {
     "id": "microsoft/phi-3.5-moe-instruct",
@@ -309,23 +316,23 @@
   {
     "id": "microsoft/phi-4-multimodal-instruct",
     "maxOutputTokens": 8192,
+    "supportsVision": true,
     "contextWindow": 131072,
-    "supportsReasoning": false,
-    "supportsVision": true
+    "supportsReasoning": false
   },
   {
     "id": "minimaxai/minimax-m2.7",
     "maxOutputTokens": 16384,
-    "supportsReasoning": true,
     "contextWindow": 204800,
+    "supportsReasoning": false,
     "supportsVision": false
   },
   {
     "id": "minimaxai/minimax-m3",
     "maxOutputTokens": 16384,
+    "supportsVision": true,
     "supportsReasoning": true,
-    "contextWindow": 1000000,
-    "supportsVision": true
+    "contextWindow": 1000000
   },
   {
     "id": "mistralai/codestral-22b-instruct-v0.1",
@@ -338,7 +345,7 @@
     "id": "mistralai/ministral-14b-instruct-2512",
     "maxOutputTokens": 8192,
     "supportsVision": true,
-    "contextWindow": 131072,
+    "contextWindow": 262144,
     "supportsReasoning": false
   },
   {
@@ -366,20 +373,20 @@
     "id": "mistralai/mistral-large-3-675b-instruct-2512",
     "maxOutputTokens": 8192,
     "supportsVision": true,
-    "contextWindow": 131072,
-    "supportsReasoning": false
+    "supportsReasoning": true,
+    "contextWindow": 262144
   },
   {
     "id": "mistralai/mistral-medium-3.5-128b",
     "maxOutputTokens": 32768,
-    "supportsReasoning": true,
+    "supportsVision": true,
     "reasoningEffortValues": [
       "none",
       "high"
     ],
-    "supportsVision": true,
-    "thinkingFormat": "reasoning-effort",
-    "contextWindow": 262144
+    "supportsReasoning": true,
+    "contextWindow": 262144,
+    "thinkingFormat": "reasoning-effort"
   },
   {
     "id": "mistralai/mistral-nemotron",
@@ -391,14 +398,14 @@
   {
     "id": "mistralai/mistral-small-4-119b-2603",
     "maxOutputTokens": 32768,
-    "supportsReasoning": true,
+    "supportsVision": true,
     "reasoningEffortValues": [
       "none",
       "high"
     ],
-    "supportsVision": true,
-    "thinkingFormat": "reasoning-effort",
-    "contextWindow": 131072
+    "supportsReasoning": true,
+    "contextWindow": 262144,
+    "thinkingFormat": "reasoning-effort"
   },
   {
     "id": "mistralai/mixtral-8x22b-v0.1",
@@ -417,15 +424,15 @@
   {
     "id": "moonshotai/kimi-k2.6",
     "maxOutputTokens": 65536,
-    "thinkingFormat": "deepseek-nim",
-    "supportsReasoning": true,
     "supportsVision": true,
+    "supportsReasoning": true,
     "exampleRequestExtra": {
       "chat_template_kwargs": {
         "thinking": true
       }
     },
-    "contextWindow": 262144
+    "contextWindow": 262144,
+    "thinkingFormat": "deepseek-nim"
   },
   {
     "id": "nv-mistralai/mistral-nemo-12b-instruct",
@@ -435,34 +442,22 @@
     "supportsVision": false
   },
   {
-    "id": "nvidia/nemotron-3-ultra-550b-a55b",
-    "maxOutputTokens": 32768,
-    "supportsReasoning": true,
-    "reasoningEffortValues": [
-      "none",
-      "medium",
-      "high"
-    ],
-    "reasoningBudget": 32768,
-    "thinkingFormat": "nemotron-3-super-effort",
-    "exampleRequestExtra": {
-      "chat_template_kwargs": {
-        "enable_thinking": true
-      },
-      "reasoning_budget": 16384
-    },
-    "contextWindow": 1000000,
-    "supportsVision": false
-  },
-  {
     "id": "nvidia/ai-synthetic-video-detector",
     "supportsReasoning": false,
     "supportsVision": false
   },
   {
     "id": "nvidia/cosmos-reason2-8b",
-    "supportsReasoning": false,
-    "supportsVision": false
+    "maxOutputTokens": 4096,
+    "supportsVision": true,
+    "exampleRequestExtra": {
+      "media_io_kwargs": {
+        "video": {
+          "fps": 4
+        }
+      }
+    },
+    "supportsReasoning": true
   },
   {
     "id": "nvidia/embed-qa-4",
@@ -471,15 +466,6 @@
   },
   {
     "id": "nvidia/gliner-pii",
-    "exampleRequestExtra": {
-      "labels": [
-        "first_name",
-        "last_name",
-        "address",
-        "date"
-      ],
-      "threshold": 0.4
-    },
     "supportsReasoning": false,
     "supportsVision": false
   },
@@ -492,7 +478,6 @@
         "enable_thinking": true
       }
     },
-    "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true
   },
   {
@@ -504,8 +489,8 @@
   },
   {
     "id": "nvidia/llama-3.1-nemoguard-8b-topic-control",
-    "maxOutputTokens": 1024,
     "contextWindow": 131072,
+    "maxOutputTokens": 8192,
     "supportsReasoning": false,
     "supportsVision": false
   },
@@ -525,8 +510,8 @@
   },
   {
     "id": "nvidia/llama-3.1-nemotron-nano-8b-v1",
-    "maxOutputTokens": 16384,
     "contextWindow": 131072,
+    "maxOutputTokens": 8192,
     "supportsReasoning": false,
     "supportsVision": false
   },
@@ -539,30 +524,21 @@
   },
   {
     "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
-    "thinkingFormat": "deepseek-nim",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
-    "supportsReasoning": true,
+    "supportsReasoning": false,
     "supportsVision": false
   },
   {
     "id": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
-    "maxOutputTokens": 16384,
     "thinkingFormat": "deepseek-nim",
-    "contextWindow": 131072,
     "supportsReasoning": true,
+    "contextWindow": 131072,
+    "maxOutputTokens": 8192,
     "supportsVision": false
   },
   {
     "id": "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
-    "exampleRequestExtra": {
-      "input": "What is the civil caseload in South Dakota courts?",
-      "input_type": "query",
-      "image": "https://assets.ngc.nvidia.com/products/api-catalog/nemo-retriever/embedding/court-sizing-metrics.png",
-      "image_name": "court-sizing-metrics.png",
-      "encoding_format": "float",
-      "truncate": "NONE"
-    },
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
@@ -570,12 +546,6 @@
   },
   {
     "id": "nvidia/llama-3.2-nv-embedqa-1b-v1",
-    "exampleRequestExtra": {
-      "input": "What is the capital of France?",
-      "input_type": "query",
-      "encoding_format": "float",
-      "truncate": "NONE"
-    },
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
@@ -583,41 +553,29 @@
   },
   {
     "id": "nvidia/llama-3.3-nemotron-super-49b-v1",
-    "maxOutputTokens": 16384,
     "thinkingFormat": "nemotron-system-detailed",
-    "contextWindow": 131072,
     "supportsReasoning": true,
+    "contextWindow": 131072,
+    "maxOutputTokens": 8192,
     "supportsVision": false
   },
   {
     "id": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
-    "maxOutputTokens": 65536,
     "thinkingFormat": "nemotron-system-think",
-    "contextWindow": 131072,
     "supportsReasoning": true,
+    "contextWindow": 131072,
+    "maxOutputTokens": 8192,
     "supportsVision": false
   },
   {
     "id": "nvidia/llama-nemotron-embed-1b-v2",
-    "exampleRequestExtra": {
-      "input": "What is the capital of France?",
-      "input_type": "query",
-      "encoding_format": "float",
-      "truncate": "NONE"
-    },
+    "contextWindow": 8192,
     "supportsReasoning": false,
     "supportsVision": false
   },
   {
     "id": "nvidia/llama-nemotron-embed-vl-1b-v2",
-    "exampleRequestExtra": {
-      "input": "What is the civil caseload in South Dakota courts?",
-      "input_type": "query",
-      "image": "https://assets.ngc.nvidia.com/products/api-catalog/nemo-retriever/embedding/court-sizing-metrics.png",
-      "image_name": "court-sizing-metrics.png",
-      "encoding_format": "float",
-      "truncate": "NONE"
-    },
+    "contextWindow": 8192,
     "supportsReasoning": false,
     "supportsVision": false
   },
@@ -645,55 +603,91 @@
     "id": "nvidia/nemotron-3-content-safety",
     "maxOutputTokens": 4096,
     "supportsVision": true,
-    "thinkingFormat": "deepseek-nim",
-    "supportsReasoning": true
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "request_categories": "/categories"
+      }
+    },
+    "supportsReasoning": true,
+    "contextWindow": 131072
   },
   {
     "id": "nvidia/nemotron-3-nano-30b-a3b",
     "maxOutputTokens": 32768,
+    "reasoningBudget": 32768,
     "exampleRequestExtra": {
       "chat_template_kwargs": {
         "enable_thinking": true
       }
     },
-    "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true,
+    "contextWindow": 1048576,
+    "thinkingFormat": "qwen-chat-template",
     "supportsVision": false
   },
   {
     "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
     "maxOutputTokens": 65536,
-    "reasoningBudget": 32768,
     "supportsVision": true,
+    "reasoningBudget": 32768,
     "exampleRequestExtra": {
-      "reasoning_budget": 16384,
       "chat_template_kwargs": {
         "enable_thinking": true
       }
     },
-    "thinkingFormat": "qwen-chat-template",
+    "supportsReasoning": true,
     "contextWindow": 262144,
-    "supportsReasoning": true
+    "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "nvidia/nemotron-3-super-120b-a12b",
     "maxOutputTokens": 32768,
-    "supportsReasoning": true,
+    "reasoningBudget": 32768,
     "reasoningEffortValues": [
       "none",
       "low",
       "high"
     ],
-    "reasoningBudget": 32768,
-    "thinkingFormat": "nemotron-3-super-effort",
     "exampleRequestExtra": {
       "chat_template_kwargs": {
-        "enable_thinking": true
-      },
-      "reasoning_budget": 8192
+        "enable_thinking": false
+      }
     },
+    "supportsReasoning": true,
+    "contextWindow": 1048576,
+    "thinkingFormat": "nemotron-3-super-effort",
+    "supportsVision": false
+  },
+  {
+    "id": "nvidia/nemotron-3-ultra-550b-a55b",
+    "maxOutputTokens": 32768,
+    "reasoningBudget": 32768,
+    "reasoningEffortValues": [
+      "none",
+      "medium",
+      "high"
+    ],
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "supportsReasoning": true,
+    "thinkingFormat": "nemotron-3-super-effort",
     "contextWindow": 1000000,
     "supportsVision": false
+  },
+  {
+    "id": "nvidia/nemotron-3.5-content-safety",
+    "maxOutputTokens": 4096,
+    "supportsVision": true,
+    "supportsReasoning": true,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "request_categories": "/categories"
+      }
+    },
+    "contextWindow": 131072
   },
   {
     "id": "nvidia/nemotron-4-340b-instruct",
@@ -718,7 +712,7 @@
   },
   {
     "id": "nvidia/nemotron-mini-4b-instruct",
-    "maxOutputTokens": 4096,
+    "maxOutputTokens": 2048,
     "contextWindow": 4096,
     "supportsReasoning": false,
     "supportsVision": false
@@ -741,7 +735,6 @@
     "id": "nvidia/nemotron-parse",
     "maxOutputTokens": 8192,
     "supportsVision": true,
-    "thinkingFormat": "deepseek-nim",
     "supportsReasoning": true
   },
   {
@@ -751,34 +744,16 @@
   },
   {
     "id": "nvidia/nv-embed-v1",
-    "exampleRequestExtra": {
-      "input": "What is the capital of France?",
-      "input_type": "query",
-      "encoding_format": "float",
-      "truncate": "NONE"
-    },
     "supportsReasoning": false,
     "supportsVision": false
   },
   {
     "id": "nvidia/nv-embedcode-7b-v1",
-    "exampleRequestExtra": {
-      "input": "What is the capital of France?",
-      "input_type": "query",
-      "encoding_format": "float",
-      "truncate": "NONE"
-    },
     "supportsReasoning": false,
     "supportsVision": false
   },
   {
     "id": "nvidia/nv-embedqa-e5-v5",
-    "exampleRequestExtra": {
-      "input": "What is the capital of France?",
-      "input_type": "query",
-      "encoding_format": "float",
-      "truncate": "NONE"
-    },
     "supportsReasoning": false,
     "supportsVision": false
   },
@@ -796,10 +771,14 @@
   },
   {
     "id": "nvidia/nvidia-nemotron-nano-9b-v2",
-    "thinkingFormat": "nemotron-system-think",
+    "maxOutputTokens": 8192,
+    "exampleRequestExtra": {
+      "min_thinking_tokens": 500,
+      "max_thinking_tokens": 2000
+    },
     "supportsReasoning": true,
-    "contextWindow": 4096,
-    "maxOutputTokens": 4096,
+    "contextWindow": 131072,
+    "thinkingFormat": "nemotron-system-think",
     "supportsVision": false
   },
   {
@@ -809,20 +788,17 @@
   },
   {
     "id": "nvidia/riva-translate-4b-instruct-v1.1",
-    "maxOutputTokens": 4096,
     "supportsReasoning": false,
     "supportsVision": false
   },
   {
     "id": "nvidia/vila",
-    "maxOutputTokens": 2048,
-    "supportsVision": true,
-    "supportsReasoning": false
+    "supportsReasoning": false,
+    "supportsVision": false
   },
   {
     "id": "openai/gpt-oss-120b",
     "maxOutputTokens": 4096,
-    "supportsReasoning": true,
     "reasoningEffortValues": [
       "low",
       "medium",
@@ -844,14 +820,14 @@
       "reasoning_effort": "medium",
       "max_output_tokens": 1000
     },
-    "thinkingFormat": "reasoning-effort",
+    "supportsReasoning": true,
     "contextWindow": 128000,
+    "thinkingFormat": "reasoning-effort",
     "supportsVision": false
   },
   {
     "id": "openai/gpt-oss-20b",
     "maxOutputTokens": 4096,
-    "supportsReasoning": true,
     "reasoningEffortValues": [
       "low",
       "medium",
@@ -873,54 +849,49 @@
       "reasoning_effort": "medium",
       "max_output_tokens": 1000
     },
-    "thinkingFormat": "reasoning-effort",
+    "supportsReasoning": true,
     "contextWindow": 128000,
-    "supportsVision": false
-  },
-  {
-    "id": "qwen/qwen3-coder-480b-a35b-instruct",
-    "maxOutputTokens": 16384,
-    "contextWindow": 262144,
-    "supportsReasoning": false,
+    "thinkingFormat": "reasoning-effort",
     "supportsVision": false
   },
   {
     "id": "qwen/qwen3-next-80b-a3b-instruct",
     "maxOutputTokens": 4096,
+    "supportsReasoning": true,
     "contextWindow": 262144,
-    "supportsReasoning": false,
     "supportsVision": false
   },
   {
     "id": "qwen/qwen3.5-122b-a10b",
     "maxOutputTokens": 32768,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsReasoning": true,
     "supportsVision": true,
+    "supportsReasoning": true,
     "exampleRequestExtra": {
       "chat_template_kwargs": {
         "enable_thinking": true
       }
     },
-    "contextWindow": 262144
+    "contextWindow": 262144,
+    "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "qwen/qwen3.5-397b-a17b",
     "maxOutputTokens": 32768,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsReasoning": true,
     "supportsVision": true,
+    "supportsReasoning": true,
     "exampleRequestExtra": {
       "chat_template_kwargs": {
         "enable_thinking": true
       }
     },
-    "contextWindow": 262144
+    "contextWindow": 262144,
+    "thinkingFormat": "qwen-chat-template"
   },
   {
     "id": "sarvamai/sarvam-m",
     "maxOutputTokens": 16384,
-    "supportsReasoning": false,
+    "supportsReasoning": true,
+    "contextWindow": 32768,
     "supportsVision": false
   },
   {
@@ -938,21 +909,21 @@
   {
     "id": "stepfun-ai/step-3.7-flash",
     "maxOutputTokens": 262144,
+    "supportsVision": true,
     "supportsReasoning": true,
-    "contextWindow": 256000,
-    "supportsVision": true
+    "contextWindow": 262144
   },
   {
     "id": "stockmark/stockmark-2-100b-instruct",
     "maxOutputTokens": 4096,
-    "contextWindow": 32768,
+    "contextWindow": 32000,
     "supportsReasoning": false,
     "supportsVision": false
   },
   {
     "id": "upstage/solar-10.7b-instruct",
-    "maxOutputTokens": 1024,
     "contextWindow": 4096,
+    "maxOutputTokens": 4096,
     "supportsReasoning": false,
     "supportsVision": false
   },
@@ -993,9 +964,9 @@
         "clear_thinking": false
       }
     },
-    "thinkingFormat": "qwen-chat-template",
     "supportsReasoning": true,
     "contextWindow": 131072,
+    "thinkingFormat": "qwen-chat-template",
     "supportsVision": false
   },
   {
@@ -1004,18 +975,5 @@
     "maxOutputTokens": 4096,
     "supportsReasoning": false,
     "supportsVision": false
-  },
-  {
-    "id": "google/diffusiongemma-26b-a4b-it",
-    "contextWindow": 262144,
-    "maxOutputTokens": 32678,
-    "supportsReasoning": true,
-    "exampleRequestExtra": {
-      "chat_template_kwargs": {
-        "enable_thinking": true
-      }
-    },
-    "thinkingFormat": "qwen-chat-template",
-    "supportsVision": true
   }
 ]

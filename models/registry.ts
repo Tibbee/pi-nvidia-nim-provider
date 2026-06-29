@@ -33,9 +33,9 @@ export function mapThinkingFormatToCompat(
       return { thinkingFormat: "qwen-chat-template" };
     case "deepseek-v4":
     case "deepseek-nim":
-      return { thinkingFormat: "deepseek" };
+      return {}; // Handled by before_provider_request handler
     case "minimax-inline":
-      return { requiresThinkingAsText: true };
+      return {}; // Handled by before_provider_request handler
     case "thinking-budget":
       return {}; // Handled by before_provider_request handler
     case "nemotron-3-super-effort":

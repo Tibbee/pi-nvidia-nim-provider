@@ -42,9 +42,13 @@ const fullMode = process.argv.includes("--full");
 const singleModel = process.argv
   .find(arg => arg.startsWith("--model=") || arg.startsWith("-m=") || arg.startsWith("--model-name="))
   ?.replace(/^--?model[=-]?/, "");
-const outputFile = process.argv
-  .find(arg => arg.startsWith("--output=") || arg.startsWith("-o="))
-  ?.replace(/^--?output[=-]?/, "") || OUTPUT_FILE;
+const explicitOutput = process.argv
+  .find(arg => arg.startsWith("--output=") || arg.startsWith("-o="));
+const outputFile = explicitOutput
+  ? explicitOutput.replace(/^--?output[=-]?/, "")
+  : singleModel
+    ? `test-${singleModel.replace(/\//g, "-")}.json`
+    : OUTPUT_FILE;
 
 const BATCH_SIZE = getNumericArg(["--batch-size="], DEFAULT_BATCH_SIZE);
 const DELAY_MS   = getNumericArg(["--delay="], DEFAULT_DELAY_MS);
@@ -153,7 +157,8 @@ function getYardstickFallback(modelId: string): { contextWindow?: number; maxOut
     { re: /dbrx/i, ctx: 32768, out: 4096 },
     { re: /solar-10\.7b/i, ctx: 4096, out: 4096 },
     { re: /seed-oss/i, ctx: 131072, out: 8192 },
-    { re: /step-3\.5/i, ctx: 256000, out: 262144 },
+    { re: /step-3\.5|step-3\.7/i, ctx: 256000, out: 262144 },
+    { re: /nemotron-3-ultra-550b/i, ctx: 1000000, out: 32768 },
     { re: /minimax-m3/i, ctx: 1000000, out: 16384 },
     { re: /minimax-m2\.[6-9]/i, ctx: 204800, out: 16384 },
     { re: /minimax/i, ctx: 131072, out: 16384 },
@@ -308,6 +313,71 @@ function extractOpenApiSpec(html: string): any | null {
   }
 }
 
+/**
+ * Extract context window size from modelcard page text.
+ * Patterns observed across NVIDIA build.nvidia.com modelcard pages:
+ *   - "Input context length: 131,072 tokens"
+ *   - "long context support up to 512K"
+ *   - "Context Length (ISL): 256K"
+ *   - "Context Length: 256k"
+ *   - "1M-token context" / "1M context"
+ *   - "context length up to 128K"
+ *   - "maximum context length is 8192"
+ */
+function extractContextFromPageText(html: string): number | undefined {
+  // Strip script/style content to avoid noise
+  const text = html
+    .replace(/<script[^>]*>[^<]*<\/script>/gi, " ")
+    .replace(/<style[^>]*>[^<]*<\/style>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&\w+;/g, " ")
+    .replace(/\s+/g, " ");
+
+  // Priority-ordered patterns — K-suffixed patterns first to avoid
+  // matching bare numbers that are actually K values
+  const patterns: { re: RegExp; multiplier: number }[] = [
+    // Most explicit patterns first — labeled context length fields
+    // "Input context length: 131,072 tokens" — explicit number with commas
+    { re: /Input context length:\s*([\d,]+)\s*tokens/i, multiplier: 1 },
+    // "Context Length (ISL): 256K" / "Context Length: 256k"
+    { re: /Context Length\s*(?:\(ISL\))?:\s*([\d,]+)\s*[Kk]/i, multiplier: 1024 },
+    // "Context Length (ISL): 1M"
+    { re: /Context Length\s*(?:\(ISL\))?:\s*([\d,]+)\s*M\b/i, multiplier: 1024 * 1024 },
+    // "Context Length (ISL): 262,144" — with comma (no K suffix)
+    { re: /Context Length\s*(?:\(ISL\))?:\s*([\d,]+)(?:\s*\(\d+k?\))?/i, multiplier: 1 },
+    // "context length up to 128K" / "long context support up to 512K"
+    { re: /(?:long\s+)?context\s+(?:length|support|window|size).{0,30}?up\s+to\s+(\d+)\s*[Kk]/i, multiplier: 1024 },
+    // "max sequence length: 8192" (embedding models)
+    { re: /max(?:imum)?\s+sequence\s+length:\s*(\d+)/i, multiplier: 1 },
+    // "maximum context length is 8192"
+    { re: /maximum\s+context\s+length\s+is\s+(\d+)/i, multiplier: 1 },
+    // Less explicit: "1M-token context" / "1M context"
+    { re: /(\d+)\s*M\s*(?:token\s+)?context/i, multiplier: 1024 * 1024 },
+    { re: /(\d+)\s*M-token\s+context/i, multiplier: 1024 * 1024 },
+    // "512K token context"
+    { re: /(\d+)\s*K\s*(?:token\s+)?context/i, multiplier: 1024 },
+    { re: /(\d+)\s*K-token\s+context/i, multiplier: 1024 },
+  ];
+
+  for (const { re, multiplier } of patterns) {
+    const match = text.match(re);
+    if (match) {
+      const raw = match[1].replace(/,/g, "");
+      const num = parseInt(raw, 10);
+      if (!isNaN(num) && num > 0 && isFinite(num)) {
+        const result = num * multiplier;
+        // Ignore results that are implausibly small (< 1024) —
+        // likely false positives from benchmark names or table rows
+        if (result >= 1024) {
+          return result;
+        }
+      }
+    }
+  }
+
+  return undefined;
+}
+
 // ─────────────────────────────────────────────────────────────
 // Metadata extraction from OpenAPI spec
 // ─────────────────────────────────────────────────────────────
@@ -381,12 +451,75 @@ function parseMetadataFromSpec(meta: ModelMetadata, spec: any): void {
     meta.supportsReasoning = true;
   }
 
+  // ── reasoning/thinking budget ──
+  const budgetProp = chatReqProps.thinking_budget ?? chatReqProps.reasoning_budget;
+  if (budgetProp) {
+    meta.reasoningBudget = budgetProp.maximum ?? budgetProp.default;
+  }
+
   // ── chat_template_kwargs → exampleRequestExtra ──
   if (ctkw?.default && typeof ctkw.default === "object") {
     meta.exampleRequestExtra = {
       chat_template_kwargs: ctkw.default,
       ...(meta.exampleRequestExtra ?? {}),
     };
+  }
+
+  // ── reasoning_effort enum → reasoningEffortValues ──
+  const reProp = chatReqProps.reasoning_effort;
+  if (reProp?.enum && Array.isArray(reProp.enum) && reProp.enum.length > 0) {
+    meta.reasoningEffortValues = reProp.enum.map((v: any) => String(v));
+    if (reProp.default != null) {
+      meta.reasoningEffortDefault = String(reProp.default);
+    }
+  }
+
+  // ── Extract example request extras from x-nvai-meta ──
+  // Scan ALL examples and pick the one with the most non-standard params.
+  // The first example is often basic; later examples may have thinking/chat_template_kwargs.
+  try {
+    const pathKey = Object.keys(spec.paths || {})[0];
+    const path = spec.paths?.[pathKey];
+    const examples = path?.post?.["x-nvai-meta"]?.examples;
+    if (examples?.length) {
+      let bestExtras: Record<string, any> | null = null;
+      let bestScore = 0;
+
+      for (const ex of examples) {
+        if (!ex.requestJson) continue;
+        try {
+          const parsed = JSON.parse(ex.requestJson);
+          const extras: Record<string, any> = {};
+          for (const [k, v] of Object.entries(parsed)) {
+            // Skip standard OpenAI params and budget params
+            // (budget is handled by dedicated reasoningBudget metadata field)
+            if (!STANDARD_OPENAI_PARAMS.has(k) &&
+                !["thinking_budget", "reasoning_budget"].includes(k)) {
+              extras[k] = v;
+            }
+          }
+          const count = Object.keys(extras).length;
+          // Score: prefer examples with chat_template_kwargs or thinking-related params
+          const hasThinking = Object.keys(extras).some(k =>
+            /chat_template_kwargs|thinking|reasoning_budget/i.test(k)
+          );
+          const score = count + (hasThinking ? 10 : 0);
+          if (score > bestScore) {
+            bestScore = score;
+            bestExtras = extras;
+          }
+        } catch {}
+      }
+
+      if (bestExtras && Object.keys(bestExtras).length > 0) {
+        meta.exampleRequestExtra = {
+          ...bestExtras,
+          ...(meta.exampleRequestExtra ?? {}),
+        };
+      }
+    }
+  } catch {
+    // Example JSON parsing is best-effort
   }
 
   // ── tool calling from broader schema scan ──
@@ -406,10 +539,13 @@ function detectThinkingFormat(modelId: string, _text?: string): string | undefin
   if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
   if (/^openai\/gpt-oss/.test(modelId)) return "reasoning-effort";
 
+  if (/^mistralai\/mistral-(medium|small)/.test(modelId)) return "reasoning-effort";
+
   if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1$/.test(modelId)) return "nemotron-system-detailed";
   if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1\.5/.test(modelId)) return "nemotron-system-think";
   if (/^nvidia\/nvidia-nemotron-nano-9b-v2/.test(modelId)) return "nemotron-system-think";
   if (/^nvidia\/nemotron-3-super-120b-a12b/.test(modelId)) return "nemotron-3-super-effort";
+  if (/^nvidia\/nemotron-3-ultra-550b/.test(modelId)) return "nemotron-3-super-effort";
   if (/^bytedance\/seed-oss/.test(modelId)) return "thinking-budget";
 
   if (/^deepseek-ai\/deepseek-(v3|r1)/.test(modelId)) return "deepseek-nim";
@@ -504,6 +640,15 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
       if (!meta.supportsReasoning && detectReasoningSupport(html)) {
         meta.supportsReasoning = true;
       }
+
+      // Fallback: extract context window from page text
+      if (!meta.contextWindow) {
+        const textCtx = extractContextFromPageText(html);
+        if (textCtx != null) {
+          meta.contextWindow = textCtx;
+          if (verbose) console.log(`  ✓ context from page text: ${textCtx}`);
+        }
+      }
     }
   } catch {
     // Modelcard fetch failed — will use fallbacks
@@ -545,7 +690,11 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     if (idCat !== "chat") meta.modelCategory = idCat;
   }
 
-  // ── 5. Vision: ensure inputModalities reflects supportsVision ──
+  // ── 5. Set explicit false for fields that were explicitly false before ──
+  if (meta.supportsReasoning == null) meta.supportsReasoning = false;
+  if (meta.supportsVision == null) meta.supportsVision = false;
+
+  // ── 6. Vision: ensure inputModalities reflects supportsVision ──
   if (meta.supportsVision && meta.inputModalities.length === 1 && meta.inputModalities[0] === "text") {
     meta.inputModalities = ["text", "image"];
   }
@@ -594,9 +743,7 @@ async function main() {
         exampleRequestExtra: meta.exampleRequestExtra,
       };
 
-      const outPath = outputFile.includes(".json")
-        ? outputFile
-        : `test-${singleModel.replace(/\//g, "-")}.json`;
+      const outPath = outputFile;
       stripUnusedFields([meta]);
       fs.writeFileSync(outPath, JSON.stringify([meta], null, 2));
       console.log(`\nWritten to: ${outPath}`);

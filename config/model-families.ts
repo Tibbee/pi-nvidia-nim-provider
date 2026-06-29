@@ -146,13 +146,14 @@ export const MODEL_FAMILIES: ModelFamily[] = [
   },
 
   // MiniMax M2.x think inline via <antha> tags — no toggle, no kwargs.
+  // Thinking conversion is handled by the extension's before_provider_request
+  // handler (minimax-inline), not by pi's native thinkingFormat.
   {
     name: "minimax-m2",
     pattern: /^minimaxai\/minimax-m2/,
     compat: {
       supportsDeveloperRole: false,
       requiresThinkingAsText: true,
-      thinkingFormat: "minimax-inline",
       maxTokensField: "max_tokens",
     },
     thinkingLevelMap: { off: null }, // Cannot disable thinking

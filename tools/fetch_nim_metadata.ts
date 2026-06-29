@@ -235,6 +235,7 @@ function getYardstickFallback(modelId: string): { contextWindow?: number; maxOut
     { re: /solar-10\.7b/i, ctx: 4096, out: 4096 },
     { re: /seed-oss/i, ctx: 131072, out: 8192 },
     { re: /step-3\.5/i, ctx: 256000, out: 262144 },
+    { re: /minimax-m3/i, ctx: 1000000, out: 16384 },
     { re: /minimax-m2\.[6-9]/i, ctx: 204800, out: 16384 },
     { re: /minimax/i, ctx: 131072, out: 16384 },
     { re: /gpt-oss/i, ctx: 131072, out: 4096 },

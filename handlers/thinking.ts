@@ -188,6 +188,21 @@ export function applyCustomThinkingFormat(
       // Other qwen-chat-template models are handled natively by pi.                                                                                                                                                                       
       return { modified: false };
     }
-    case "minimax-inline": case "reasoning-effort": case "none": default: return { modified: false };
+    case "minimax-inline": {
+      if (!hasThinkingParams) return { modified: false };
+      // MiniMax M2/M3: thinking_mode in chat_template_kwargs.
+      const thinking = isDeepSeekThinkingEnabled(payload);
+      const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
+
+      delete payload.thinking;
+      delete payload.reasoning_effort;
+
+      payload.chat_template_kwargs = {
+        ...(kwargs ?? {}),
+        thinking_mode: thinking ? "enabled" : "disabled",
+      };
+      return { modified: true, thinkingEnabled: thinking };
+    }
+    case "reasoning-effort": case "none": default: return { modified: false };
   }
 }

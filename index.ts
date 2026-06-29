@@ -1,9 +1,14 @@
 // Provider entry + request hook.
+import { appendFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { NIM_API_KEY_REF, NIM_BASE_URL } from "./config/defaults";
 import { applyCustomThinkingFormat, hasEnabledThinking } from "./handlers/thinking";
 import type { TransformResult } from "./handlers/thinking";
 import { STATIC_MODELS, STATIC_MODEL_MAP, classifyThinkingFormat } from "./models/registry";
+
+const NIM_DEBUG_LOG = join(homedir(), ".pi", "nim-debug.log");
 
 // Gate: pi v0.73.0 BeforeProviderRequestEvent has no `provider` field,
 // so we identify NIM requests by checking whether payload.model is in our registry.
@@ -59,6 +64,23 @@ export function handleBeforeProviderRequest(event: { payload: unknown }) {
     modified = true;
   }
 
+  // Ensure max_tokens is always set — some NIM models reject requests without it.
+  if (payload.max_tokens == null && payload.max_completion_tokens == null) {
+    payload.max_tokens = modelConfig.maxTokens;
+    modified = true;
+  }
+
+  // Debug: log the final payload for troubleshooting.
+  // Set NIM_DEBUG=1 to log to ~/.pi/nim-debug.log
+  if (typeof process !== "undefined" && process.env.NIM_DEBUG) {
+    try {
+      appendFileSync(NIM_DEBUG_LOG,
+        `--- ${new Date().toISOString()} ${modelId} ---\n` +
+        JSON.stringify(payload, null, 2) + "\n"
+      );
+    } catch { /* ignore write errors */ }
+  }
+
   return modified ? payload : undefined;
 }
 
@@ -67,13 +89,23 @@ export function handleAfterProviderResponse(
   ctx: ExtensionContext,
 ): void {
   if (ctx?.model?.provider !== "nvidia-nim") return;
-  if (event.status !== 429) return;
 
-  const retryAfter = event.headers?.["retry-after"];
-  const notice = retryAfter
-    ? `NVIDIA NIM rate-limited. Retry after ${retryAfter}.`
-    : "NVIDIA NIM rate-limited.";
-  ctx.ui.notify(notice, "warning");
+  if (event.status === 429) {
+    const retryAfter = event.headers?.["retry-after"];
+    const notice = retryAfter
+      ? `NVIDIA NIM rate-limited. Retry after ${retryAfter}.`
+      : "NVIDIA NIM rate-limited.";
+    ctx.ui.notify(notice, "warning");
+    return;
+  }
+
+  if (event.status >= 500) {
+    const requestId = event.headers?.["x-request-id"] ?? event.headers?.["x-nvca-request-id"];
+    const notice = requestId
+      ? `NVIDIA NIM server error (${event.status}). Request ID: ${requestId}`
+      : `NVIDIA NIM server error (${event.status}).`;
+    ctx.ui.notify(notice, "error");
+  }
 }
 
 // Older/smaller NIM models (e.g. solar, baichuan, falcon) reject

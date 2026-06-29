@@ -27,6 +27,7 @@ const cases = [
         thinking: true,
         reasoning_effort: "high",
       },
+      max_tokens: 16384,
     },
   },
   {
@@ -41,6 +42,7 @@ const cases = [
       model: "bytedance/seed-oss-36b-instruct",
       messages: [{ role: "user", content: "hello" }],
       thinking_budget: 16384,
+      max_tokens: 32768,
     },
   },
   {
@@ -55,6 +57,7 @@ const cases = [
       model: "z-ai/glm-5.1",
       chat_template_kwargs: { enable_thinking: true, clear_thinking: false },
       messages: [{ role: "user", content: "hello" }],
+      max_tokens: 32768,
     },
   },
   {
@@ -73,17 +76,23 @@ const cases = [
       ],
       min_thinking_tokens: 1024,
       max_thinking_tokens: 4096,
+      max_tokens: 4096,
     },
   },
   {
-    name: "gpt-oss remains a no-op",
+    name: "gpt-oss injects max_tokens",
     provider: "nvidia-nim",
     payload: {
       model: "openai/gpt-oss-120b",
       reasoning_effort: "low",
       messages: [{ role: "user", content: "hello" }],
     },
-    expected: undefined,
+    expected: {
+      model: "openai/gpt-oss-120b",
+      reasoning_effort: "low",
+      messages: [{ role: "user", content: "hello" }],
+      max_tokens: 4096,
+    },
   },
   {
     name: "non-NIM models are untouched",
@@ -95,6 +104,36 @@ const cases = [
       messages: [{ role: "user", content: "hello" }],
     },
     expected: undefined,
+  },
+  {
+    name: "minimax-m3 with thinking enabled sets thinking_mode",
+    provider: "nvidia-nim",
+    payload: {
+      model: "minimaxai/minimax-m3",
+      thinking: { type: "enabled" },
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "minimaxai/minimax-m3",
+      messages: [{ role: "user", content: "hello" }],
+      chat_template_kwargs: { thinking_mode: "enabled" },
+      max_tokens: 16384,
+    },
+  },
+  {
+    name: "minimax-m3 with thinking disabled sets thinking_mode:disabled",
+    provider: "nvidia-nim",
+    payload: {
+      model: "minimaxai/minimax-m3",
+      thinking: { type: "disabled" },
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "minimaxai/minimax-m3",
+      messages: [{ role: "user", content: "hello" }],
+      chat_template_kwargs: { thinking_mode: "disabled" },
+      max_tokens: 16384,
+    },
   },
 ] as const;
 

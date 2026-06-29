@@ -321,6 +321,13 @@
     "supportsVision": false
   },
   {
+    "id": "minimaxai/minimax-m3",
+    "maxOutputTokens": 16384,
+    "supportsReasoning": true,
+    "contextWindow": 1000000,
+    "supportsVision": true
+  },
+  {
     "id": "mistralai/codestral-22b-instruct-v0.1",
     "contextWindow": 32768,
     "maxOutputTokens": 4096,

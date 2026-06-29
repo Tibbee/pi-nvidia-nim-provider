@@ -46,9 +46,9 @@ assert.equal(
 );
 assert.equal(STATIC_MODEL_MAP.get("stepfun-ai/step-3.5-flash")?.reasoning, true);
 
-// 5) before_provider_request should ignore non-NVIDIA providers.
+// 5) before_provider_request should skip models not in the NIM registry.
 assert.equal(
-  handleBeforeProviderRequest({ provider: "openrouter", payload: { model: "deepseek-ai/deepseek-v4-flash" } }),
+  handleBeforeProviderRequest({ provider: "openrouter", payload: { model: "openai/gpt-4o" } }),
   undefined
 );
 

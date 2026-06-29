@@ -121,13 +121,37 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // MiniMax M2 always thinks inline via <antha> tags — no toggle.
+  // MiniMax M3 uses chat_template_kwargs.thinking_mode (enabled/disabled).
+  // It sends reasoning_content in the response — NOT inline <antha> tags.
+  {
+    name: "minimax-m3",
+    pattern: /^minimaxai\/minimax-m3/,
+    compat: {
+      supportsDeveloperRole: false,
+      supportsReasoningEffort: false,
+      supportsStore: false,
+      supportsUsageInStreaming: false,
+      thinkingFormat: "deepseek",
+      maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: {
+      off: "disabled",
+      minimal: "enabled",
+      low: "enabled",
+      medium: "enabled",
+      high: "enabled",
+      xhigh: "enabled",
+    },
+  },
+
+  // MiniMax M2.x think inline via <antha> tags — no toggle, no kwargs.
   {
     name: "minimax-m2",
     pattern: /^minimaxai\/minimax-m2/,
     compat: {
       supportsDeveloperRole: false,
       requiresThinkingAsText: true,
+      thinkingFormat: "minimax-inline",
       maxTokensField: "max_tokens",
     },
     thinkingLevelMap: { off: null }, // Cannot disable thinking
@@ -480,6 +504,8 @@ const FAMILY_HANDLER_FORMATS: Partial<Record<string, NimThinkingFormat>> = {
   "deepseek-v3": "deepseek-nim",
   "kimi-k2.5": "deepseek-nim",
   "kimi-k2.6": "deepseek-nim",
+  "minimax-m3": "minimax-inline",
+  "minimax-m2": "minimax-inline",
   "nemotron-super-detailed": "nemotron-system-detailed",
   "nemotron-system-think": "nemotron-system-think",
   "nemotron-3-super-effort": "nemotron-3-super-effort",

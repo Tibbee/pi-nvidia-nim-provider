@@ -25,7 +25,6 @@ export function handleBeforeProviderRequest(event: { payload: unknown }) {
 
   const modelConfig = STATIC_MODEL_MAP.get(modelId)!;
 
-  const thinkingEnabledBeforeTransform = hasEnabledThinking(payload);
   const format = classifyThinkingFormat(modelId);
   const result: TransformResult = applyCustomThinkingFormat(payload, format);
   let modified = result.modified;

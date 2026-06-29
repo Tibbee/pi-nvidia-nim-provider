@@ -58,9 +58,9 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     pattern: /^qwen\/qwen3-next/,
     compat: {
       supportsDeveloperRole: false,
+      thinkingFormat: "qwen-chat-template",
       maxTokensField: "max_tokens",
     },
-    thinkingLevelMap: { off: null }, // qwen3-next-*-thinking always thinks
   },
 
   {
@@ -264,23 +264,45 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // Nemotron Ultra/Super use system-message-based thinking (detailed thinking on/off).
+  // Nemotron Super v1 uses system-message-based thinking ("detailed thinking on/off").
+  // supportsReasoningEffort: true causes pi to send reasoning_effort, which the
+  // handler then converts into a system message.
   {
     name: "nemotron-super-detailed",
     pattern: /^nvidia\/llama-3\.3-nemotron-super-49b-v1$/,
     compat: {
       supportsDeveloperRole: false,
+      supportsReasoningEffort: true,
       maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: {
+      off: "none",
+      minimal: "high",
+      low: "high",
+      medium: "high",
+      high: "high",
+      xhigh: "high",
     },
   },
 
   // Nemotron Super v1.5 and Nemotron Nano 9B v2 use system message /think or /no_think.
+  // supportsReasoningEffort: true causes pi to send reasoning_effort, which the
+  // handler then converts into a system message.
   {
     name: "nemotron-system-think",
     pattern: /^nvidia\/llama-3\.3-nemotron-super-49b-v1\.5$|^nvidia\/nvidia-nemotron-nano-9b-v2/,
     compat: {
       supportsDeveloperRole: false,
+      supportsReasoningEffort: true,
       maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: {
+      off: "none",
+      minimal: "high",
+      low: "high",
+      medium: "high",
+      high: "high",
+      xhigh: "high",
     },
   },
 
@@ -348,6 +370,16 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       maxTokensField: "max_tokens",
     },
     reasoningBudget: 32768,
+  },
+
+  {
+    name: "diffusiongemma",
+    pattern: /^google\/diffusiongemma/,
+    compat: {
+      supportsDeveloperRole: false,
+      thinkingFormat: "qwen-chat-template",
+      maxTokensField: "max_tokens",
+    },
   },
 
   {

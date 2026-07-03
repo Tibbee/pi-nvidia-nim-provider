@@ -10,10 +10,12 @@ Registers the **`nvidia-nim`** provider with pi, backed by
 ## Features
 
 - **100+ curated models** — chat, reasoning, code, and vision
-- **6 thinking/reasoning format handlers** — DeepSeek V4, DeepSeek NIM, Qwen
-  chat-template, MiniMax inline, reasoning-effort, and Nemotron system modes
-- **Model-specific quirks handled automatically** — GLM `clear_thinking`,
-  Nemotron reasoning budget, content array normalization for older models
+- **7 thinking/reasoning format handlers** — DeepSeek V4, DeepSeek NIM, Qwen
+  chat-template, GLM chat-template, MiniMax inline, reasoning-effort, and
+  Nemotron system modes
+- **Model-specific quirks handled automatically** — GLM `clear_thinking` with
+  effort level mapping (high/max), Nemotron reasoning budget, system-message
+  thinking toggles, content array normalization for older models
 - **No custom streaming** — uses pi's built-in `openai-completions`
 
 ## Install
@@ -49,5 +51,6 @@ Look for the `nvidia-nim/` prefix in the model picker.
 - Uses pi's built-in **`openai-completions`** streaming — no custom `streamSimple`.
 - Model-specific quirks (thinking formats, extra body kwargs, compat flags) are
   handled via `before_provider_request` and pi's `compat` system.
-- Family-based config in `config/model-families.ts` (36 families, first-match-wins)
+- Family-based config in `config/model-families.ts` (37 families, first-match-wins)
   drives thinking format routing and model metadata.
+- All cost fields are `$0` — NVIDIA NIM free tier.

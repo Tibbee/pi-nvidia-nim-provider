@@ -24,7 +24,21 @@
     },
     "license": "MIT",
     "keywords": [
-        "pi-package"
+        "pi-package",
+        "pi",
+        "nvidia",
+        "nim",
+        "llm",
+        "provider"
     ],
-    "description": "NVIDIA NIM provider for pi coding agent"
+    "description": "NVIDIA NIM provider for pi coding agent — 100+ models with full thinking support",
+    "author": "Your Name <you@example.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/your-org/pi-extension-nvidia-nim.git"
+    },
+    "homepage": "https://github.com/your-org/pi-extension-nvidia-nim#readme",
+    "bugs": {
+        "url": "https://github.com/your-org/pi-extension-nvidia-nim/issues"
+    }
 }

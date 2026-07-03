@@ -57,36 +57,36 @@ Look for the `nvidia-nim/` prefix in the model picker.
 - Coexists with pi's built-in `nvidia` provider — use `nvidia-nim/...` for
   the full experience, `nvidia/...` as a basic fallback.
 
-## Comparison with other NVIDIA extensions
+## Comparison with alternative NVIDIA extensions
 
-Several pi extensions provide NVIDIA model access. Here is how they differ:
+Several pi extensions provide NVIDIA model access. Here is how this one compares:
 
-| Aspect | This extension | `nvidia` (official, built-in) | `nvidia-build` | `pi-nvidia-nim` (xRyul) | `pi-free` suite |
-|--------|----------------|-------------------------------|----------------|------------------------|-----------------|
-| **Provider ID** | `nvidia-nim` | `nvidia` | `nvidia-build` | `nvidia-nim` | `nvidia` (among many) |
-| **Model count** | ~100 curated | ~20 curated | Dynamic | Static + dynamic enrich | Dynamic + 404 probe |
-| **Thinking support** | **7 formats** ✅ | **Broken** ❌ | None ❌ | **5 formats** ⚠️ | None ❌ |
-| **GLM effort levels** | ✅ high / max | ❌ | ❌ | ❌ | ❌ |
-| **Content normalization** | ✅ | ❌ | ❌ | ✅ (in streamSimple) | ❌ |
-| **Rate-limit warnings** | ✅ (429 handler) | ❌ | ❌ | ❌ | ❌ |
-| **Streaming approach** | Built-in `openai-completions` | Built-in `openai-completions` | Built-in `openai-completions` | **Custom `streamSimple`** | Built-in `openai-completions` |
-| **API key source** | `NVIDIA_NIM_API_KEY` + fallback | `NVIDIA_API_KEY` env | OAuth `/login` + env | Env + auth.json | Env + config file |
-| **Scope** | Single provider | Single provider (pi built-in) | Single provider | Single provider | Multi-provider suite |
+| Aspect | This extension | `nvidia` (official, built-in) | Other community NVIDIA extensions |
+|--------|----------------|-------------------------------|----------------------------------|
+| **Provider ID** | `nvidia-nim` | `nvidia` | Varies (`nvidia-build`, `nvidia-nim`, or multi-provider) |
+| **Model count** | ~100 curated | ~20 curated | Varies (dynamic fetch or static + enrichment) |
+| **Thinking support** | **7 formats** ✅ | **None (broken)** ❌ | Limited or none |
+| **GLM effort levels** | ✅ high / max | ❌ | ❌ |
+| **Content normalization** | ✅ | ❌ | Some implement via custom streaming |
+| **Rate-limit warnings** | ✅ (429 handler) | ❌ | ❌ |
+| **Streaming approach** | Built-in `openai-completions` | Built-in `openai-completions` | Built-in or custom `streamSimple` |
+| **API key source** | `NVIDIA_NIM_API_KEY` + fallback | `NVIDIA_API_KEY` env | Varies (env, OAuth, config file) |
+| **Scope** | Single provider | Single provider (pi built-in) | Single or multi-provider |
 
 **Why this extension?**
 
-- **Only extension with full thinking support** — 7 format handlers covering
-  DeepSeek V4, DeepSeek NIM, Qwen, GLM (with effort level mapping), MiniMax,
-  Nemotron, and reasoning-effort models (pi's built-in `nvidia` provider has
-  **no thinking format handling** — all reasoning models are broken there)
+- **Full thinking support** — 7 format handlers covering DeepSeek V4, DeepSeek
+  NIM, Qwen, GLM (with effort level mapping), MiniMax, Nemotron, and
+  reasoning-effort models (pi's built-in `nvidia` provider has no thinking
+  format handling, so reasoning models don't work there)
 - **5× more models than pi's built-in** — ~100 curated vs ~20, including
   DeepSeek, Kimi, GLM, MiniMax, Qwen3-Coder, and many more
-- **Architecturally clean** — no custom `streamSimple` that can break other
-  providers; everything goes through pi's standard `before_provider_request`
-  event hook
-- **Static curated model list** — no startup latency from API calls, no risk of
-  dynamic fetches failing due to auth issues
-- **GLM-5.2 effort levels** — the only extension that maps pi thinking levels
-  (low/medium/high/xhigh) to GLM's native effort values (high/max)
-- **Content array normalization** and **rate-limit warnings** — small touches
-  that make the experience smoother
+- **Architecturally clean** — no custom streaming override; everything goes
+  through pi's standard `before_provider_request` event hook, avoiding
+  conflicts with other providers
+- **Static curated model list** — no startup latency from API calls, no risk
+  of dynamic fetches failing due to auth or rate limits
+- **GLM-5.2 effort levels** — maps pi thinking levels (low/medium/high/xhigh)
+  to GLM's native effort values (high/max)
+- **Content array normalization and rate-limit warnings** — small touches that
+  make the experience smoother

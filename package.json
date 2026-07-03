@@ -32,13 +32,13 @@
         "provider"
     ],
     "description": "NVIDIA NIM provider for pi coding agent — 100+ models with full thinking support",
-    "author": "Your Name <you@example.com>",
+    "author": "Tibbee",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/your-org/pi-extension-nvidia-nim.git"
+        "url": "git+https://github.com/Tibbee/pi-nvidia-nim-provider.git"
     },
-    "homepage": "https://github.com/your-org/pi-extension-nvidia-nim#readme",
+    "homepage": "https://github.com/Tibbee/pi-nvidia-nim-provider#readme",
     "bugs": {
-        "url": "https://github.com/your-org/pi-extension-nvidia-nim/issues"
+        "url": "https://github.com/Tibbee/pi-nvidia-nim-provider/issues"
     }
 }

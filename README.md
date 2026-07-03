@@ -11,11 +11,10 @@ Registers the **`nvidia-nim`** provider with pi, backed by
 
 - **100+ curated models** — chat, reasoning, code, and vision
 - **7 thinking/reasoning format handlers** — DeepSeek V4, DeepSeek NIM, Qwen
-  chat-template, GLM chat-template, MiniMax inline, reasoning-effort, and
-  Nemotron system modes
-- **Model-specific quirks handled automatically** — GLM `clear_thinking` with
-  effort level mapping (high/max), Nemotron reasoning budget, system-message
-  thinking toggles, content array normalization for older models
+  chat-template, MiniMax inline, reasoning-effort, and Nemotron system modes
+- **Model-specific quirks handled automatically** — per-model `chat_template_kwargs`
+  injection (thinking effort, budgets, system-message toggles), content array
+  normalization for older models
 - **No custom streaming** — uses pi's built-in `openai-completions`
 
 ## Install
@@ -66,7 +65,7 @@ Several pi extensions provide NVIDIA model access. Here is how this one compares
 | **Provider ID** | `nvidia-nim` | `nvidia` | Varies (`nvidia-build`, `nvidia-nim`, or multi-provider) |
 | **Model count** | ~100 curated | ~20 curated | Varies (dynamic fetch or static + enrichment) |
 | **Thinking support** | **7 formats** ✅ | **None (broken)** ❌ | Limited or none |
-| **GLM effort levels** | ✅ high / max | ❌ | ❌ |
+| **Per-model effort mapping** | ✅ (high/max, low/medium, etc.) | ❌ | ❌ |
 | **Content normalization** | ✅ | ❌ | Some implement via custom streaming |
 | **Rate-limit warnings** | ✅ (429 handler) | ❌ | ❌ |
 | **Streaming approach** | Built-in `openai-completions` | Built-in `openai-completions` | Built-in or custom `streamSimple` |
@@ -76,17 +75,18 @@ Several pi extensions provide NVIDIA model access. Here is how this one compares
 **Why this extension?**
 
 - **Full thinking support** — 7 format handlers covering DeepSeek V4, DeepSeek
-  NIM, Qwen, GLM (with effort level mapping), MiniMax, Nemotron, and
-  reasoning-effort models (pi's built-in `nvidia` provider has no thinking
-  format handling, so reasoning models don't work there)
+  NIM, Qwen, MiniMax, Nemotron, and reasoning-effort models (pi's built-in
+  `nvidia` provider has no thinking format handling, so reasoning models
+  don't work there)
 - **5× more models than pi's built-in** — ~100 curated vs ~20, including
   DeepSeek, Kimi, GLM, MiniMax, Qwen3-Coder, and many more
+- **Per-model effort level mapping** — translates pi thinking levels to each
+  model's native effort values (e.g. high/max for GLM, low/high for GPT-OSS,
+  none/high/max for DeepSeek V4)
 - **Architecturally clean** — no custom streaming override; everything goes
   through pi's standard `before_provider_request` event hook, avoiding
   conflicts with other providers
 - **Static curated model list** — no startup latency from API calls, no risk
   of dynamic fetches failing due to auth or rate limits
-- **GLM-5.2 effort levels** — maps pi thinking levels (low/medium/high/xhigh)
-  to GLM's native effort values (high/max)
 - **Content array normalization and rate-limit warnings** — small touches that
   make the experience smoother

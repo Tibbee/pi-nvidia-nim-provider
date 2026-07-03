@@ -46,16 +46,31 @@ const cases = [
     },
   },
   {
-    name: "glm-5.1 injects clear_thinking into chat_template_kwargs",
+    name: "glm-5.2 injects clear_thinking with thinking enabled",
     provider: "nvidia-nim",
     payload: {
-      model: "z-ai/glm-5.1",
+      model: "z-ai/glm-5.2",
       chat_template_kwargs: { enable_thinking: true },
       messages: [{ role: "user", content: "hello" }],
     },
     expected: {
-      model: "z-ai/glm-5.1",
+      model: "z-ai/glm-5.2",
       chat_template_kwargs: { enable_thinking: true, clear_thinking: false },
+      messages: [{ role: "user", content: "hello" }],
+      max_tokens: 32768,
+    },
+  },
+  {
+    name: "glm-5.2 disables thinking with clear_thinking:true",
+    provider: "nvidia-nim",
+    payload: {
+      model: "z-ai/glm-5.2",
+      chat_template_kwargs: { enable_thinking: false },
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "z-ai/glm-5.2",
+      chat_template_kwargs: { enable_thinking: false, clear_thinking: true },
       messages: [{ role: "user", content: "hello" }],
       max_tokens: 32768,
     },

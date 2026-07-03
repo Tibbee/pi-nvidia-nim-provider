@@ -170,22 +170,41 @@ export function applyCustomThinkingFormat(
     }
 
     case "qwen-chat-template": {
-      // GLM models think by default; explicitly disable when reasoning is off.                                                                                                                                                            
+      // GLM models think by default; explicitly disable when reasoning is off.
+      // See also: https://recipes.vllm.ai/zai-org/GLM-5.2
       const modelId = (payload.model as string | undefined) || "";
       if (/^z-ai\/glm/.test(modelId)) {
         const enabled = hasEnabledThinking(payload);
+        // Capture reasoning_effort before deletion and map to GLM effort levels.
+        // GLM-5.2 accepts "high" (balanced) or "max" (deep, default when omitted).
+        const rawEffort = payload.reasoning_effort as string | undefined;
+        const mappedEffort =
+          rawEffort && !["off", "none", "minimal"].includes(rawEffort)
+            ? ["xhigh", "max"].includes(rawEffort) ? "max" : "high"
+            : undefined;
         const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
         delete payload.thinking;
         delete payload.reasoning_effort;
+        // Strip preserve_thinking if pi's native handler set it — GLM uses clear_thinking instead.
+        const { preserve_thinking: _, ...base } = kwargs ?? {};
         if (enabled) {
-          payload.chat_template_kwargs = { ...(kwargs ?? {}), enable_thinking: true, clear_thinking: false };
+          payload.chat_template_kwargs = {
+            ...base,
+            enable_thinking: true,
+            clear_thinking: false,
+            ...(mappedEffort ? { reasoning_effort: mappedEffort } : {}),
+          };
           return { modified: true, thinkingEnabled: true };
         } else {
-          payload.chat_template_kwargs = { ...(kwargs ?? {}), enable_thinking: false, clear_thinking: true };
+          payload.chat_template_kwargs = {
+            ...base,
+            enable_thinking: false,
+            clear_thinking: true,
+          };
           return { modified: true, thinkingEnabled: false };
         }
       }
-      // Other qwen-chat-template models are handled natively by pi.                                                                                                                                                                       
+      // Other qwen-chat-template models are handled natively by pi.
       return { modified: false };
     }
     case "minimax-inline": {

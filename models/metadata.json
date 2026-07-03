@@ -956,7 +956,7 @@
     "supportsVision": false
   },
   {
-    "id": "z-ai/glm-5.1",
+    "id": "z-ai/glm-5.2",
     "maxOutputTokens": 32768,
     "exampleRequestExtra": {
       "chat_template_kwargs": {
@@ -965,7 +965,7 @@
       }
     },
     "supportsReasoning": true,
-    "contextWindow": 131072,
+    "contextWindow": 1000000,
     "thinkingFormat": "qwen-chat-template",
     "supportsVision": false
   },

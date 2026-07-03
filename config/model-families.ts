@@ -120,6 +120,14 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       thinkingFormat: "qwen-chat-template",
       maxTokensField: "max_tokens",
     },
+    thinkingLevelMap: {
+      off: "none",
+      minimal: "high",
+      low: "high",
+      medium: "high",
+      high: "high",
+      xhigh: "max",
+    },
   },
 
   // MiniMax M3 uses chat_template_kwargs.thinking_mode (enabled/disabled).
@@ -545,6 +553,7 @@ const FAMILY_HANDLER_FORMATS: Partial<Record<string, NimThinkingFormat>> = {
   "nemotron-3-super-effort": "nemotron-3-super-effort",
   "seed-oss": "thinking-budget",
   "nemotron-ultra-deprecated": "deepseek-nim",
+  "glm": "qwen-chat-template",
 };
 
 // Init-time safety check: every family that sets thinkingFormat: "deepseek"

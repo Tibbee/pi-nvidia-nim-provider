@@ -54,27 +54,33 @@ Look for the `nvidia-nim/` prefix in the model picker.
 - Family-based config in `config/model-families.ts` (37 families, first-match-wins)
   drives thinking format routing and model metadata.
 - All cost fields are `$0` — NVIDIA NIM free tier.
+- Coexists with pi's built-in `nvidia` provider — use `nvidia-nim/...` for
+  the full experience, `nvidia/...` as a basic fallback.
 
 ## Comparison with other NVIDIA extensions
 
 Several pi extensions provide NVIDIA model access. Here is how they differ:
 
-| Aspect | This extension | `nvidia-build` | `pi-nvidia-nim` (xRyul) | `pi-free` suite |
-|--------|----------------|----------------|------------------------|-----------------|
-| **Provider ID** | `nvidia-nim` | `nvidia-build` | `nvidia-nim` | `nvidia` (among many) |
-| **Model list** | Static (~100 curated) | Dynamic (`/v1/models`) | Static + dynamic enrich | Dynamic + 404 probe |
-| **Streaming** | Built-in `openai-completions` | Built-in `openai-completions` | **Custom `streamSimple`** | Built-in `openai-completions` |
-| **Thinking formats** | **7** (all major families) | None | **5** (no GLM effort levels) | None (general provider) |
-| **GLM effort levels** | ✅ high / max | ❌ | ❌ | ❌ |
-| **API key source** | Env var only | OAuth `/login` + env | Env var + auth.json | Env var + config file |
-| **Model age filter** | Curated release | Fresh daily | Fresh on session start | 404-probed |
-| **Scope** | Single provider | Single provider | Single provider | Multi-provider suite |
+| Aspect | This extension | `nvidia` (official, built-in) | `nvidia-build` | `pi-nvidia-nim` (xRyul) | `pi-free` suite |
+|--------|----------------|-------------------------------|----------------|------------------------|-----------------|
+| **Provider ID** | `nvidia-nim` | `nvidia` | `nvidia-build` | `nvidia-nim` | `nvidia` (among many) |
+| **Model count** | ~100 curated | ~20 curated | Dynamic | Static + dynamic enrich | Dynamic + 404 probe |
+| **Thinking support** | **7 formats** ✅ | **Broken** ❌ | None ❌ | **5 formats** ⚠️ | None ❌ |
+| **GLM effort levels** | ✅ high / max | ❌ | ❌ | ❌ | ❌ |
+| **Content normalization** | ✅ | ❌ | ❌ | ✅ (in streamSimple) | ❌ |
+| **Rate-limit warnings** | ✅ (429 handler) | ❌ | ❌ | ❌ | ❌ |
+| **Streaming approach** | Built-in `openai-completions` | Built-in `openai-completions` | Built-in `openai-completions` | **Custom `streamSimple`** | Built-in `openai-completions` |
+| **API key source** | `NVIDIA_NIM_API_KEY` + fallback | `NVIDIA_API_KEY` env | OAuth `/login` + env | Env + auth.json | Env + config file |
+| **Scope** | Single provider | Single provider (pi built-in) | Single provider | Single provider | Multi-provider suite |
 
 **Why this extension?**
 
 - **Only extension with full thinking support** — 7 format handlers covering
   DeepSeek V4, DeepSeek NIM, Qwen, GLM (with effort level mapping), MiniMax,
-  Nemotron, and reasoning-effort models
+  Nemotron, and reasoning-effort models (pi's built-in `nvidia` provider has
+  **no thinking format handling** — all reasoning models are broken there)
+- **5× more models than pi's built-in** — ~100 curated vs ~20, including
+  DeepSeek, Kimi, GLM, MiniMax, Qwen3-Coder, and many more
 - **Architecturally clean** — no custom `streamSimple` that can break other
   providers; everything goes through pi's standard `before_provider_request`
   event hook
@@ -82,3 +88,5 @@ Several pi extensions provide NVIDIA model access. Here is how they differ:
   dynamic fetches failing due to auth issues
 - **GLM-5.2 effort levels** — the only extension that maps pi thinking levels
   (low/medium/high/xhigh) to GLM's native effort values (high/max)
+- **Content array normalization** and **rate-limit warnings** — small touches
+  that make the experience smoother

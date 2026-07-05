@@ -32,17 +32,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  {
-    name: "deepseek-v3",
-    pattern: /^deepseek-ai\/deepseek-(v3|r1)/,
-    compat: {
-      supportsDeveloperRole: false,
-      thinkingFormat: "deepseek",
-      maxTokensField: "max_tokens",
-      requiresReasoningContentOnAssistantMessages: true,
-    },
-  },
-
   // Qwen/GLM use qwen-chat-template natively.
   {
     name: "qwen3-coder",
@@ -145,10 +134,10 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
     thinkingLevelMap: {
       off: "disabled",
-      minimal: "enabled",
-      low: "enabled",
-      medium: "enabled",
-      high: "enabled",
+      minimal: "adaptive",
+      low: "adaptive",
+      medium: "adaptive",
+      high: "adaptive",
       xhigh: "enabled",
     },
   },
@@ -191,16 +180,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
   },
 
   {
-    name: "kimi-k2.5",
-    pattern: /^moonshotai\/kimi-k2\.5/,
-    compat: {
-      supportsDeveloperRole: false,
-      thinkingFormat: "deepseek",
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
     name: "kimi-k2.6",
     pattern: /^moonshotai\/kimi-k2\.6/,
     compat: {
@@ -230,17 +209,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       maxTokensField: "max_tokens",
     },
     thinkingLevelMap: { minimal: "low" },
-  },
-
-  // Step 3.5 Flash always thinks on NIM — no toggle, no API params.
-  {
-    name: "stepfun",
-    pattern: /^stepfun-ai\//,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
-    thinkingLevelMap: { off: null }, // Cannot disable thinking
   },
 
   // Seed OSS uses top-level thinking_budget.
@@ -314,13 +282,39 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // Nemotron 3 Super 120B and Ultra 550B use enable_thinking + low_effort flag + reasoning_budget.
+  // Nemotron 3 Super 120B: none/low/high effort + low_effort flag + reasoning_budget.
   {
     name: "nemotron-3-super-effort",
-    pattern: /^nvidia\/nemotron-3-(super-120b-a12b|ultra-550b-a55b)/,
+    pattern: /^nvidia\/nemotron-3-super-120b-a12b/,
     compat: {
       supportsDeveloperRole: false,
       maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: {
+      off: "none",
+      minimal: "low",
+      low: "low",
+      medium: "high",
+      high: "high",
+      xhigh: "high",
+    },
+  },
+
+  // Nemotron 3 Ultra 550B: none/medium/high effort + reasoning_budget (no low_effort flag).
+  {
+    name: "nemotron-3-ultra-effort",
+    pattern: /^nvidia\/nemotron-3-ultra-550b-a55b/,
+    compat: {
+      supportsDeveloperRole: false,
+      maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: {
+      off: "none",
+      minimal: "medium",
+      low: "medium",
+      medium: "medium",
+      high: "high",
+      xhigh: "high",
     },
   },
 
@@ -508,6 +502,26 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
+  // StepFun models use reasoning_effort directly (low/medium/high).
+  // Thinking is always on — cannot be disabled.
+  {
+    name: "stepfun",
+    pattern: /^stepfun-ai\//,
+    compat: {
+      supportsDeveloperRole: false,
+      supportsReasoningEffort: true,
+      maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: {
+      off: null, // Cannot disable thinking
+      minimal: "low",
+      low: "low",
+      medium: "medium",
+      high: "high",
+      xhigh: "high",
+    },
+  },
+
   {
     name: "nvidia-base",
     pattern: /^nvidia\//,
@@ -543,14 +557,12 @@ export function findFamily(modelId: string): ModelFamily | undefined {
 // thinking, new kwarg structures).
 const FAMILY_HANDLER_FORMATS: Partial<Record<string, NimThinkingFormat>> = {
   "deepseek-v4": "deepseek-v4",
-  "deepseek-v3": "deepseek-nim",
-  "kimi-k2.5": "deepseek-nim",
   "kimi-k2.6": "deepseek-nim",
   "minimax-m3": "minimax-inline",
-  "minimax-m2": "minimax-inline",
   "nemotron-super-detailed": "nemotron-system-detailed",
   "nemotron-system-think": "nemotron-system-think",
   "nemotron-3-super-effort": "nemotron-3-super-effort",
+  "nemotron-3-ultra-effort": "nemotron-3-super-effort",
   "seed-oss": "thinking-budget",
   "nemotron-ultra-deprecated": "deepseek-nim",
   "glm": "qwen-chat-template",

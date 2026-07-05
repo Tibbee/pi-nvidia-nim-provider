@@ -121,11 +121,26 @@ const cases = [
     expected: undefined,
   },
   {
-    name: "minimax-m3 with thinking enabled sets thinking_mode",
+    name: "minimax-m3 with thinking enabled (no effort) sets thinking_mode:adaptive",
     provider: "nvidia-nim",
     payload: {
       model: "minimaxai/minimax-m3",
       thinking: { type: "enabled" },
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "minimaxai/minimax-m3",
+      messages: [{ role: "user", content: "hello" }],
+      chat_template_kwargs: { thinking_mode: "adaptive" },
+      max_tokens: 16384,
+    },
+  },
+  {
+    name: "minimax-m3 with xhigh reasoning_effort sets thinking_mode:enabled",
+    provider: "nvidia-nim",
+    payload: {
+      model: "minimaxai/minimax-m3",
+      reasoning_effort: "xhigh",
       messages: [{ role: "user", content: "hello" }],
     },
     expected: {

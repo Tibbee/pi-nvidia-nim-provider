@@ -553,6 +553,8 @@ function detectThinkingFormat(modelId: string, _text?: string): string | undefin
   if (/^moonshotai\/kimi-k2\.6/.test(modelId)) return "deepseek-nim";
   if (/^nvidia\/llama-3\.1-nemotron-ultra/.test(modelId)) return "deepseek-nim";
 
+  if (/^stepfun-ai\//.test(modelId)) return "reasoning-effort";
+
   if (/^z-ai\/glm/.test(modelId)) return "qwen-chat-template";
   if (/^qwen\/qwen3\.5/.test(modelId)) return "qwen-chat-template";
   if (/^google\/gemma-4/.test(modelId)) return "qwen-chat-template";

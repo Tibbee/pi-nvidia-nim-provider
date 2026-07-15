@@ -60,6 +60,12 @@ export interface ReasoningCapability {
  * The request transport remains unverified against the hosted endpoint. The
  * current production handler intentionally emits only the boolean
  * chat_template_kwargs toggle until a live NIM probe proves effort support.
+ *
+ * Reference semantics:
+ * - https://docs.z.ai/guides/capabilities/thinking-mode
+ * - https://recipes.vllm.ai/zai-org/GLM-5.2
+ * Hosted NIM reference:
+ * - https://docs.api.nvidia.com/nim/reference/z-ai-glm-5.2
  */
 export const GLM_52_REASONING_CAPABILITY: ReasoningCapability = {
   modelId: "z-ai/glm-5.2",

@@ -103,6 +103,48 @@ export const GLM_52_REASONING_CAPABILITY: ReasoningCapability = {
 };
 
 /**
+ * MiniMax-M3 NIM model-card capability. The model page's OpenAPI schema
+ * explicitly documents chat_template_kwargs.thinking_mode and the separate
+ * reasoning_content response field. The live endpoint was unavailable during
+ * probing (HTTP 400: degraded function), so these remain documentation-level
+ * transport claims.
+ *
+ * Reference:
+ * - https://build.nvidia.com/minimaxai/minimax-m3.md
+ */
+export const MINIMAX_M3_REASONING_CAPABILITY: ReasoningCapability = {
+  modelId: "minimaxai/minimax-m3",
+  semantics: {
+    defaultEnabled: false,
+    canDisable: true,
+    supportsEffort: false,
+    acceptedEfforts: [],
+    effectiveEffortMapping: {
+      off: "disabled",
+      minimal: "adaptive",
+      low: "adaptive",
+      medium: "adaptive",
+      high: "adaptive",
+      xhigh: "enabled",
+    },
+    supportsInterleavedThinking: "unknown",
+    supportsPreservedThinking: "unknown",
+    responseField: "reasoning_content",
+  },
+  nimTransport: {
+    requestEncoding: "chat-template-kwargs",
+    responseEncoding: "reasoning_content",
+  },
+  verification: {
+    semantics: "documented",
+    requestTransport: "documented",
+    responseTransport: "documented",
+    tools: "documented",
+    preservedThinking: "unknown",
+  },
+};
+
+/**
  * Step-3.7 Flash hosted-NIM observation. NVIDIA's model page documents
  * low/medium/high effort and the live endpoint returned reasoning_content for
  * top-level and nested reasoning_effort requests. The hosted endpoint did not
@@ -144,6 +186,7 @@ export const STEP_37_REASONING_CAPABILITY: ReasoningCapability = {
 
 const CAPABILITIES = new Map<string, ReasoningCapability>([
   [GLM_52_REASONING_CAPABILITY.modelId, GLM_52_REASONING_CAPABILITY],
+  [MINIMAX_M3_REASONING_CAPABILITY.modelId, MINIMAX_M3_REASONING_CAPABILITY],
   [STEP_37_REASONING_CAPABILITY.modelId, STEP_37_REASONING_CAPABILITY],
 ]);
 

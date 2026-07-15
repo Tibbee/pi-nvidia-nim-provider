@@ -174,6 +174,21 @@ async function inspectResponse(response: Response, stream: boolean): Promise<Pro
 
   if (!response.ok) {
     observation.notes.push("HTTP request was rejected");
+    try {
+      const errorBody = await response.json() as JsonObject;
+      const serverText = [errorBody.title, errorBody.detail, errorBody.error]
+        .filter((value): value is string => typeof value === "string")
+        .join(" ")
+        .toLowerCase();
+      // Classify known service-state failures without copying arbitrary error
+      // details into the report.
+      if (serverText.includes("degraded")) observation.notes.push("NIM reported a degraded function");
+      else if (/(busy|overloaded|unavailable|capacity)/.test(serverText)) {
+        observation.notes.push("NIM reported temporary service unavailability");
+      }
+    } catch {
+      observation.notes.push("Rejected response was not valid JSON");
+    }
     return observation;
   }
 
@@ -300,6 +315,15 @@ function buildCases(model: string): ProbeCase[] {
     make("conflicting-thinking-controls", true, {
       thinking: { type: "disabled" },
       chat_template_kwargs: { enable_thinking: true, reasoning_effort: "high" },
+    }),
+    make("minimax-thinking-disabled", true, {
+      chat_template_kwargs: { thinking_mode: "disabled" },
+    }),
+    make("minimax-thinking-adaptive", true, {
+      chat_template_kwargs: { thinking_mode: "adaptive" },
+    }),
+    make("minimax-thinking-enabled", true, {
+      chat_template_kwargs: { thinking_mode: "enabled" },
     }),
     make("tools-thinking-off", true, {
       chat_template_kwargs: { enable_thinking: false, clear_thinking: true },

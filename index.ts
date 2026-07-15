@@ -12,7 +12,7 @@ import {
 import { applyCustomThinkingFormat, hasEnabledThinking } from "./handlers/thinking";
 import type { TransformResult } from "./handlers/thinking";
 import { STATIC_MODELS, STATIC_MODEL_MAP, classifyThinkingFormat } from "./models/registry";
-import { GLM_52_REASONING_CAPABILITY } from "./models/capabilities";
+import { GLM_52_REASONING_CAPABILITY, getReasoningCapability } from "./models/capabilities";
 
 const NIM_DEBUG_LOG = join(homedir(), ".pi", "nim-debug.log");
 
@@ -97,6 +97,9 @@ export function handleBeforeProviderRequest(
 export function buildNimDoctorReport(ctx: Pick<ExtensionContext, "model" | "modelRegistry">): string {
   const auth = ctx.modelRegistry.getProviderAuthStatus("nvidia-nim");
   const selected = ctx.model?.provider === "nvidia-nim" ? ctx.model.id : "none";
+  const capability = selected === "none"
+    ? GLM_52_REASONING_CAPABILITY
+    : getReasoningCapability(selected);
   const envNames = [NIM_NIM_API_KEY_ENV, NIM_API_KEY_ENV];
   const configuredEnvs = envNames.filter((name) => Boolean(process.env[name]));
   const reasoningModels = STATIC_MODELS.filter((model) => model.reasoning).length;
@@ -108,9 +111,9 @@ export function buildNimDoctorReport(ctx: Pick<ExtensionContext, "model" | "mode
     `catalog: ${STATIC_MODELS.length} curated models, ${reasoningModels} reasoning-capable`,
     `auth.json/env configured: ${auth.configured ? "yes" : "no"}${auth.source ? ` (${auth.source})` : ""}`,
     `environment variables present: ${configuredEnvs.length > 0 ? configuredEnvs.join(", ") : "none"}`,
-    `GLM-5.2 request transport: ${GLM_52_REASONING_CAPABILITY.verification.requestTransport}`,
-    `GLM-5.2 response transport: ${GLM_52_REASONING_CAPABILITY.verification.responseTransport}`,
-    `GLM-5.2 tools: ${GLM_52_REASONING_CAPABILITY.verification.tools}`,
+    `${capability?.modelId ?? selected} request transport: ${capability?.verification.requestTransport ?? "unknown"}`,
+    `${capability?.modelId ?? selected} response transport: ${capability?.verification.responseTransport ?? "unknown"}`,
+    `${capability?.modelId ?? selected} tools: ${capability?.verification.tools ?? "unknown"}`,
     "live verification: run npm run probe -- --model=z-ai/glm-5.2",
   ].join("\\n");
 }

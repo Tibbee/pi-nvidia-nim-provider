@@ -19,8 +19,8 @@ export interface ReasoningSemantics {
   supportsEffort: boolean;
   acceptedEfforts: readonly string[];
   effectiveEffortMapping: Readonly<Record<string, string>>;
-  supportsInterleavedThinking: boolean;
-  supportsPreservedThinking: boolean;
+  supportsInterleavedThinking: boolean | "unknown";
+  supportsPreservedThinking: boolean | "unknown";
   responseField: "reasoning_content" | "reasoning" | "inline";
 }
 
@@ -102,8 +102,49 @@ export const GLM_52_REASONING_CAPABILITY: ReasoningCapability = {
   },
 };
 
+/**
+ * Step-3.7 Flash hosted-NIM observation. NVIDIA's model page documents
+ * low/medium/high effort and the live endpoint returned reasoning_content for
+ * top-level and nested reasoning_effort requests. The hosted endpoint did not
+ * honor the standard enable_thinking=false switch in this probe.
+ *
+ * References:
+ * - https://build.nvidia.com/stepfun-ai/step-3.7-flash.md
+ * - https://platform.stepfun.ai/docs/en/guides/models/step-3.7-flash
+ * - https://huggingface.co/stepfun-ai/Step-3.7-Flash/discussions/14
+ */
+export const STEP_37_REASONING_CAPABILITY: ReasoningCapability = {
+  modelId: "stepfun-ai/step-3.7-flash",
+  semantics: {
+    defaultEnabled: true,
+    canDisable: false,
+    supportsEffort: true,
+    acceptedEfforts: ["low", "medium", "high"],
+    effectiveEffortMapping: {
+      low: "low",
+      medium: "medium",
+      high: "high",
+    },
+    supportsInterleavedThinking: "unknown",
+    supportsPreservedThinking: "unknown",
+    responseField: "reasoning_content",
+  },
+  nimTransport: {
+    requestEncoding: "reasoning-effort",
+    responseEncoding: "reasoning_content",
+  },
+  verification: {
+    semantics: "documented",
+    requestTransport: "probe-passed",
+    responseTransport: "probe-passed",
+    tools: "claimed",
+    preservedThinking: "unknown",
+  },
+};
+
 const CAPABILITIES = new Map<string, ReasoningCapability>([
   [GLM_52_REASONING_CAPABILITY.modelId, GLM_52_REASONING_CAPABILITY],
+  [STEP_37_REASONING_CAPABILITY.modelId, STEP_37_REASONING_CAPABILITY],
 ]);
 
 export function getReasoningCapability(modelId: string): ReasoningCapability | undefined {

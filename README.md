@@ -116,6 +116,9 @@ Notable:
 - **GLM-5.2** — boolean NIM thinking control via `enable_thinking` and
   `clear_thinking`. Upstream and self-hosted vLLM documentation describe
   high/max effort modes, but the hosted NIM transport remains unverified.
+- **StepFun** — live NIM probing confirmed `reasoning_effort` requests return
+  separate `reasoning_content`; Step-3.7 Flash remains always-on on the hosted
+  endpoint even when `enable_thinking: false` is sent
 - **MiniMax M3** — three-mode thinking toggle (disabled/adaptive/enabled)
   mapped from pi's thinking levels
 - **Nemotron** — system-message-driven thinking modes (detailed think, /think,
@@ -145,4 +148,5 @@ npm run probe -- --model=z-ai/glm-5.2 --output=glm-5.2-probe.json
 ```
 
 The probe never runs during startup and does not write credentials, prompts, or
-complete responses to its report.
+complete responses to its report. Use `--cases` and `--timeout-ms` to avoid
+waiting on a busy hosted model.

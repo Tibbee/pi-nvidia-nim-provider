@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const BASE_URL = "https://integrate.api.nvidia.com/v1";
 const DEFAULT_MODEL = "z-ai/glm-5.2";
+const DEFAULT_TIMEOUT_MS = 60000;
 const PROMPT = "Compute 17 times 19. Give the final answer and a short explanation.";
 
 type JsonObject = Record<string, unknown>;
@@ -39,6 +40,7 @@ type ProbeReport = {
   nodeVersion: string;
   piVersion: string;
   endpoint: string;
+  timeoutMs: number;
   results: ProbeResult[];
 };
 
@@ -257,6 +259,24 @@ function buildCases(model: string): ProbeCase[] {
     make("top-level-thinking-disabled", true, {
       thinking: { type: "disabled" },
     }),
+    make("chat-template-off-only", true, {
+      chat_template_kwargs: { enable_thinking: false },
+    }),
+    make("reasoning-effort-none-only", true, {
+      reasoning_effort: "none",
+    }),
+    make("top-level-thinking-none", true, {
+      thinking: { type: "enabled" },
+      reasoning_effort: "none",
+    }),
+    make("top-level-thinking-low", true, {
+      thinking: { type: "enabled" },
+      reasoning_effort: "low",
+    }),
+    make("top-level-thinking-medium", true, {
+      thinking: { type: "enabled" },
+      reasoning_effort: "medium",
+    }),
     make("top-level-thinking-high", true, {
       thinking: { type: "enabled" },
       reasoning_effort: "high",
@@ -264,6 +284,12 @@ function buildCases(model: string): ProbeCase[] {
     make("top-level-thinking-max", true, {
       thinking: { type: "enabled" },
       reasoning_effort: "max",
+    }),
+    make("nested-effort-low", true, {
+      chat_template_kwargs: { reasoning_effort: "low" },
+    }),
+    make("nested-effort-medium", true, {
+      chat_template_kwargs: { reasoning_effort: "medium" },
     }),
     make("nested-effort-high", true, {
       chat_template_kwargs: { reasoning_effort: "high" },
@@ -322,7 +348,12 @@ async function loadPackageVersion(): Promise<string> {
   }
 }
 
-async function runCase(apiKey: string, model: string, testCase: ProbeCase): Promise<ProbeResult> {
+async function runCase(
+  apiKey: string,
+  model: string,
+  testCase: ProbeCase,
+  timeoutMs: number,
+): Promise<ProbeResult> {
   const observation = emptyObservation();
   try {
     const response = await fetch(`${BASE_URL}/chat/completions`, {
@@ -332,11 +363,16 @@ async function runCase(apiKey: string, model: string, testCase: ProbeCase): Prom
         "Content-Type": "application/json",
       },
       body: JSON.stringify(testCase.body),
-      signal: AbortSignal.timeout(60000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     Object.assign(observation, await inspectResponse(response, testCase.stream));
-  } catch {
-    observation.notes.push("Request failed before a response was received");
+  } catch (error: unknown) {
+    const errorName = error instanceof Error ? error.name : "";
+    observation.notes.push(
+      errorName === "TimeoutError" || errorName === "AbortError"
+        ? `Request timed out after ${timeoutMs}ms`
+        : "Request failed before a response was received",
+    );
   }
   return { name: testCase.name, stream: testCase.stream, ...observation };
 }
@@ -350,10 +386,24 @@ async function main(): Promise<void> {
   }
 
   const model = argValue("--model") ?? DEFAULT_MODEL;
+  const timeoutMs = Number(argValue("--timeout-ms") ?? DEFAULT_TIMEOUT_MS);
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1000) {
+    throw new Error("--timeout-ms must be an integer of at least 1000 milliseconds.");
+  }
+
+  const allCases = buildCases(model);
+  const requestedCases = argValue("--cases")?.split(",").map((name) => name.trim()).filter(Boolean);
+  const cases = requestedCases
+    ? allCases.filter((testCase) => requestedCases.includes(testCase.name))
+    : allCases;
+  if (cases.length === 0) {
+    throw new Error(`No matching probe cases. Available: ${allCases.map((testCase) => testCase.name).join(", ")}`);
+  }
+
   const results: ProbeResult[] = [];
-  for (const testCase of buildCases(model)) {
+  for (const testCase of cases) {
     process.stderr.write(`Running ${testCase.name}...\n`);
-    results.push(await runCase(apiKey, model, testCase));
+    results.push(await runCase(apiKey, model, testCase, timeoutMs));
   }
 
   const report: ProbeReport = {
@@ -363,6 +413,7 @@ async function main(): Promise<void> {
     nodeVersion: process.version,
     piVersion: process.env.PI_VERSION ?? "unknown",
     endpoint: "integrate.api.nvidia.com",
+    timeoutMs,
     results,
   };
   const output = JSON.stringify(report, null, 2);
@@ -374,7 +425,7 @@ async function main(): Promise<void> {
 }
 
 if (hasFlag("--help")) {
-  console.log("Usage: npm run probe -- --model=z-ai/glm-5.2 [--output=report.json]");
+  console.log("Usage: npm run probe -- --model=z-ai/glm-5.2 [--cases=baseline-stream,current-extension-on] [--timeout-ms=30000] [--output=report.json]");
   console.log("Credential: --api-key=... or NVIDIA_NIM_API_KEY/NVIDIA_API_KEY");
 } else {
   main().catch((error: unknown) => {

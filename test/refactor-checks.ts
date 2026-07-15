@@ -3,7 +3,11 @@ import { buildNimDoctorReport, handleAfterProviderResponse, handleBeforeProvider
 import { classifyThinkingFormat, mapThinkingFormatToCompat, STATIC_MODELS, STATIC_MODEL_MAP } from "../models/registry";
 import { applyFamilyCompat } from "../config/model-families";
 import type { NimModelConfig } from "../models/types";
-import { GLM_52_REASONING_CAPABILITY, getReasoningCapability } from "../models/capabilities";
+import {
+  GLM_52_REASONING_CAPABILITY,
+  STEP_37_REASONING_CAPABILITY,
+  getReasoningCapability,
+} from "../models/capabilities";
 
 function baseModel(id: string): NimModelConfig {
   return {
@@ -51,13 +55,16 @@ assert.equal(STATIC_MODEL_MAP.get("stepfun-ai/step-3.5-flash")?.reasoning, true)
 assert.equal(getReasoningCapability("z-ai/glm-5.2"), GLM_52_REASONING_CAPABILITY);
 assert.equal(GLM_52_REASONING_CAPABILITY.semantics.supportsEffort, true);
 assert.equal(GLM_52_REASONING_CAPABILITY.verification.requestTransport, "unknown");
+assert.equal(getReasoningCapability("stepfun-ai/step-3.7-flash"), STEP_37_REASONING_CAPABILITY);
+assert.equal(STEP_37_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
+assert.equal(STEP_37_REASONING_CAPABILITY.semantics.canDisable, false);
 
 const doctorReport = buildNimDoctorReport({
   model: { provider: "nvidia-nim", id: "z-ai/glm-5.2" } as any,
   modelRegistry: { getProviderAuthStatus: () => ({ configured: false }) } as any,
 });
 assert.match(doctorReport, /provider: nvidia-nim/);
-assert.match(doctorReport, /GLM-5.2 request transport: unknown/);
+assert.match(doctorReport, /z-ai\/glm-5\.2 request transport: unknown/);
 
 // 6) before_provider_request should skip models not in the NIM registry.
 assert.equal(

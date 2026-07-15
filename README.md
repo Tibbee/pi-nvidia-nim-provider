@@ -18,6 +18,7 @@ Registers the **`nvidia-nim`** provider with pi, backed by
   injection (thinking effort, budgets, system-message toggles), content array
   normalization for older models
 - **No custom streaming** — uses pi's built-in `openai-completions`
+- **`/nim-doctor` diagnostics** — reports provider, auth, catalog, and verification state
 
 ## Install
 
@@ -112,8 +113,9 @@ DeepSeek V4, Kimi K2.6, Qwen3, GLM-5.2, MiniMax M3, Seed OSS, Nemotron
 (Ultra, Super, 3-Super), GPT-OSS, and StepFun.
 
 Notable:
-- **GLM-5.2** — boolean thinking control via `enable_thinking` and
-  `clear_thinking`; upstream effort levels are not yet verified on NIM
+- **GLM-5.2** — boolean NIM thinking control via `enable_thinking` and
+  `clear_thinking`. Upstream and self-hosted vLLM documentation describe
+  high/max effort modes, but the hosted NIM transport remains unverified.
 - **MiniMax M3** — three-mode thinking toggle (disabled/adaptive/enabled)
   mapped from pi's thinking levels
 - **Nemotron** — system-message-driven thinking modes (detailed think, /think,
@@ -132,3 +134,15 @@ Notable:
   handled automatically (e.g. `off→none`, `minimal→low`)
 - **Architecturally clean** — uses `before_provider_request` event hook with no
   custom `streamSimple`, avoiding provider conflicts
+
+## Verification
+
+The extension keeps upstream model semantics separate from NVIDIA-hosted wire
+encoding. Run the opt-in probe when an NVIDIA credential is available:
+
+```bash
+npm run probe -- --model=z-ai/glm-5.2 --output=glm-5.2-probe.json
+```
+
+The probe never runs during startup and does not write credentials, prompts, or
+complete responses to its report.

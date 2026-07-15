@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { handleAfterProviderResponse, handleBeforeProviderRequest } from "../index";
+import { buildNimDoctorReport, handleAfterProviderResponse, handleBeforeProviderRequest } from "../index";
 import { classifyThinkingFormat, mapThinkingFormatToCompat, STATIC_MODELS, STATIC_MODEL_MAP } from "../models/registry";
 import { applyFamilyCompat } from "../config/model-families";
 import type { NimModelConfig } from "../models/types";
@@ -51,6 +51,13 @@ assert.equal(STATIC_MODEL_MAP.get("stepfun-ai/step-3.5-flash")?.reasoning, true)
 assert.equal(getReasoningCapability("z-ai/glm-5.2"), GLM_52_REASONING_CAPABILITY);
 assert.equal(GLM_52_REASONING_CAPABILITY.semantics.supportsEffort, true);
 assert.equal(GLM_52_REASONING_CAPABILITY.verification.requestTransport, "unknown");
+
+const doctorReport = buildNimDoctorReport({
+  model: { provider: "nvidia-nim", id: "z-ai/glm-5.2" } as any,
+  modelRegistry: { getProviderAuthStatus: () => ({ configured: false }) } as any,
+});
+assert.match(doctorReport, /provider: nvidia-nim/);
+assert.match(doctorReport, /GLM-5.2 request transport: unknown/);
 
 // 6) before_provider_request should skip models not in the NIM registry.
 assert.equal(

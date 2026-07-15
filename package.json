@@ -40,7 +40,7 @@
     },
     "homepage": "https://github.com/Tibbee/pi-nvidia-nim-provider#readme",
     "scripts": {
-        "test": "npx --yes tsx test/refactor-checks.ts && npx --yes tsx test/before-provider-request-snapshots.ts",
+        "test": "npx --yes tsx test/refactor-checks.ts && npx --yes tsx test/before-provider-request-snapshots.ts && npx --yes tsx test/glm-request-contracts.ts",
         "probe": "npx --yes tsx tools/probe_nim.ts"
     },
     "bugs": {

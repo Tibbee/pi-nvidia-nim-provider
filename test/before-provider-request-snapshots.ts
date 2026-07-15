@@ -64,6 +64,22 @@ const cases = [
     },
   },
   {
+    name: "glm-5.2 does not emit unverified effort fields",
+    provider: "nvidia-nim",
+    payload: {
+      model: "z-ai/glm-5.2",
+      thinking: { type: "enabled" },
+      reasoning_effort: "high",
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "z-ai/glm-5.2",
+      chat_template_kwargs: { enable_thinking: true, clear_thinking: false },
+      messages: [{ role: "user", content: "hello" }],
+      max_tokens: 32768,
+    },
+  },
+  {
     name: "glm-5.2 disables thinking with clear_thinking:true",
     provider: "nvidia-nim",
     payload: {

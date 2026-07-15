@@ -32,13 +32,17 @@
         "llm",
         "provider"
     ],
-    "description": "NVIDIA NIM provider for pi coding agent — 100+ models with full thinking support",
+    "description": "NVIDIA NIM provider for pi coding agent — ~81 curated models with verified compatibility handlers",
     "author": "Tibbee",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/Tibbee/pi-nvidia-nim-provider.git"
     },
     "homepage": "https://github.com/Tibbee/pi-nvidia-nim-provider#readme",
+    "scripts": {
+        "test": "npx --yes tsx test/refactor-checks.ts && npx --yes tsx test/before-provider-request-snapshots.ts",
+        "probe": "npx --yes tsx tools/probe_nim.ts"
+    },
     "bugs": {
         "url": "https://github.com/Tibbee/pi-nvidia-nim-provider/issues"
     }

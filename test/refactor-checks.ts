@@ -3,6 +3,7 @@ import { handleAfterProviderResponse, handleBeforeProviderRequest } from "../ind
 import { classifyThinkingFormat, mapThinkingFormatToCompat, STATIC_MODELS, STATIC_MODEL_MAP } from "../models/registry";
 import { applyFamilyCompat } from "../config/model-families";
 import type { NimModelConfig } from "../models/types";
+import { GLM_52_REASONING_CAPABILITY, getReasoningCapability } from "../models/capabilities";
 
 function baseModel(id: string): NimModelConfig {
   return {
@@ -46,7 +47,12 @@ assert.equal(
 );
 assert.equal(STATIC_MODEL_MAP.get("stepfun-ai/step-3.5-flash")?.reasoning, true);
 
-// 5) before_provider_request should skip models not in the NIM registry.
+// 5) GLM semantics and NIM transport hypotheses remain separate.
+assert.equal(getReasoningCapability("z-ai/glm-5.2"), GLM_52_REASONING_CAPABILITY);
+assert.equal(GLM_52_REASONING_CAPABILITY.semantics.supportsEffort, true);
+assert.equal(GLM_52_REASONING_CAPABILITY.verification.requestTransport, "unknown");
+
+// 6) before_provider_request should skip models not in the NIM registry.
 assert.equal(
   handleBeforeProviderRequest(
     { payload: { model: "openai/gpt-4o" } },
@@ -55,7 +61,7 @@ assert.equal(
   undefined
 );
 
-// 6) after_provider_response should only warn for NVIDIA rate limits.
+// 7) after_provider_response should only warn for NVIDIA rate limits.
 // The function returns void and calls ctx.ui.notify(), so we mock the context.
 function mockCtx(provider: string) {
   const notifications: Array<{ msg: string; level: string }> = [];
@@ -88,7 +94,7 @@ assert.equal(ctx4.notifications[0].msg, "NVIDIA NIM rate-limited.");
 // Also handle undefined ctx gracefully.
 handleAfterProviderResponse({ status: 429, headers: {} }, undefined as any);
 
-// 7) DeepSeek V4 rewrite should move thinking fields into chat_template_kwargs.
+// 8) DeepSeek V4 rewrite should move thinking fields into chat_template_kwargs.
 const deepseekPayload = {
   model: "deepseek-ai/deepseek-v4-flash",
   thinking: { type: "enabled" },

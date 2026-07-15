@@ -175,13 +175,9 @@ export function applyCustomThinkingFormat(
       const modelId = (payload.model as string | undefined) || "";
       if (/^z-ai\/glm/.test(modelId)) {
         const enabled = hasEnabledThinking(payload);
-        // Capture reasoning_effort before deletion and map to GLM effort levels.
-        // GLM-5.2 accepts "high" (balanced) or "max" (deep, default when omitted).
-        const rawEffort = payload.reasoning_effort as string | undefined;
-        const mappedEffort =
-          rawEffort && !["off", "none", "minimal"].includes(rawEffort)
-            ? ["xhigh", "max"].includes(rawEffort) ? "max" : "high"
-            : undefined;
+        // Upstream GLM and self-hosted vLLM document effort controls, but the
+        // hosted NIM transport is not verified yet. Keep production requests
+        // boolean-only until the opt-in probe confirms a NIM wire encoding.
         const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
         delete payload.thinking;
         delete payload.reasoning_effort;
@@ -192,7 +188,6 @@ export function applyCustomThinkingFormat(
             ...base,
             enable_thinking: true,
             clear_thinking: false,
-            ...(mappedEffort ? { reasoning_effort: mappedEffort } : {}),
           };
           return { modified: true, thinkingEnabled: true };
         } else {

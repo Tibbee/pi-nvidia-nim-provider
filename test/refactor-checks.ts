@@ -4,6 +4,7 @@ import { classifyThinkingFormat, mapThinkingFormatToCompat, STATIC_MODELS, STATI
 import { applyFamilyCompat } from "../config/model-families";
 import type { NimModelConfig } from "../models/types";
 import {
+  DEEPSEEK_V4_FLASH_REASONING_CAPABILITY,
   GLM_52_REASONING_CAPABILITY,
   MINIMAX_M3_REASONING_CAPABILITY,
   STEP_37_REASONING_CAPABILITY,
@@ -56,6 +57,8 @@ assert.equal(STATIC_MODEL_MAP.get("stepfun-ai/step-3.5-flash")?.reasoning, true)
 assert.equal(getReasoningCapability("z-ai/glm-5.2"), GLM_52_REASONING_CAPABILITY);
 assert.equal(GLM_52_REASONING_CAPABILITY.semantics.supportsEffort, true);
 assert.equal(GLM_52_REASONING_CAPABILITY.verification.requestTransport, "unknown");
+assert.equal(getReasoningCapability("deepseek-ai/deepseek-v4-flash"), DEEPSEEK_V4_FLASH_REASONING_CAPABILITY);
+assert.equal(DEEPSEEK_V4_FLASH_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
 assert.equal(getReasoningCapability("minimaxai/minimax-m3"), MINIMAX_M3_REASONING_CAPABILITY);
 assert.equal(MINIMAX_M3_REASONING_CAPABILITY.nimTransport.requestEncoding, "chat-template-kwargs");
 assert.equal(getReasoningCapability("stepfun-ai/step-3.7-flash"), STEP_37_REASONING_CAPABILITY);

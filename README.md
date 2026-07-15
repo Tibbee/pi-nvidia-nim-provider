@@ -123,6 +123,8 @@ Notable:
   mapped from pi's thinking levels
 - **Nemotron** — system-message-driven thinking modes (detailed think, /think,
   and reasoning budget variants)
+- **DeepSeek V4 Flash** — live NIM requests confirmed content-only non-think
+  and separate `reasoning_content` for high/max via `chat_template_kwargs`
 - **DeepSeek V4** — `reasoning_effort` inside `chat_template_kwargs` with
   off→none and xhigh→max mapping
 

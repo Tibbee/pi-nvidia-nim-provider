@@ -103,6 +103,48 @@ export const GLM_52_REASONING_CAPABILITY: ReasoningCapability = {
 };
 
 /**
+ * DeepSeek V4 Flash hosted-NIM observation. The NVIDIA model page documents
+ * non-think, high, and max modes. Live requests using the production handler's
+ * chat_template_kwargs shape returned content-only non-think responses and
+ * separate reasoning_content for high/max.
+ *
+ * References:
+ * - https://build.nvidia.com/deepseek-ai/deepseek-v4-flash.md
+ * - https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash
+ */
+export const DEEPSEEK_V4_FLASH_REASONING_CAPABILITY: ReasoningCapability = {
+  modelId: "deepseek-ai/deepseek-v4-flash",
+  semantics: {
+    defaultEnabled: false,
+    canDisable: true,
+    supportsEffort: true,
+    acceptedEfforts: ["none", "high", "max"],
+    effectiveEffortMapping: {
+      off: "none",
+      minimal: "none",
+      low: "high",
+      medium: "high",
+      high: "high",
+      xhigh: "max",
+    },
+    supportsInterleavedThinking: "unknown",
+    supportsPreservedThinking: "unknown",
+    responseField: "reasoning_content",
+  },
+  nimTransport: {
+    requestEncoding: "chat-template-kwargs",
+    responseEncoding: "reasoning_content",
+  },
+  verification: {
+    semantics: "documented",
+    requestTransport: "probe-passed",
+    responseTransport: "probe-passed",
+    tools: "documented",
+    preservedThinking: "unknown",
+  },
+};
+
+/**
  * MiniMax-M3 NIM model-card capability. The model page's OpenAPI schema
  * explicitly documents chat_template_kwargs.thinking_mode and the separate
  * reasoning_content response field. The live endpoint was unavailable during
@@ -185,6 +227,7 @@ export const STEP_37_REASONING_CAPABILITY: ReasoningCapability = {
 };
 
 const CAPABILITIES = new Map<string, ReasoningCapability>([
+  [DEEPSEEK_V4_FLASH_REASONING_CAPABILITY.modelId, DEEPSEEK_V4_FLASH_REASONING_CAPABILITY],
   [GLM_52_REASONING_CAPABILITY.modelId, GLM_52_REASONING_CAPABILITY],
   [MINIMAX_M3_REASONING_CAPABILITY.modelId, MINIMAX_M3_REASONING_CAPABILITY],
   [STEP_37_REASONING_CAPABILITY.modelId, STEP_37_REASONING_CAPABILITY],

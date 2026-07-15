@@ -151,6 +151,30 @@ function mergeObservation(
   }
 }
 
+function classifyServerError(value: unknown, notes: string[]): void {
+  const body = asObject(value);
+  const nested = asObject(body?.error);
+  const serverText = [
+    body?.title,
+    body?.detail,
+    body?.message,
+    body?.code,
+    typeof body?.error === "string" ? body.error : undefined,
+    nested?.message,
+    nested?.type,
+    nested?.code,
+  ]
+    .filter((item): item is string => typeof item === "string")
+    .join(" ")
+    .toLowerCase();
+  if (serverText.includes("degraded")) notes.push("NIM reported a degraded function");
+  else if (/(busy|overloaded|unavailable|capacity|resourceexhausted)/.test(serverText)) {
+    notes.push("NIM reported temporary service unavailability");
+  } else {
+    notes.push("NIM returned an error event");
+  }
+}
+
 function emptyObservation(): ProbeObservation {
   return {
     status: null,
@@ -175,17 +199,7 @@ async function inspectResponse(response: Response, stream: boolean): Promise<Pro
   if (!response.ok) {
     observation.notes.push("HTTP request was rejected");
     try {
-      const errorBody = await response.json() as JsonObject;
-      const serverText = [errorBody.title, errorBody.detail, errorBody.error]
-        .filter((value): value is string => typeof value === "string")
-        .join(" ")
-        .toLowerCase();
-      // Classify known service-state failures without copying arbitrary error
-      // details into the report.
-      if (serverText.includes("degraded")) observation.notes.push("NIM reported a degraded function");
-      else if (/(busy|overloaded|unavailable|capacity)/.test(serverText)) {
-        observation.notes.push("NIM reported temporary service unavailability");
-      }
+      classifyServerError(await response.json(), observation.notes);
     } catch {
       observation.notes.push("Rejected response was not valid JSON");
     }
@@ -220,7 +234,12 @@ async function inspectResponse(response: Response, stream: boolean): Promise<Pro
         if (!line.startsWith("data:") || line.trim() === "data: [DONE]") continue;
         try {
           const chunk = JSON.parse(line.slice(5).trim()) as JsonObject;
-          mergeObservation(observation, chunk);
+          if (chunk.error !== undefined) {
+            observation.accepted = false;
+            classifyServerError(chunk.error, observation.notes);
+          } else {
+            mergeObservation(observation, chunk);
+          }
         } catch {
           observation.notes.push("A stream event was not valid JSON");
         }
@@ -229,7 +248,13 @@ async function inspectResponse(response: Response, stream: boolean): Promise<Pro
     }
     if (buffer.startsWith("data:") && buffer.trim() !== "data: [DONE]") {
       try {
-        mergeObservation(observation, JSON.parse(buffer.slice(5).trim()) as JsonObject);
+        const chunk = JSON.parse(buffer.slice(5).trim()) as JsonObject;
+        if (chunk.error !== undefined) {
+          observation.accepted = false;
+          classifyServerError(chunk.error, observation.notes);
+        } else {
+          mergeObservation(observation, chunk);
+        }
       } catch {
         observation.notes.push("The final stream event was not valid JSON");
       }
@@ -324,6 +349,27 @@ function buildCases(model: string): ProbeCase[] {
     }),
     make("minimax-thinking-enabled", true, {
       chat_template_kwargs: { thinking_mode: "enabled" },
+    }),
+    make("deepseek-v4-nonthink", true, {
+      chat_template_kwargs: { thinking: false, reasoning_effort: "none" },
+    }),
+    make("deepseek-v4-handler-off-non-stream", false, {
+      chat_template_kwargs: { thinking: false },
+    }),
+    make("deepseek-v4-nonthink-non-stream", false, {
+      chat_template_kwargs: { thinking: false, reasoning_effort: "none" },
+    }),
+    make("deepseek-v4-high", true, {
+      chat_template_kwargs: { thinking: true, reasoning_effort: "high" },
+    }),
+    make("deepseek-v4-high-non-stream", false, {
+      chat_template_kwargs: { thinking: true, reasoning_effort: "high" },
+    }),
+    make("deepseek-v4-max", true, {
+      chat_template_kwargs: { thinking: true, reasoning_effort: "max" },
+    }),
+    make("deepseek-v4-max-non-stream", false, {
+      chat_template_kwargs: { thinking: true, reasoning_effort: "max" },
     }),
     make("tools-thinking-off", true, {
       chat_template_kwargs: { enable_thinking: false, clear_thinking: true },

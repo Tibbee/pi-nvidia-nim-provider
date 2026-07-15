@@ -1,8 +1,8 @@
 # pi-extension-nvidia-nim
 
-NVIDIA NIM provider for the pi coding agent — access **100+ models** hosted on
-NVIDIA's inference microservice platform, including DeepSeek, Llama Nemotron,
-Qwen, GLM, Mistral, MiniMax, and more.
+NVIDIA NIM provider for the pi coding agent — access **~81 curated models**
+hosted on NVIDIA's inference microservice platform, including DeepSeek, Llama
+Nemotron, Qwen, GLM, Mistral, MiniMax, and more.
 
 Registers the **`nvidia-nim`** provider with pi, backed by
 `https://integrate.api.nvidia.com/v1`.
@@ -49,14 +49,16 @@ Add an entry so pi resolves the key automatically for all NVIDIA providers:
 
 ```json
 {
-  "nvidia": { "type": "api_key", "key": "nvapi-..." }
+  "nvidia-nim": { "type": "api_key", "key": "nvapi-..." }
 }
 ```
 
 **Option C — Interactive login:**
 
-Run `/login` in pi's interactive mode and select **NVIDIA** from the list.
-The key is stored in `auth.json` and managed automatically.
+Run `/login nvidia-nim` in pi's interactive mode and select the API-key
+login. The key is stored under the `nvidia-nim` provider in `auth.json` and
+managed automatically. Selecting built-in `nvidia` authenticates a different
+provider.
 
 ### 3. Run pi with the extension
 
@@ -110,8 +112,8 @@ DeepSeek V4, Kimi K2.6, Qwen3, GLM-5.2, MiniMax M3, Seed OSS, Nemotron
 (Ultra, Super, 3-Super), GPT-OSS, and StepFun.
 
 Notable:
-- **GLM-5.2** — full reasoning effort control (high/max) via `enable_thinking`
-  and `clear_thinking` kwargs
+- **GLM-5.2** — boolean thinking control via `enable_thinking` and
+  `clear_thinking`; upstream effort levels are not yet verified on NIM
 - **MiniMax M3** — three-mode thinking toggle (disabled/adaptive/enabled)
   mapped from pi's thinking levels
 - **Nemotron** — system-message-driven thinking modes (detailed think, /think,

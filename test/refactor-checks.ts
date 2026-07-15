@@ -26,7 +26,7 @@ assert.deepEqual(mapThinkingFormatToCompat("reasoning-effort"), {
 const stepfun = applyFamilyCompat([baseModel("stepfun-ai/step-3.5-flash")])[0];
 assert.equal(stepfun.reasoning, true);
 
-const deepseek = applyFamilyCompat([baseModel("deepseek-ai/deepseek-v3-test")])[0];
+const deepseek = applyFamilyCompat([baseModel("deepseek-ai/deepseek-v4-test")])[0];
 assert.equal(deepseek.reasoning, true);
 
 const minimax = applyFamilyCompat([baseModel("minimaxai/minimax-m2.7")])[0];
@@ -48,7 +48,10 @@ assert.equal(STATIC_MODEL_MAP.get("stepfun-ai/step-3.5-flash")?.reasoning, true)
 
 // 5) before_provider_request should skip models not in the NIM registry.
 assert.equal(
-  handleBeforeProviderRequest({ provider: "openrouter", payload: { model: "openai/gpt-4o" } }),
+  handleBeforeProviderRequest(
+    { payload: { model: "openai/gpt-4o" } },
+    { model: { provider: "openrouter" } as any },
+  ),
   undefined
 );
 
@@ -92,7 +95,10 @@ const deepseekPayload = {
   reasoning_effort: "high",
   messages: [],
 };
-const rewritten = handleBeforeProviderRequest({ provider: "nvidia-nim", payload: deepseekPayload }) as Record<string, unknown>;
+const rewritten = handleBeforeProviderRequest(
+  { payload: deepseekPayload },
+  { model: { provider: "nvidia-nim" } as any },
+) as Record<string, unknown>;
 assert.ok(rewritten);
 assert.equal("thinking" in rewritten, false);
 assert.equal("reasoning_effort" in rewritten, false);

@@ -12,9 +12,14 @@ const NIM_DEBUG_LOG = join(homedir(), ".pi", "nim-debug.log");
 
 // Gate: pi v0.73.0 BeforeProviderRequestEvent has no `provider` field,
 // so we identify NIM requests by checking whether payload.model is in our registry.
-export function handleBeforeProviderRequest(event: { payload: unknown }) {
+export function handleBeforeProviderRequest(
+  event: { payload: unknown },
+  ctx: Pick<ExtensionContext, "model">,
+) {
+  if (ctx.model?.provider !== "nvidia-nim") return;
+
   const payload = event.payload as Record<string, unknown>;
-  // payload.model is the raw NIM model ID.
+  // payload.model is the raw NIM model ID, not a provider-prefixed ID.
   const modelId = payload.model as string | undefined;
   if (!modelId || !STATIC_MODEL_MAP.has(modelId)) return;
   // Older/smaller NIM models (e.g. solar, baichuan, falcon) reject
@@ -130,13 +135,16 @@ function normalizeContentArrays(payload: Record<string, unknown>): void {
 
 export default async function (pi: ExtensionAPI) {
   pi.registerProvider("nvidia-nim", {
+    name: "NVIDIA NIM",
     baseUrl: NIM_BASE_URL,
     apiKey: NIM_API_KEY_REF,
     api: "openai-completions",
     models: STATIC_MODELS,
   });
 
-  pi.on("before_provider_request", (event) => handleBeforeProviderRequest(event as { payload: unknown }));
+  pi.on("before_provider_request", (event, ctx) =>
+    handleBeforeProviderRequest(event as { payload: unknown }, ctx),
+  );
   pi.on("after_provider_response", (event, ctx) => handleAfterProviderResponse(
     event as { status: number; headers?: Record<string, string | undefined> },
     ctx,

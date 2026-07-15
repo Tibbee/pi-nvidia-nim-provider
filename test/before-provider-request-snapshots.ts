@@ -6,7 +6,10 @@ function deepClone<T>(value: T): T {
 }
 
 function run(provider: string, payload: Record<string, unknown>) {
-  const result = handleBeforeProviderRequest({ provider, payload: deepClone(payload) });
+  const result = handleBeforeProviderRequest(
+    { payload: deepClone(payload) },
+    { model: { provider } as any },
+  );
   return result ? deepClone(result as Record<string, unknown>) : undefined;
 }
 
@@ -116,6 +119,16 @@ const cases = [
       model: "openai/gpt-4o",
       thinking: { type: "enabled" },
       reasoning_effort: "high",
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: undefined,
+  },
+  {
+    name: "known NIM model is untouched for another provider",
+    provider: "openrouter",
+    payload: {
+      model: "z-ai/glm-5.2",
+      chat_template_kwargs: { enable_thinking: true },
       messages: [{ role: "user", content: "hello" }],
     },
     expected: undefined,

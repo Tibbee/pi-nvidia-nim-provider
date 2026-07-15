@@ -64,8 +64,10 @@ export interface ReasoningCapability {
  * Reference semantics:
  * - https://docs.z.ai/guides/capabilities/thinking-mode
  * - https://recipes.vllm.ai/zai-org/GLM-5.2
- * Hosted NIM reference:
+ * Hosted NIM references:
  * - https://docs.api.nvidia.com/nim/reference/z-ai-glm-5.2
+ * - https://docs.nvidia.com/nim/large-language-models/latest/api-reference.html
+ * - https://docs.nvidia.com/nim/large-language-models/1.15.0/reasoning-model.html
  */
 export const GLM_52_REASONING_CAPABILITY: ReasoningCapability = {
   modelId: "z-ai/glm-5.2",

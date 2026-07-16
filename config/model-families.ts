@@ -22,13 +22,16 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       maxTokensField: "max_tokens",
       requiresReasoningContentOnAssistantMessages: true,
     },
+    // Hosted DeepSeek V4 exposes exactly three named modes. Explicit nulls
+    // hide Pi's intermediate levels instead of silently presenting aliases.
     thinkingLevelMap: {
       off: "none",
-      minimal: "high",
-      low: "high",
-      medium: "high",
+      minimal: null,
+      low: null,
+      medium: null,
       high: "high",
-      xhigh: "max",
+      xhigh: null,
+      max: "max",
     },
   },
 

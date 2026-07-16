@@ -374,6 +374,57 @@ function buildCases(model: string): ProbeCase[] {
     make("deepseek-v4-max-non-stream", false, {
       chat_template_kwargs: { thinking: true, reasoning_effort: "max" },
     }),
+    make("deepseek-nim-off", true, {
+      chat_template_kwargs: { thinking: false },
+    }),
+    make("deepseek-nim-on", true, {
+      chat_template_kwargs: { thinking: true },
+    }),
+    make("qwen-chat-template-off", true, {
+      chat_template_kwargs: { enable_thinking: false, preserve_thinking: true },
+    }),
+    make("qwen-chat-template-on", true, {
+      chat_template_kwargs: { enable_thinking: true, preserve_thinking: true },
+    }),
+    make("nemotron-3-effort-off", true, {
+      chat_template_kwargs: { enable_thinking: false },
+    }),
+    make("nemotron-3-effort-low", true, {
+      chat_template_kwargs: { enable_thinking: true, low_effort: true },
+      reasoning_budget: 32768,
+    }),
+    make("nemotron-3-effort-medium", true, {
+      chat_template_kwargs: { enable_thinking: true },
+      reasoning_budget: 32768,
+    }),
+    make("nemotron-3-effort-high", true, {
+      chat_template_kwargs: { enable_thinking: true },
+      reasoning_budget: 32768,
+    }),
+    make("nemotron-super-detailed-off", true, {
+      messages: [
+        { role: "system", content: "detailed thinking off" },
+        { role: "user", content: PROMPT },
+      ],
+    }),
+    make("nemotron-super-detailed-on", true, {
+      messages: [
+        { role: "system", content: "detailed thinking on" },
+        { role: "user", content: PROMPT },
+      ],
+    }),
+    make("nemotron-system-think-off", true, {
+      messages: [
+        { role: "system", content: "/no_think" },
+        { role: "user", content: PROMPT },
+      ],
+    }),
+    make("nemotron-system-think-on", true, {
+      messages: [
+        { role: "system", content: "/think" },
+        { role: "user", content: PROMPT },
+      ],
+    }),
     make("tools-thinking-off", true, {
       chat_template_kwargs: { enable_thinking: false, clear_thinking: true },
       tools: [{

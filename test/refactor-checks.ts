@@ -53,6 +53,19 @@ assert.equal(
   classifyThinkingFormat("deepseek-ai/deepseek-v4-flash"),
   "deepseek-v4"
 );
+const deepseekV4Levels = {
+  off: "none",
+  minimal: null,
+  low: null,
+  medium: null,
+  high: "high",
+  xhigh: null,
+  max: "max",
+};
+for (const modelId of ["deepseek-ai/deepseek-v4-flash", "deepseek-ai/deepseek-v4-pro"]) {
+  const model = STATIC_MODEL_MAP.get(modelId);
+  assert.deepEqual(model?.thinkingLevelMap, deepseekV4Levels, modelId);
+}
 assert.equal(classifyThinkingFormat("moonshotai/kimi-k2.6"), "deepseek-nim");
 assert.equal(classifyThinkingFormat("minimaxai/minimax-m2.7"), "minimax-inline");
 assert.equal(

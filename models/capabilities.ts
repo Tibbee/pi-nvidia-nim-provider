@@ -124,11 +124,8 @@ export const DEEPSEEK_V4_FLASH_REASONING_CAPABILITY: ReasoningCapability = {
     acceptedEfforts: ["none", "high", "max"],
     effectiveEffortMapping: {
       off: "none",
-      minimal: "none",
-      low: "high",
-      medium: "high",
       high: "high",
-      xhigh: "max",
+      max: "max",
     },
     supportsInterleavedThinking: "unknown",
     supportsPreservedThinking: "unknown",

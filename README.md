@@ -104,8 +104,8 @@ DeepSeek V4, Kimi K2.6, Qwen3, GLM-5.2, MiniMax M3, Seed OSS, Nemotron (Ultra, S
 - StepFun: live NIM probing confirmed `reasoning_effort` requests return separate `reasoning_content`. Step-3.7 Flash stays always-on on the hosted endpoint even when `enable_thinking: false` is sent.
 - MiniMax M3 has a three-mode thinking toggle (disabled, adaptive, enabled) mapped from pi's thinking levels.
 - Nemotron uses system-message-driven thinking modes (detailed think, /think, and reasoning budget variants).
-- DeepSeek V4 Flash: live NIM requests confirmed content-only non-think and separate `reasoning_content` for high and max via `chat_template_kwargs`.
-- DeepSeek V4 puts `reasoning_effort` inside `chat_template_kwargs` with off to none and xhigh to max mapping.
+- DeepSeek V4 Flash and Pro: live NIM requests confirmed content-only non-think and separate `reasoning_content` for high and max via `chat_template_kwargs`. Pi exposes only `off`, `high`, and `max` for these models.
+- DeepSeek V4 puts `reasoning_effort` inside `chat_template_kwargs`, with `off` mapped to `none` and `max` mapped to `max`.
 
 ### Verified compatibility matrix
 
@@ -131,6 +131,26 @@ The remaining models work through their family rules, but don't call them live-v
 - No custom `streamSimple`: uses `before_provider_request` event hook, avoiding provider conflicts.
 
 ## Troubleshooting
+
+### Handling transient NIM 429 errors
+
+This extension relies on Pi's built-in retry handling. For occasional NVIDIA NIM rate-limit responses, I currently use the following global setting in `~/.pi/agent/settings.json` as a practical starting point:
+
+```json
+{
+  "retry": {
+    "enabled": true,
+    "maxRetries": 4,
+    "baseDelayMs": 2000,
+    "provider": {
+      "maxRetries": 1,
+      "maxRetryDelayMs": 60000
+    }
+  }
+}
+```
+
+Pi retries the failed turn after approximately 2, 4, 8, and 16 seconds. The single provider retry can help with an immediately transient 429, while keeping the retry count limited. This configuration applies globally to Pi and is not required by the extension. Persistent 429 responses usually indicate throttling or exhausted quota; wait or select another NIM model instead of continually increasing retries.
 
 - Confirm the selected model starts with `nvidia-nim/`. Pi's built-in `nvidia/` provider uses a different catalog and compatibility path.
 - If `--thinking` appears ignored, run `npm run probe -- --model=...` from the extension checkout and check the selected model's family and verification status.

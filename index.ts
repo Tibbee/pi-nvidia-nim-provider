@@ -4,15 +4,12 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import {
-  NIM_API_KEY_ENV,
   NIM_API_KEY_REF,
   NIM_BASE_URL,
-  NIM_NIM_API_KEY_ENV,
 } from "./config/defaults";
 import { applyCustomThinkingFormat, hasEnabledThinking } from "./handlers/thinking";
 import type { TransformResult } from "./handlers/thinking";
 import { STATIC_MODELS, STATIC_MODEL_MAP, classifyThinkingFormat } from "./models/registry";
-import { GLM_52_REASONING_CAPABILITY, getReasoningCapability } from "./models/capabilities";
 
 const NIM_DEBUG_LOG = join(homedir(), ".pi", "nim-debug.log");
 
@@ -94,33 +91,6 @@ export function handleBeforeProviderRequest(
   return modified ? payload : undefined;
 }
 
-export function buildNimDoctorReport(ctx: Pick<ExtensionContext, "model" | "modelRegistry">): string {
-  const auth = ctx.modelRegistry.getProviderAuthStatus("nvidia-nim");
-  const selected = ctx.model?.provider === "nvidia-nim" ? ctx.model.id : "none";
-  const capability = selected === "none"
-    ? GLM_52_REASONING_CAPABILITY
-    : getReasoningCapability(selected);
-  const envNames = [NIM_NIM_API_KEY_ENV, NIM_API_KEY_ENV];
-  const configuredEnvs = envNames.filter((name) => Boolean(process.env[name]));
-  const reasoningModels = STATIC_MODELS.filter((model) => model.reasoning).length;
-  const liveProbeModel = selected === "none" ? "z-ai/glm-5.2" : selected;
-
-  return [
-    "NVIDIA NIM doctor",
-    `provider: nvidia-nim (${NIM_BASE_URL})`,
-    `selected model: ${selected}`,
-    `catalog: ${STATIC_MODELS.length} curated models, ${reasoningModels} reasoning-capable`,
-    `auth.json/env configured: ${auth.configured ? "yes" : "no"}${auth.source ? ` (${auth.source})` : ""}`,
-    `environment variables present: ${configuredEnvs.length > 0 ? configuredEnvs.join(", ") : "none"}`,
-    `${capability?.modelId ?? selected} request encoding: ${capability?.nimTransport.requestEncoding ?? "unknown"}`,
-    `${capability?.modelId ?? selected} request transport: ${capability?.verification.requestTransport ?? "unknown"}`,
-    `${capability?.modelId ?? selected} response transport: ${capability?.verification.responseTransport ?? "unknown"}`,
-    `${capability?.modelId ?? selected} streaming: ${capability?.verification.streaming ?? "unknown"}`,
-    `${capability?.modelId ?? selected} tools: ${capability?.verification.tools ?? "unknown"}`,
-    `live verification: run npm run probe -- --model=${liveProbeModel}`,
-  ].join("\\n");
-}
-
 export function handleAfterProviderResponse(
   event: { status: number; headers?: Record<string, string | undefined> },
   ctx: ExtensionContext,
@@ -178,13 +148,6 @@ export default async function (pi: ExtensionAPI) {
   pi.on("before_provider_request", (event, ctx) =>
     handleBeforeProviderRequest(event as { payload: unknown }, ctx),
   );
-  pi.registerCommand("nim-doctor", {
-    description: "Show NVIDIA NIM compatibility and authentication diagnostics",
-    handler: async (_args, ctx) => {
-      const auth = ctx.modelRegistry.getProviderAuthStatus("nvidia-nim");
-      ctx.ui.notify(buildNimDoctorReport(ctx), auth.configured ? "info" : "warning");
-    },
-  });
   pi.on("after_provider_response", (event, ctx) => handleAfterProviderResponse(
     event as { status: number; headers?: Record<string, string | undefined> },
     ctx,

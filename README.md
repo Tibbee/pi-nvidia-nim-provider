@@ -21,7 +21,6 @@ supported NVIDIA NIM family while retaining Pi's built-in
   injection (thinking effort, budgets, system-message toggles), and request
   content-array normalization for older models
 - **No custom streaming** — uses pi's built-in `openai-completions`
-- **`/nim-doctor` diagnostics** — reports provider, auth, catalog, and verification state
 
 ## Which NVIDIA provider?
 
@@ -180,8 +179,8 @@ matrix or have a corresponding compatibility report.
 
 - Confirm that the selected model starts with `nvidia-nim/`; Pi's built-in
   `nvidia/` provider uses a different catalog and compatibility path.
-- If `--thinking` appears ignored, run `/nim-doctor` and check the selected
-  model's family and verification status.
+- If `--thinking` appears ignored, run `npm run probe -- --model=...` from the
+  extension checkout and check the selected model's family and verification status.
 - If a model is missing, refresh the catalog and confirm the exact NIM model ID
   still exists on its NVIDIA model page.
 - If authentication fails, check `NVIDIA_NIM_API_KEY` first, then the

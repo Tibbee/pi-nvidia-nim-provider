@@ -14,7 +14,7 @@ All notable changes to `pi-extension-nvidia-nim` are documented here.
 
 - Added Thinking Machines Inkling (`thinkingmachines/inkling`) with always-on reasoning support.
 - Added Poolside Laguna XS 2.1 (`poolside/laguna-xs-2.1`) with native thinking on/off routing.
-- Added model capability records and `/nim-doctor` verification diagnostics.
+- Added model capability records and opt-in live probe tooling.
 - Added opt-in live probes for request, response, streaming, usage, and tool behavior.
 
 ### Changed

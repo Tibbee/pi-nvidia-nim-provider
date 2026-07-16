@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildNimDoctorReport, handleAfterProviderResponse, handleBeforeProviderRequest } from "../index";
+import { handleAfterProviderResponse, handleBeforeProviderRequest } from "../index";
 import { classifyThinkingFormat, mapThinkingFormatToCompat, STATIC_MODELS, STATIC_MODEL_MAP } from "../models/registry";
 import { applyFamilyCompat } from "../config/model-families";
 import type { NimModelConfig } from "../models/types";
@@ -91,21 +91,6 @@ assert.equal(getReasoningCapability("stepfun-ai/step-3.7-flash"), STEP_37_REASON
 assert.equal(STEP_37_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
 assert.equal(STEP_37_REASONING_CAPABILITY.semantics.canDisable, false);
 
-const doctorReport = buildNimDoctorReport({
-  model: { provider: "nvidia-nim", id: "z-ai/glm-5.2" } as any,
-  modelRegistry: { getProviderAuthStatus: () => ({ configured: false }) } as any,
-});
-assert.match(doctorReport, /provider: nvidia-nim/);
-assert.match(doctorReport, /z-ai\/glm-5\.2 request transport: probe-passed/);
-assert.match(doctorReport, /z-ai\/glm-5\.2 streaming: probe-passed/);
-
-const lagunaDoctorReport = buildNimDoctorReport({
-  model: { provider: "nvidia-nim", id: "poolside/laguna-xs-2.1" } as any,
-  modelRegistry: { getProviderAuthStatus: () => ({ configured: false }) } as any,
-});
-assert.match(lagunaDoctorReport, /poolside\/laguna-xs-2\.1 request encoding: chat-template-kwargs/);
-assert.match(lagunaDoctorReport, /poolside\/laguna-xs-2\.1 streaming: probe-passed/);
-assert.match(lagunaDoctorReport, /live verification: run npm run probe -- --model=poolside\/laguna-xs-2\.1/);
 
 // 6) before_provider_request should skip models not in the NIM registry.
 assert.equal(

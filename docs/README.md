@@ -487,7 +487,7 @@ The actual thinking transforms are implemented in `handlers/thinking.ts`:
 | GPT-OSS `thinkingLevelMap` | Partial override: `{ minimal: "low" }` |
 | Documentation scraper | `fetch_nim_metadata.ts` scrapes NVIDIA build pages + docs, no external API needed |
 | Comparison tool | `fetch_modelsdev_nvidia.ts` cross-references against models.dev public API |
-| Live probe and diagnostics | `tools/probe_nim.ts` plus `/nim-doctor` report verification, auth, and catalog state |
+| Live probe and capability evidence | `tools/probe_nim.ts` plus static capability records for verification state |
 | Debug capturer | `test/capture_raw.ts` (removed - superseded by `fetch_nim_metadata.ts`) |
 
 ---
@@ -563,7 +563,7 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 ### Completed implementation
 
 - [x] Inkling and Laguna XS 2.1 are in the generated catalog and family routing.
-- [x] Capability records and `/nim-doctor` diagnostics cover both new models.
+- [x] Capability records and opt-in probes cover both new models.
 - [x] Request snapshots cover the configured custom thinking formats.
 - [x] The provider is scoped to `nvidia-nim` and uses Pi's built-in `openai-completions` streaming.
 - [x] `supportsStore: false` is applied at the registry merge point for every NIM model.

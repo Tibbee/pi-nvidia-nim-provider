@@ -2,6 +2,12 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.1.3] - 2026-07-16
+
+### Changed
+
+- Refined README for clarity and consistent formatting.
+
 ## [1.1.2] - 2026-07-16
 
 ### Changed

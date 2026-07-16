@@ -52,6 +52,11 @@ assert.equal(
   "none"
 );
 assert.equal(STATIC_MODEL_MAP.get("stepfun-ai/step-3.5-flash")?.reasoning, true);
+assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.reasoning, true);
+assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.compat?.thinkingFormat, "qwen-chat-template");
+assert.equal(STATIC_MODEL_MAP.get("thinkingmachines/inkling")?.reasoning, true);
+assert.deepEqual(STATIC_MODEL_MAP.get("thinkingmachines/inkling")?.input, ["text", "image"]);
+assert.equal(STATIC_MODEL_MAP.get("thinkingmachines/inkling")?.thinkingLevelMap?.off, null);
 
 // 5) GLM semantics and NIM transport hypotheses remain separate.
 assert.equal(getReasoningCapability("z-ai/glm-5.2"), GLM_52_REASONING_CAPABILITY);

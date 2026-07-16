@@ -855,6 +855,19 @@
     "supportsVision": false
   },
   {
+    "id": "poolside/laguna-xs-2.1",
+    "maxOutputTokens": 16384,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": true
+      }
+    },
+    "supportsReasoning": true,
+    "contextWindow": 262144,
+    "thinkingFormat": "qwen-chat-template",
+    "supportsVision": false
+  },
+  {
     "id": "qwen/qwen3-next-80b-a3b-instruct",
     "maxOutputTokens": 4096,
     "supportsReasoning": true,
@@ -919,6 +932,13 @@
     "contextWindow": 32000,
     "supportsReasoning": false,
     "supportsVision": false
+  },
+  {
+    "id": "thinkingmachines/inkling",
+    "maxOutputTokens": 16384,
+    "supportsReasoning": true,
+    "supportsVision": true,
+    "contextWindow": 1048576
   },
   {
     "id": "upstage/solar-10.7b-instruct",

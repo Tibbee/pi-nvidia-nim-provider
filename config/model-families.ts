@@ -167,6 +167,34 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     thinkingLevelMap: { off: null }, // Cannot disable thinking
   },
 
+  // Inkling's hosted endpoint always returns reasoning content and ignores
+  // top-level and chat-template thinking toggles. Do not send unsupported
+  // thinking controls; expose it as always-on reasoning instead.
+  {
+    name: "inkling",
+    pattern: /^thinkingmachines\/inkling$/,
+    compat: {
+      supportsDeveloperRole: false,
+      supportsReasoningEffort: false,
+      maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: { off: null },
+  },
+
+  // Laguna XS 2.1 uses chat_template_kwargs.enable_thinking. Pi's native
+  // qwen-chat-template path handles the boolean toggle and preservation flag.
+  {
+    name: "laguna-xs-2.1",
+    pattern: /^poolside\/laguna-xs-2\.1$/,
+    compat: {
+      supportsDeveloperRole: false,
+      supportsReasoningEffort: false,
+      thinkingFormat: "qwen-chat-template",
+      requiresReasoningContentOnAssistantMessages: true,
+      maxTokensField: "max_tokens",
+    },
+  },
+
   // Kimi/Nemotron deepseek-style thinking.
   // kimi-k2-thinking always thinks — no toggle, no params.
   {

@@ -1,6 +1,6 @@
 # pi-extension-nvidia-nim
 
-NVIDIA NIM provider for the pi coding agent — access **~81 curated models**
+NVIDIA NIM provider for the pi coding agent — access **~83 curated models**
 hosted on NVIDIA's inference microservice platform, including DeepSeek, Llama
 Nemotron, Qwen, GLM, Mistral, MiniMax, and more.
 
@@ -9,8 +9,8 @@ Registers the **`nvidia-nim`** provider with pi, backed by
 
 ## Features
 
-- **~81 curated models** — chat, reasoning, code, and vision
-- **121 scraped entries** filtered, deduplicated, and family-mapped
+- **~83 curated models** — chat, reasoning, code, and vision
+- **123 scraped entries** filtered, deduplicated, and family-mapped
 - **8 handler-based thinking formats** — DeepSeek V4, DeepSeek NIM,
   thinking-budget, Nemotron system modes (3 variants), MiniMax inline,
   and Qwen chat-template — plus native pi handling for reasoning-effort
@@ -98,7 +98,7 @@ thinking/reasoning support:
 
 | Aspect | Built-in `nvidia` | This extension `nvidia-nim` |
 |--------|-------------------|-----------------------------|
-| **Models** | ~20 curated | ~81 curated (full NIM catalog) |
+| **Models** | ~20 curated | ~83 curated (full NIM catalog) |
 | **Thinking formats** | None | 8 handler-based formats + reasoning-effort |
 | **Content normalization** | No | Yes |
 | **Rate-limit warnings** | No | Yes (429 handler) |
@@ -110,7 +110,7 @@ Both can coexist. Use `nvidia-nim/...` for the full feature set,
 ### Models with thinking support
 
 DeepSeek V4, Kimi K2.6, Qwen3, GLM-5.2, MiniMax M3, Seed OSS, Nemotron
-(Ultra, Super, 3-Super), GPT-OSS, and StepFun.
+(Ultra, Super, 3-Super), GPT-OSS, StepFun, Inkling, and Laguna XS 2.1.
 
 Notable:
 - **GLM-5.2** — boolean NIM thinking control via `enable_thinking` and
@@ -134,7 +134,7 @@ Notable:
 - **Content array normalization** — converts `[{type:"text"}]` to plain strings
   for older models that reject structured content arrays
 - **46-family regex routing** — accurate thinking format and compat assignment
-  across all ~81 models
+  across all ~83 models
 - **Per-model reasoning effort mapping** — non-standard effort values are
   handled automatically (e.g. `off→none`, `minimal→low`)
 - **Architecturally clean** — uses `before_provider_request` event hook with no

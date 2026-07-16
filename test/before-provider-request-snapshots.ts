@@ -129,6 +129,34 @@ const cases = [
     },
   },
   {
+    name: "inkling remains always-on without thinking controls",
+    provider: "nvidia-nim",
+    payload: {
+      model: "thinkingmachines/inkling",
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "thinkingmachines/inkling",
+      messages: [{ role: "user", content: "hello" }],
+      max_tokens: 16384,
+    },
+  },
+  {
+    name: "laguna xs 2.1 uses chat-template thinking",
+    provider: "nvidia-nim",
+    payload: {
+      model: "poolside/laguna-xs-2.1",
+      chat_template_kwargs: { enable_thinking: true, preserve_thinking: true },
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "poolside/laguna-xs-2.1",
+      chat_template_kwargs: { enable_thinking: true, preserve_thinking: true },
+      messages: [{ role: "user", content: "hello" }],
+      max_tokens: 16384,
+    },
+  },
+  {
     name: "non-NIM models are untouched",
     provider: "openrouter",
     payload: {

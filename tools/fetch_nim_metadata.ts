@@ -143,6 +143,8 @@ function getYardstickFallback(modelId: string): { contextWindow?: number; maxOut
     { re: /jamba-1\.5/i, ctx: 262144, out: 8192 },
     { re: /granite-3/i, ctx: 131072, out: 8192 },
     { re: /qwen3/i, ctx: 262144, out: 8192 },
+    // Inkling's upstream config declares a 1M-token context window.
+    { re: /thinkingmachines\/inkling/i, ctx: 1048576, out: 16384 },
     { re: /qwen2\.5-coder/i, ctx: 131072, out: 4096 },
     { re: /qwen2/i, ctx: 32768, out: 4096 },
     { re: /glm-5/i, ctx: 200000, out: 32768 },
@@ -538,6 +540,7 @@ function parseMetadataFromSpec(meta: ModelMetadata, spec: any): void {
 function detectThinkingFormat(modelId: string, _text?: string): string | undefined {
   if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
   if (/^openai\/gpt-oss/.test(modelId)) return "reasoning-effort";
+  if (/^poolside\/laguna-xs-2\.1$/.test(modelId)) return "qwen-chat-template";
 
   if (/^mistralai\/mistral-(medium|small)/.test(modelId)) return "reasoning-effort";
 
@@ -654,6 +657,13 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     }
   } catch {
     // Modelcard fetch failed — will use fallbacks
+  }
+
+  // Inkling's hosted model card describes text/image/audio input, while its
+  // OpenAPI schema currently exposes only the text request shape.
+  if (/^thinkingmachines\/inkling$/.test(modelId) && !meta.supportsVision) {
+    meta.supportsVision = true;
+    meta.inputModalities = ["text", "image"];
   }
 
   // ── 2. Apply model-ID-based heuristics for fields still missing ──

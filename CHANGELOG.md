@@ -22,7 +22,7 @@ All notable changes to `pi-extension-nvidia-nim` are documented here.
 
 - `npm test`
 - `npm pack --dry-run`
-- Live streaming and usage probes for Inkling and Laguna XS 2.1
+- Live streaming and usage probes for GLM-5.2, MiniMax M3, Inkling, and Laguna XS 2.1
 
 Tool-call support remains model-specific and is not claimed unless a live probe
 observes a tool-call and tool-result round trip.

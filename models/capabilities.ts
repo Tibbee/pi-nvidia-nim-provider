@@ -58,9 +58,9 @@ export interface ReasoningCapability {
 /**
  * Upstream GLM-5.2 semantics and the current NIM transport hypothesis.
  *
- * The request transport remains unverified against the hosted endpoint. The
- * current production handler intentionally emits only the boolean
- * chat_template_kwargs toggle until a live NIM probe proves effort support.
+ * Live hosted-NIM probes confirmed the boolean chat_template_kwargs toggle
+ * and streaming response shape. Effort-level mappings remain documented
+ * semantics rather than independently verified transport behavior.
  *
  * Reference semantics:
  * - https://docs.z.ai/guides/capabilities/thinking-mode
@@ -96,9 +96,9 @@ export const GLM_52_REASONING_CAPABILITY: ReasoningCapability = {
   },
   verification: {
     semantics: "documented",
-    requestTransport: "unknown",
-    responseTransport: "unknown",
-    streaming: "unknown",
+    requestTransport: "probe-passed",
+    responseTransport: "probe-passed",
+    streaming: "probe-passed",
     tools: "claimed",
     preservedThinking: "unknown",
   },
@@ -227,9 +227,8 @@ export const LAGUNA_XS_21_REASONING_CAPABILITY: ReasoningCapability = {
 /**
  * MiniMax-M3 NIM model-card capability. The model page's OpenAPI schema
  * explicitly documents chat_template_kwargs.thinking_mode and the separate
- * reasoning_content response field. The live endpoint was unavailable during
- * probing (HTTP 400: degraded function), so these remain documentation-level
- * transport claims.
+ * reasoning_content response field. Live probes confirmed disabled
+ * content-only responses and adaptive/enabled reasoning_content streaming.
  *
  * Reference:
  * - https://build.nvidia.com/minimaxai/minimax-m3.md
@@ -259,9 +258,9 @@ export const MINIMAX_M3_REASONING_CAPABILITY: ReasoningCapability = {
   },
   verification: {
     semantics: "documented",
-    requestTransport: "documented",
-    responseTransport: "documented",
-    streaming: "documented",
+    requestTransport: "probe-passed",
+    responseTransport: "probe-passed",
+    streaming: "probe-passed",
     tools: "documented",
     preservedThinking: "unknown",
   },

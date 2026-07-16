@@ -89,14 +89,11 @@ accepts the parameter.
 
 Pi may send `stream_options: { include_usage: true }` when compatibility allows
 it. A dedicated `stream-with-usage` probe case returned HTTP 200 and usage data
-for both:
-
-- `thinkingmachines/inkling`
-- `poolside/laguna-xs-2.1`
+for Inkling, Laguna XS 2.1, GLM-5.2, and MiniMax M3.
 
 This is evidence for those endpoints, not a guarantee for every NIM model. Keep
-this finding partially verified until representative families are checked or a
-provider-wide NIM contract is documented.
+this finding partially verified until more representative families are checked
+or a provider-wide NIM contract is documented.
 
 ### 12. Handler-format safety coverage
 
@@ -119,6 +116,8 @@ The latest focused probes showed:
 
 | Model | Reasoning | Streaming | Usage option | Tool call |
 |-------|-----------|-----------|--------------|-----------|
+| GLM-5.2 | `reasoning_content` with current toggle | Passed | Passed | Not observed |
+| MiniMax M3 | `reasoning_content` with adaptive/enabled modes | Passed | Passed | Not observed |
 | Inkling | `reasoning_content`, always on | Passed | Passed | Not observed |
 | Laguna XS 2.1 | `reasoning_content` when enabled | Passed | Passed | Not observed |
 

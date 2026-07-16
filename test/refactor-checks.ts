@@ -69,7 +69,9 @@ assert.equal(STATIC_MODEL_MAP.get("thinkingmachines/inkling")?.thinkingLevelMap?
 // 5) GLM semantics and NIM transport hypotheses remain separate.
 assert.equal(getReasoningCapability("z-ai/glm-5.2"), GLM_52_REASONING_CAPABILITY);
 assert.equal(GLM_52_REASONING_CAPABILITY.semantics.supportsEffort, true);
-assert.equal(GLM_52_REASONING_CAPABILITY.verification.requestTransport, "unknown");
+assert.equal(GLM_52_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
+assert.equal(GLM_52_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
+assert.equal(GLM_52_REASONING_CAPABILITY.verification.streaming, "probe-passed");
 assert.equal(getReasoningCapability("deepseek-ai/deepseek-v4-flash"), DEEPSEEK_V4_FLASH_REASONING_CAPABILITY);
 assert.equal(DEEPSEEK_V4_FLASH_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
 assert.equal(getReasoningCapability("thinkingmachines/inkling"), INKLING_REASONING_CAPABILITY);
@@ -82,6 +84,9 @@ assert.equal(LAGUNA_XS_21_REASONING_CAPABILITY.verification.requestTransport, "p
 assert.equal(LAGUNA_XS_21_REASONING_CAPABILITY.verification.streaming, "probe-passed");
 assert.equal(getReasoningCapability("minimaxai/minimax-m3"), MINIMAX_M3_REASONING_CAPABILITY);
 assert.equal(MINIMAX_M3_REASONING_CAPABILITY.nimTransport.requestEncoding, "chat-template-kwargs");
+assert.equal(MINIMAX_M3_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
+assert.equal(MINIMAX_M3_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
+assert.equal(MINIMAX_M3_REASONING_CAPABILITY.verification.streaming, "probe-passed");
 assert.equal(getReasoningCapability("stepfun-ai/step-3.7-flash"), STEP_37_REASONING_CAPABILITY);
 assert.equal(STEP_37_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
 assert.equal(STEP_37_REASONING_CAPABILITY.semantics.canDisable, false);
@@ -91,7 +96,8 @@ const doctorReport = buildNimDoctorReport({
   modelRegistry: { getProviderAuthStatus: () => ({ configured: false }) } as any,
 });
 assert.match(doctorReport, /provider: nvidia-nim/);
-assert.match(doctorReport, /z-ai\/glm-5\.2 request transport: unknown/);
+assert.match(doctorReport, /z-ai\/glm-5\.2 request transport: probe-passed/);
+assert.match(doctorReport, /z-ai\/glm-5\.2 streaming: probe-passed/);
 
 const lagunaDoctorReport = buildNimDoctorReport({
   model: { provider: "nvidia-nim", id: "poolside/laguna-xs-2.1" } as any,

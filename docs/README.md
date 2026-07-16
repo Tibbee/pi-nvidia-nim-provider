@@ -526,8 +526,8 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 
 ### Current verification snapshot
 
-- **Probe-passed:** DeepSeek V4 Flash, Step-3.7 Flash, Inkling, and Laguna XS 2.1 request/response/streaming paths.
-- **Request-contract tested:** GLM-5.2, MiniMax M3, Kimi K2.6, and Nemotron routing cases.
+- **Probe-passed:** DeepSeek V4 Flash, GLM-5.2, MiniMax M3, Step-3.7 Flash, Inkling, and Laguna XS 2.1 request/response/streaming paths.
+- **Request-contract tested:** Kimi K2.6 and Nemotron routing cases.
 - **Still unknown:** reliable tool-call emission, tool-result replay, and full non-NIM regression behavior.
 
 ### Critical Path (Test First)
@@ -580,7 +580,7 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 
 ### Open compatibility questions
 
-- GLM request transport and effort-level behavior remain unverified.
+- GLM effort-level mappings remain unverified; boolean thinking transport and streaming are probe-passed.
 - Tool support, preserved thinking, and interleaved thinking remain model-specific and should not be inferred from reasoning support.
 - Long cache retention behavior is not live-verified; keep it disabled unless NIM support is demonstrated.
 

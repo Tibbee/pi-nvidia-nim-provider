@@ -154,8 +154,8 @@ response; it does not guarantee every tool or prompt combination works.
 | Model | Reasoning control | Request | Response | Streaming | Tools |
 |-------|-------------------|---------|----------|-----------|-------|
 | DeepSeek V4 Flash | off / high / max | `chat_template_kwargs` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
-| GLM-5.2 | boolean toggle; effort unverified | Qwen template (unverified) | unverified | unknown | claimed |
-| MiniMax M3 | disabled / adaptive / enabled | `thinking_mode` (documented) | `reasoning_content` (documented) | documented | documented |
+| GLM-5.2 | boolean toggle (probe-passed); effort unverified | Qwen template (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | claimed |
+| MiniMax M3 | disabled / adaptive / enabled | `thinking_mode` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
 | Step-3.7 Flash | low / medium / high; always-on hosted | `reasoning_effort` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | claimed |
 | Inkling | always-on; no toggle | no control exposed | `reasoning_content` (probe-passed) | probe-passed | unknown |
 | Laguna XS 2.1 | on / off toggle | `enable_thinking` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | unknown |

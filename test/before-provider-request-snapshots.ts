@@ -34,6 +34,36 @@ const cases = [
     },
   },
   {
+    name: "kimi k2.6 rewrites to deepseek-nim kwargs",
+    provider: "nvidia-nim",
+    payload: {
+      model: "moonshotai/kimi-k2.6",
+      thinking: { type: "enabled" },
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "moonshotai/kimi-k2.6",
+      messages: [{ role: "user", content: "hello" }],
+      chat_template_kwargs: { thinking: true },
+      max_tokens: 65536,
+    },
+  },
+  {
+    name: "minimax m2 rewrites to thinking_mode",
+    provider: "nvidia-nim",
+    payload: {
+      model: "minimaxai/minimax-m2.7",
+      reasoning_effort: "xhigh",
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "minimaxai/minimax-m2.7",
+      messages: [{ role: "user", content: "hello" }],
+      chat_template_kwargs: { thinking_mode: "enabled" },
+      max_tokens: 16384,
+    },
+  },
+  {
     name: "seed-oss injects top-level thinking_budget",
     provider: "nvidia-nim",
     payload: {
@@ -111,6 +141,39 @@ const cases = [
       min_thinking_tokens: 1024,
       max_thinking_tokens: 4096,
       max_tokens: 8192,
+    },
+  },
+  {
+    name: "nemotron super uses detailed thinking system mode",
+    provider: "nvidia-nim",
+    payload: {
+      model: "nvidia/llama-3.3-nemotron-super-49b-v1",
+      reasoning_effort: "high",
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "nvidia/llama-3.3-nemotron-super-49b-v1",
+      messages: [
+        { role: "system", content: "detailed thinking on" },
+        { role: "user", content: "hello" },
+      ],
+      max_tokens: 8192,
+    },
+  },
+  {
+    name: "nemotron 3 super maps low effort and budget",
+    provider: "nvidia-nim",
+    payload: {
+      model: "nvidia/nemotron-3-super-120b-a12b",
+      reasoning_effort: "low",
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "nvidia/nemotron-3-super-120b-a12b",
+      messages: [{ role: "user", content: "hello" }],
+      chat_template_kwargs: { enable_thinking: true, low_effort: true },
+      reasoning_budget: 32768,
+      max_tokens: 32768,
     },
   },
   {

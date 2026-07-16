@@ -11,6 +11,7 @@
         "handlers/",
         "lib/",
         "models/",
+        "tools/",
         "index.ts",
         "package.json"
     ],
@@ -29,10 +30,14 @@
         "pi",
         "nvidia",
         "nim",
+        "nvidia-nim",
         "llm",
+        "reasoning",
+        "thinking",
+        "openai-compatible",
         "provider"
     ],
-    "description": "NVIDIA NIM provider for pi coding agent — ~81 curated models with verified compatibility handlers",
+    "description": "Model-aware NVIDIA NIM reasoning compatibility for the pi coding agent",
     "author": "Tibbee",
     "repository": {
         "type": "git",

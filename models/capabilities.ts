@@ -43,6 +43,7 @@ export interface ReasoningVerification {
   semantics: VerificationState;
   requestTransport: VerificationState;
   responseTransport: VerificationState;
+  streaming: VerificationState;
   tools: VerificationState;
   preservedThinking: VerificationState;
 }
@@ -97,6 +98,7 @@ export const GLM_52_REASONING_CAPABILITY: ReasoningCapability = {
     semantics: "documented",
     requestTransport: "unknown",
     responseTransport: "unknown",
+    streaming: "unknown",
     tools: "claimed",
     preservedThinking: "unknown",
   },
@@ -139,7 +141,85 @@ export const DEEPSEEK_V4_FLASH_REASONING_CAPABILITY: ReasoningCapability = {
     semantics: "documented",
     requestTransport: "probe-passed",
     responseTransport: "probe-passed",
+    streaming: "probe-passed",
     tools: "documented",
+    preservedThinking: "unknown",
+  },
+};
+
+/**
+ * Thinking Machines Inkling hosted-NIM observation. The endpoint returned
+ * separate reasoning_content without an exposed thinking toggle in live
+ * probes; the upstream model is multimodal and always-on for reasoning.
+ *
+ * References:
+ * - https://build.nvidia.com/thinkingmachines/inkling
+ * - https://huggingface.co/thinkingmachines/Inkling
+ */
+export const INKLING_REASONING_CAPABILITY: ReasoningCapability = {
+  modelId: "thinkingmachines/inkling",
+  semantics: {
+    defaultEnabled: true,
+    canDisable: false,
+    supportsEffort: false,
+    acceptedEfforts: [],
+    effectiveEffortMapping: { off: "always-on" },
+    supportsInterleavedThinking: "unknown",
+    supportsPreservedThinking: "unknown",
+    responseField: "reasoning_content",
+  },
+  nimTransport: {
+    requestEncoding: "unknown",
+    responseEncoding: "reasoning_content",
+  },
+  verification: {
+    semantics: "documented",
+    requestTransport: "unknown",
+    responseTransport: "probe-passed",
+    streaming: "probe-passed",
+    tools: "unknown",
+    preservedThinking: "unknown",
+  },
+};
+
+/**
+ * Poolside Laguna XS 2.1 hosted-NIM observation. The endpoint switches
+ * reasoning with chat_template_kwargs.enable_thinking and returns separate
+ * reasoning_content when enabled.
+ *
+ * References:
+ * - https://build.nvidia.com/poolside/laguna-xs-2.1
+ * - https://huggingface.co/poolside/Laguna-XS-2.1
+ */
+export const LAGUNA_XS_21_REASONING_CAPABILITY: ReasoningCapability = {
+  modelId: "poolside/laguna-xs-2.1",
+  semantics: {
+    defaultEnabled: false,
+    canDisable: true,
+    supportsEffort: false,
+    acceptedEfforts: [],
+    effectiveEffortMapping: {
+      off: "disabled",
+      minimal: "enabled",
+      low: "enabled",
+      medium: "enabled",
+      high: "enabled",
+      xhigh: "enabled",
+    },
+    supportsInterleavedThinking: "unknown",
+    supportsPreservedThinking: "unknown",
+    responseField: "reasoning_content",
+  },
+  nimTransport: {
+    requestEncoding: "chat-template-kwargs",
+    responseEncoding: "reasoning_content",
+  },
+  verification: {
+    semantics: "documented",
+    requestTransport: "probe-passed",
+    responseTransport: "probe-passed",
+    streaming: "probe-passed",
+    tools: "unknown",
     preservedThinking: "unknown",
   },
 };
@@ -181,6 +261,7 @@ export const MINIMAX_M3_REASONING_CAPABILITY: ReasoningCapability = {
     semantics: "documented",
     requestTransport: "documented",
     responseTransport: "documented",
+    streaming: "documented",
     tools: "documented",
     preservedThinking: "unknown",
   },
@@ -221,6 +302,7 @@ export const STEP_37_REASONING_CAPABILITY: ReasoningCapability = {
     semantics: "documented",
     requestTransport: "probe-passed",
     responseTransport: "probe-passed",
+    streaming: "probe-passed",
     tools: "claimed",
     preservedThinking: "unknown",
   },
@@ -228,6 +310,8 @@ export const STEP_37_REASONING_CAPABILITY: ReasoningCapability = {
 
 const CAPABILITIES = new Map<string, ReasoningCapability>([
   [DEEPSEEK_V4_FLASH_REASONING_CAPABILITY.modelId, DEEPSEEK_V4_FLASH_REASONING_CAPABILITY],
+  [INKLING_REASONING_CAPABILITY.modelId, INKLING_REASONING_CAPABILITY],
+  [LAGUNA_XS_21_REASONING_CAPABILITY.modelId, LAGUNA_XS_21_REASONING_CAPABILITY],
   [GLM_52_REASONING_CAPABILITY.modelId, GLM_52_REASONING_CAPABILITY],
   [MINIMAX_M3_REASONING_CAPABILITY.modelId, MINIMAX_M3_REASONING_CAPABILITY],
   [STEP_37_REASONING_CAPABILITY.modelId, STEP_37_REASONING_CAPABILITY],

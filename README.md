@@ -1,11 +1,14 @@
 # pi-extension-nvidia-nim
 
-NVIDIA NIM provider for the pi coding agent — access **~83 curated models**
-hosted on NVIDIA's inference microservice platform, including DeepSeek, Llama
-Nemotron, Qwen, GLM, Mistral, MiniMax, and more.
+NVIDIA NIM exposes many reasoning models through an OpenAI-compatible API,
+but their thinking controls are not actually compatible with one another. Pi's
+standard `--thinking` option may be ignored, or reasoning may require
+model-family-specific request fields.
 
-Registers the **`nvidia-nim`** provider with pi, backed by
-`https://integrate.api.nvidia.com/v1`.
+`pi-extension-nvidia-nim` adds a model-aware **`nvidia-nim`** provider for Pi.
+It translates Pi thinking levels into the request format expected by each
+supported NVIDIA NIM family while retaining Pi's built-in
+`openai-completions` streaming path.
 
 ## Features
 
@@ -15,10 +18,21 @@ Registers the **`nvidia-nim`** provider with pi, backed by
   thinking-budget, Nemotron system modes (3 variants), MiniMax inline,
   and Qwen chat-template — plus native pi handling for reasoning-effort
 - **Model-specific quirks handled automatically** — per-model `chat_template_kwargs`
-  injection (thinking effort, budgets, system-message toggles), content array
-  normalization for older models
+  injection (thinking effort, budgets, system-message toggles), and request
+  content-array normalization for older models
 - **No custom streaming** — uses pi's built-in `openai-completions`
 - **`/nim-doctor` diagnostics** — reports provider, auth, catalog, and verification state
+
+## Which NVIDIA provider?
+
+| Provider | Use it when |
+|----------|-------------|
+| Built-in `nvidia` | You need basic NVIDIA model access with minimal configuration |
+| `nvidia-nim` | You need model-family-aware reasoning controls and NIM-specific compatibility |
+
+Install the npm package `pi-extension-nvidia-nim`. It registers the separate
+Pi provider named `nvidia-nim`; it does not replace Pi's built-in `nvidia`
+provider. Both providers can be installed and used side by side.
 
 ## Install
 
@@ -41,6 +55,12 @@ Sign up at [build.nvidia.com](https://build.nvidia.com) (free tier:
 export NVIDIA_NIM_API_KEY="nvapi-..."
 ```
 
+PowerShell:
+
+```powershell
+$env:NVIDIA_NIM_API_KEY = "nvapi-..."
+```
+
 `NVIDIA_API_KEY` is accepted as a fallback for backward compatibility with
 pi's built-in `nvidia` provider.
 
@@ -61,23 +81,20 @@ login. The key is stored under the `nvidia-nim` provider in `auth.json` and
 managed automatically. Selecting built-in `nvidia` authenticates a different
 provider.
 
-### 3. Run pi with the extension
-
-Install from npm:
+### 3. Select a model and test reasoning
 
 ```bash
-pi install npm:pi-extension-nvidia-nim
+pi --provider nvidia-nim \
+  --model deepseek-ai/deepseek-v4-flash \
+  --thinking high \
+  -p "Give me a short solution to this coding problem: reverse a linked list."
 ```
 
-## Usage
+This smoke test should show Pi's structured reasoning indicator and a separate
+final answer. Do not copy private reasoning content into issue reports.
 
-```bash
-pi
-/model
-# or Ctrl+P to pick a model
-```
-
-Look for the `nvidia-nim/` prefix in the model picker.
+You can also select models interactively with `/model` or `Ctrl+P`. Look for
+the `nvidia-nim/` prefix in the model picker.
 
 ## Design
 
@@ -100,7 +117,7 @@ thinking/reasoning support:
 |--------|-------------------|-----------------------------|
 | **Models** | ~20 curated | ~83 curated (full NIM catalog) |
 | **Thinking formats** | None | 8 handler-based formats + reasoning-effort |
-| **Content normalization** | No | Yes |
+| **Request normalization** | No | Yes |
 | **Rate-limit warnings** | No | Yes (429 handler) |
 | **API key** | `NVIDIA_API_KEY` env | `NVIDIA_NIM_API_KEY` + `NVIDIA_API_KEY` fallback |
 
@@ -128,17 +145,52 @@ Notable:
 - **DeepSeek V4** — `reasoning_effort` inside `chat_template_kwargs` with
   off→none and xhigh→max mapping
 
+### Verified compatibility matrix
+
+This table separates documented behavior from live hosted-NIM observations. A
+`probe-passed` transport result means the request shape produced the observed
+response; it does not guarantee every tool or prompt combination works.
+
+| Model | Reasoning control | Request | Response | Streaming | Tools |
+|-------|-------------------|---------|----------|-----------|-------|
+| DeepSeek V4 Flash | off / high / max | `chat_template_kwargs` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
+| GLM-5.2 | boolean toggle; effort unverified | Qwen template (unverified) | unverified | unknown | claimed |
+| MiniMax M3 | disabled / adaptive / enabled | `thinking_mode` (documented) | `reasoning_content` (documented) | documented | documented |
+| Step-3.7 Flash | low / medium / high; always-on hosted | `reasoning_effort` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | claimed |
+| Inkling | always-on; no toggle | no control exposed | `reasoning_content` (probe-passed) | probe-passed | unknown |
+| Laguna XS 2.1 | on / off toggle | `enable_thinking` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | unknown |
+
+The remaining curated models are usable through their configured family rules,
+but should not be described as live-verified unless they appear in this
+matrix or have a corresponding compatibility report.
+
 ### Additional capabilities
 
 - **Rate-limit warnings** — surfaces HTTP 429 responses with retry-after info
-- **Content array normalization** — converts `[{type:"text"}]` to plain strings
-  for older models that reject structured content arrays
+- **Request content normalization** — converts `[{type:"text"}]` to plain
+  strings for older models that reject structured content arrays
 - **46-family regex routing** — accurate thinking format and compat assignment
   across all ~83 models
 - **Per-model reasoning effort mapping** — non-standard effort values are
   handled automatically (e.g. `off→none`, `minimal→low`)
 - **Architecturally clean** — uses `before_provider_request` event hook with no
   custom `streamSimple`, avoiding provider conflicts
+
+## Troubleshooting
+
+- Confirm that the selected model starts with `nvidia-nim/`; Pi's built-in
+  `nvidia/` provider uses a different catalog and compatibility path.
+- If `--thinking` appears ignored, run `/nim-doctor` and check the selected
+  model's family and verification status.
+- If a model is missing, refresh the catalog and confirm the exact NIM model ID
+  still exists on its NVIDIA model page.
+- If authentication fails, check `NVIDIA_NIM_API_KEY` first, then the
+  `NVIDIA_API_KEY` fallback, and verify that the variable is visible to the Pi
+  process.
+- Tool calling and reasoning are tracked separately; a reasoning-capable model
+  is not automatically tool-call verified.
+- Enable `NIM_DEBUG=1` only when needed and avoid sharing the resulting payload
+  logs without removing prompts and other sensitive data.
 
 ## Verification
 

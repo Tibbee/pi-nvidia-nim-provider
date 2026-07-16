@@ -586,6 +586,7 @@ export function findFamily(modelId: string): ModelFamily | undefined {
 const FAMILY_HANDLER_FORMATS: Partial<Record<string, NimThinkingFormat>> = {
   "deepseek-v4": "deepseek-v4",
   "kimi-k2.6": "deepseek-nim",
+  "minimax-m2": "minimax-inline",
   "minimax-m3": "minimax-inline",
   "nemotron-super-detailed": "nemotron-system-detailed",
   "nemotron-system-think": "nemotron-system-think",
@@ -624,7 +625,14 @@ export function applyFamilyCompat(
     const family = findFamily(model.id);
     const { ...providerModel } = model;
     if (family) {
-      providerModel.compat = { ...family.compat, ...model.compat };
+      // NIM is not an OpenAI storage provider. Apply this at the registry
+      // merge point so every family gets the safe default, while preserving
+      // an explicit model-level override if one is ever added.
+      providerModel.compat = {
+        supportsStore: false,
+        ...family.compat,
+        ...model.compat,
+      };
       if (family.thinkingLevelMap || model.thinkingLevelMap) {
         providerModel.thinkingLevelMap = {
           ...(family.thinkingLevelMap ?? {}),

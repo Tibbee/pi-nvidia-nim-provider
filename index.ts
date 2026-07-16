@@ -103,6 +103,7 @@ export function buildNimDoctorReport(ctx: Pick<ExtensionContext, "model" | "mode
   const envNames = [NIM_NIM_API_KEY_ENV, NIM_API_KEY_ENV];
   const configuredEnvs = envNames.filter((name) => Boolean(process.env[name]));
   const reasoningModels = STATIC_MODELS.filter((model) => model.reasoning).length;
+  const liveProbeModel = selected === "none" ? "z-ai/glm-5.2" : selected;
 
   return [
     "NVIDIA NIM doctor",
@@ -111,10 +112,12 @@ export function buildNimDoctorReport(ctx: Pick<ExtensionContext, "model" | "mode
     `catalog: ${STATIC_MODELS.length} curated models, ${reasoningModels} reasoning-capable`,
     `auth.json/env configured: ${auth.configured ? "yes" : "no"}${auth.source ? ` (${auth.source})` : ""}`,
     `environment variables present: ${configuredEnvs.length > 0 ? configuredEnvs.join(", ") : "none"}`,
+    `${capability?.modelId ?? selected} request encoding: ${capability?.nimTransport.requestEncoding ?? "unknown"}`,
     `${capability?.modelId ?? selected} request transport: ${capability?.verification.requestTransport ?? "unknown"}`,
     `${capability?.modelId ?? selected} response transport: ${capability?.verification.responseTransport ?? "unknown"}`,
+    `${capability?.modelId ?? selected} streaming: ${capability?.verification.streaming ?? "unknown"}`,
     `${capability?.modelId ?? selected} tools: ${capability?.verification.tools ?? "unknown"}`,
-    "live verification: run npm run probe -- --model=z-ai/glm-5.2",
+    `live verification: run npm run probe -- --model=${liveProbeModel}`,
   ].join("\\n");
 }
 

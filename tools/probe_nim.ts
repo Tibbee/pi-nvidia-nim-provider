@@ -286,6 +286,9 @@ function buildCases(model: string): ProbeCase[] {
 
   return [
     make("baseline-stream", true),
+    make("stream-with-usage", true, {
+      stream_options: { include_usage: true },
+    }),
     make("baseline-non-stream", false),
     make("current-extension-off", true, {
       chat_template_kwargs: { enable_thinking: false, clear_thinking: true },

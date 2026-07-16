@@ -30,4 +30,9 @@ Tools/nvidia_nim_models.txt
 Tools/nvidia_nim_models_by_category.txt
 
 alternative/
-docs/
+
+# Tracked project documentation lives in these files; other local archival
+# notes under docs/ remain ignored.
+docs/*
+!docs/README.md
+!docs/audit-findings.md

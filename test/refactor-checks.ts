@@ -6,6 +6,8 @@ import type { NimModelConfig } from "../models/types";
 import {
   DEEPSEEK_V4_FLASH_REASONING_CAPABILITY,
   GLM_52_REASONING_CAPABILITY,
+  INKLING_REASONING_CAPABILITY,
+  LAGUNA_XS_21_REASONING_CAPABILITY,
   MINIMAX_M3_REASONING_CAPABILITY,
   STEP_37_REASONING_CAPABILITY,
   getReasoningCapability,
@@ -39,6 +41,10 @@ assert.equal(deepseek.reasoning, true);
 const minimax = applyFamilyCompat([baseModel("minimaxai/minimax-m2.7")])[0];
 assert.equal(minimax.reasoning, true);
 
+// NIM must not inherit pi's OpenAI storage default for any family.
+const genericNim = applyFamilyCompat([baseModel("meta/llama-3.3-70b-instruct")])[0];
+assert.equal(genericNim.compat?.supportsStore, false);
+
 // 3) Model filter should exclude known embedding-only models.
 assert.equal(STATIC_MODELS.some((model) => model.id === "baai/bge-m3"), false);
 
@@ -47,6 +53,8 @@ assert.equal(
   classifyThinkingFormat("deepseek-ai/deepseek-v4-flash"),
   "deepseek-v4"
 );
+assert.equal(classifyThinkingFormat("moonshotai/kimi-k2.6"), "deepseek-nim");
+assert.equal(classifyThinkingFormat("minimaxai/minimax-m2.7"), "minimax-inline");
 assert.equal(
   classifyThinkingFormat("openai/gpt-oss-120b"),
   "none"
@@ -64,6 +72,14 @@ assert.equal(GLM_52_REASONING_CAPABILITY.semantics.supportsEffort, true);
 assert.equal(GLM_52_REASONING_CAPABILITY.verification.requestTransport, "unknown");
 assert.equal(getReasoningCapability("deepseek-ai/deepseek-v4-flash"), DEEPSEEK_V4_FLASH_REASONING_CAPABILITY);
 assert.equal(DEEPSEEK_V4_FLASH_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
+assert.equal(getReasoningCapability("thinkingmachines/inkling"), INKLING_REASONING_CAPABILITY);
+assert.equal(INKLING_REASONING_CAPABILITY.semantics.canDisable, false);
+assert.equal(INKLING_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
+assert.equal(INKLING_REASONING_CAPABILITY.verification.streaming, "probe-passed");
+assert.equal(getReasoningCapability("poolside/laguna-xs-2.1"), LAGUNA_XS_21_REASONING_CAPABILITY);
+assert.equal(LAGUNA_XS_21_REASONING_CAPABILITY.nimTransport.requestEncoding, "chat-template-kwargs");
+assert.equal(LAGUNA_XS_21_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
+assert.equal(LAGUNA_XS_21_REASONING_CAPABILITY.verification.streaming, "probe-passed");
 assert.equal(getReasoningCapability("minimaxai/minimax-m3"), MINIMAX_M3_REASONING_CAPABILITY);
 assert.equal(MINIMAX_M3_REASONING_CAPABILITY.nimTransport.requestEncoding, "chat-template-kwargs");
 assert.equal(getReasoningCapability("stepfun-ai/step-3.7-flash"), STEP_37_REASONING_CAPABILITY);
@@ -76,6 +92,14 @@ const doctorReport = buildNimDoctorReport({
 });
 assert.match(doctorReport, /provider: nvidia-nim/);
 assert.match(doctorReport, /z-ai\/glm-5\.2 request transport: unknown/);
+
+const lagunaDoctorReport = buildNimDoctorReport({
+  model: { provider: "nvidia-nim", id: "poolside/laguna-xs-2.1" } as any,
+  modelRegistry: { getProviderAuthStatus: () => ({ configured: false }) } as any,
+});
+assert.match(lagunaDoctorReport, /poolside\/laguna-xs-2\.1 request encoding: chat-template-kwargs/);
+assert.match(lagunaDoctorReport, /poolside\/laguna-xs-2\.1 streaming: probe-passed/);
+assert.match(lagunaDoctorReport, /live verification: run npm run probe -- --model=poolside\/laguna-xs-2\.1/);
 
 // 6) before_provider_request should skip models not in the NIM registry.
 assert.equal(

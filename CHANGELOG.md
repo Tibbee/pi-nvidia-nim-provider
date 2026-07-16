@@ -2,6 +2,12 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.1.2] - 2026-07-16
+
+### Changed
+
+- Removed interactive `/nim-doctor` command; diagnostics are now handled through the extension's standard capabilities reports.
+
 ## [1.1.1] - 2026-07-16
 
 ### Fixed

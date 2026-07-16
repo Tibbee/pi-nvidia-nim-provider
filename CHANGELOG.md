@@ -2,6 +2,12 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.1.1] - 2026-07-16
+
+### Fixed
+
+- Verified GLM-5.2 and MiniMax M3 transport behavior updated capabilities records.
+
 ## [1.1.0] - 2026-07-16
 
 ### Added

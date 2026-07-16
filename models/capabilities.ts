@@ -28,6 +28,7 @@ export interface NimReasoningTransport {
   requestEncoding:
     | "top-level-thinking"
     | "chat-template-kwargs"
+    | "chat-template-kwargs+reasoning-effort"
     | "reasoning-effort"
     | "system-prompt"
     | "unknown";
@@ -58,9 +59,9 @@ export interface ReasoningCapability {
 /**
  * Upstream GLM-5.2 semantics and the current NIM transport hypothesis.
  *
- * Live hosted-NIM probes confirmed the boolean chat_template_kwargs toggle
- * and streaming response shape. Effort-level mappings remain documented
- * semantics rather than independently verified transport behavior.
+ * Live hosted-NIM probes confirmed the boolean chat_template_kwargs toggle,
+ * top-level reasoning_effort values, and streaming response shape. The
+ * endpoint accepts high and max effort; nested reasoning_effort is ignored.
  *
  * Reference semantics:
  * - https://docs.z.ai/guides/capabilities/thinking-mode
@@ -91,7 +92,7 @@ export const GLM_52_REASONING_CAPABILITY: ReasoningCapability = {
     responseField: "reasoning_content",
   },
   nimTransport: {
-    requestEncoding: "chat-template-kwargs",
+    requestEncoding: "chat-template-kwargs+reasoning-effort",
     responseEncoding: "reasoning_content",
   },
   verification: {

@@ -65,6 +65,11 @@ assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.compat?.thinkingFor
 assert.equal(STATIC_MODEL_MAP.get("thinkingmachines/inkling")?.reasoning, true);
 assert.deepEqual(STATIC_MODEL_MAP.get("thinkingmachines/inkling")?.input, ["text", "image"]);
 assert.equal(STATIC_MODEL_MAP.get("thinkingmachines/inkling")?.thinkingLevelMap?.off, null);
+const glmModel = STATIC_MODEL_MAP.get("z-ai/glm-5.2");
+assert.equal(glmModel?.compat?.thinkingFormat, "zai");
+assert.equal(glmModel?.compat?.supportsReasoningEffort, true);
+assert.equal(glmModel?.thinkingLevelMap?.high, "high");
+assert.equal(glmModel?.thinkingLevelMap?.max, "max");
 
 // 5) GLM semantics and NIM transport hypotheses remain separate.
 assert.equal(getReasoningCapability("z-ai/glm-5.2"), GLM_52_REASONING_CAPABILITY);

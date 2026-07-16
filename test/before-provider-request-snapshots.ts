@@ -94,7 +94,7 @@ const cases = [
     },
   },
   {
-    name: "glm-5.2 does not emit unverified effort fields",
+    name: "glm-5.2 keeps verified top-level high effort",
     provider: "nvidia-nim",
     payload: {
       model: "z-ai/glm-5.2",
@@ -105,6 +105,24 @@ const cases = [
     expected: {
       model: "z-ai/glm-5.2",
       chat_template_kwargs: { enable_thinking: true, clear_thinking: false },
+      reasoning_effort: "high",
+      messages: [{ role: "user", content: "hello" }],
+      max_tokens: 32768,
+    },
+  },
+  {
+    name: "glm-5.2 maps xhigh to verified top-level max effort",
+    provider: "nvidia-nim",
+    payload: {
+      model: "z-ai/glm-5.2",
+      thinking: { type: "enabled" },
+      reasoning_effort: "xhigh",
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "z-ai/glm-5.2",
+      chat_template_kwargs: { enable_thinking: true, clear_thinking: false },
+      reasoning_effort: "max",
       messages: [{ role: "user", content: "hello" }],
       max_tokens: 32768,
     },

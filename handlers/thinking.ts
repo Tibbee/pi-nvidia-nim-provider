@@ -170,18 +170,23 @@ export function applyCustomThinkingFormat(
     }
 
     case "qwen-chat-template": {
-      // GLM models think by default; explicitly disable when reasoning is off.
+      // GLM models use chat-template booleans, while NIM accepts effort as a
+      // top-level reasoning_effort field. Pi's `zai` serializer supplies the
+      // top-level thinking state and mapped effort before this handler runs.
       // See also: https://recipes.vllm.ai/zai-org/GLM-5.2
       const modelId = (payload.model as string | undefined) || "";
       if (/^z-ai\/glm/.test(modelId)) {
         const enabled = hasEnabledThinking(payload);
-        // Upstream GLM and self-hosted vLLM document effort controls, but the
-        // hosted NIM transport is not verified yet. Keep production requests
-        // boolean-only until the opt-in probe confirms a NIM wire encoding.
+        const rawEffort = payload.reasoning_effort as string | undefined;
+        const mappedEffort =
+          rawEffort && !["off", "none", "minimal"].includes(rawEffort)
+            ? ["xhigh", "max"].includes(rawEffort) ? "max" : "high"
+            : undefined;
         const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
         delete payload.thinking;
-        delete payload.reasoning_effort;
-        // Strip preserve_thinking if pi's native handler set it — GLM uses clear_thinking instead.
+        // Strip preserve_thinking if pi's native handler set it — GLM uses
+        // clear_thinking instead. Keep effort top-level: nested effort is
+        // accepted by NIM but ignored by the hosted GLM endpoint.
         const { preserve_thinking: _, ...base } = kwargs ?? {};
         if (enabled) {
           payload.chat_template_kwargs = {
@@ -189,15 +194,18 @@ export function applyCustomThinkingFormat(
             enable_thinking: true,
             clear_thinking: false,
           };
+          if (mappedEffort) payload.reasoning_effort = mappedEffort;
+          else delete payload.reasoning_effort;
           return { modified: true, thinkingEnabled: true };
-        } else {
-          payload.chat_template_kwargs = {
-            ...base,
-            enable_thinking: false,
-            clear_thinking: true,
-          };
-          return { modified: true, thinkingEnabled: false };
         }
+
+        delete payload.reasoning_effort;
+        payload.chat_template_kwargs = {
+          ...base,
+          enable_thinking: false,
+          clear_thinking: true,
+        };
+        return { modified: true, thinkingEnabled: false };
       }
       // Other qwen-chat-template models are handled natively by pi.
       return { modified: false };

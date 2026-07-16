@@ -558,7 +558,7 @@ function detectThinkingFormat(modelId: string, _text?: string): string | undefin
 
   if (/^stepfun-ai\//.test(modelId)) return "reasoning-effort";
 
-  if (/^z-ai\/glm/.test(modelId)) return "qwen-chat-template";
+  if (/^z-ai\/glm/.test(modelId)) return "zai";
   if (/^qwen\/qwen3\.5/.test(modelId)) return "qwen-chat-template";
   if (/^google\/gemma-4/.test(modelId)) return "qwen-chat-template";
   if (/^nvidia\/nemotron-3-nano/.test(modelId)) return "qwen-chat-template";

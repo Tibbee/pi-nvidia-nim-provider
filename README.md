@@ -100,7 +100,7 @@ Use `nvidia-nim/...` for the full feature set, `nvidia/...` as a lightweight fal
 
 DeepSeek V4, Kimi K2.6, Qwen3, GLM-5.2, MiniMax M3, Seed OSS, Nemotron (Ultra, Super, 3-Super), GPT-OSS, StepFun, Inkling, and Laguna XS 2.1.
 
-- GLM-5.2 uses boolean NIM thinking control via `enable_thinking` and `clear_thinking`. Upstream and self-hosted vLLM documentation describe high and max effort modes, but the hosted NIM transport remains unverified.
+- GLM-5.2 uses boolean NIM thinking control via `enable_thinking` and `clear_thinking`, plus top-level `reasoning_effort` (`high` or `max`). Nested effort inside `chat_template_kwargs` is ignored by hosted NIM.
 - StepFun: live NIM probing confirmed `reasoning_effort` requests return separate `reasoning_content`. Step-3.7 Flash stays always-on on the hosted endpoint even when `enable_thinking: false` is sent.
 - MiniMax M3 has a three-mode thinking toggle (disabled, adaptive, enabled) mapped from pi's thinking levels.
 - Nemotron uses system-message-driven thinking modes (detailed think, /think, and reasoning budget variants).
@@ -114,7 +114,7 @@ A `probe-passed` transport result means the request shape produced the expected 
 | Model | Reasoning control | Request | Response | Streaming | Tools |
 |-------|-------------------|---------|----------|-----------|-------|
 | DeepSeek V4 Flash | off / high / max | `chat_template_kwargs` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
-| GLM-5.2 | boolean toggle (probe-passed); effort unverified | Qwen template (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | claimed |
+| GLM-5.2 | boolean toggle + high/max effort (probe-passed) | `chat_template_kwargs` + top-level `reasoning_effort` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | claimed |
 | MiniMax M3 | disabled / adaptive / enabled | `thinking_mode` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
 | Step-3.7 Flash | low / medium / high; always-on hosted | `reasoning_effort` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | claimed |
 | Inkling | always-on; no toggle | no control exposed | `reasoning_content` (probe-passed) | probe-passed | unknown |

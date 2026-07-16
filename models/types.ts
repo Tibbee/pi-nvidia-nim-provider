@@ -13,7 +13,7 @@ export interface NimModelConfig {
   contextWindow: number;
   maxTokens: number;
   reasoningBudget?: number;
-  thinkingLevelMap?: Partial<Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh", string | null>>;
+  thinkingLevelMap?: Partial<Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max", string | null>>;
   headers?: Record<string, string>;
   compat?: NimModelCompat;
   exampleRequestExtra?: Record<string, unknown>;

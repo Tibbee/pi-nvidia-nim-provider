@@ -100,13 +100,16 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // GLM-5.1 also needs clear_thinking: false.
+  // GLM uses NIM's boolean chat-template controls plus a top-level
+  // reasoning_effort field. Pi's `zai` format gives the handler both the
+  // selected effort and the enabled/disabled state before conversion.
   {
     name: "glm",
     pattern: /^z-ai\/glm/,
     compat: {
       supportsDeveloperRole: false,
-      thinkingFormat: "qwen-chat-template",
+      thinkingFormat: "zai",
+      supportsReasoningEffort: true,
       maxTokensField: "max_tokens",
     },
     thinkingLevelMap: {
@@ -116,6 +119,7 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       medium: "high",
       high: "high",
       xhigh: "max",
+      max: "max",
     },
   },
 

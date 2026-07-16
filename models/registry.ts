@@ -26,11 +26,22 @@ function reasoningEffortRank(value: string): number | undefined {
 
 // Map scraper thinking labels to pi compat flags.
 export function mapThinkingFormatToCompat(
-  thinkingFormat: string | undefined
+  thinkingFormat: string | undefined,
+  modelId?: string,
 ): NimModelCompat {
+  // GLM's scraped metadata historically reported the generic Qwen template,
+  // but hosted NIM also accepts effort through the top-level Z.ai shape. Keep
+  // this compatibility rule here so existing generated metadata gets the
+  // corrected transport without being edited by hand.
+  if (/^z-ai\/glm/.test(modelId ?? "")) {
+    return { thinkingFormat: "zai", supportsReasoningEffort: true };
+  }
+
   switch (thinkingFormat) {
     case "qwen-chat-template":
       return { thinkingFormat: "qwen-chat-template" };
+    case "zai":
+      return { thinkingFormat: "zai", supportsReasoningEffort: true };
     case "deepseek-v4":
     case "deepseek-nim":
       return {}; // Handled by before_provider_request handler
@@ -84,7 +95,7 @@ export function buildReasoningEffortThinkingLevelMap(
 
 // One metadata row → one provider model.
 function metadataToModelConfig(entry: MetadataEntry): NimModelConfig {
-  const compat = mapThinkingFormatToCompat(entry.thinkingFormat);
+  const compat = mapThinkingFormatToCompat(entry.thinkingFormat, entry.id);
   const thinkingLevelMap =
     entry.thinkingFormat === "reasoning-effort"
       ? buildReasoningEffortThinkingLevelMap(entry.reasoningEffortValues)

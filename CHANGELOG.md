@@ -2,6 +2,12 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.2.1] - 2026-07-16
+
+### Fixed
+
+- Restricted DeepSeek V4 Flash thinking levels to off, high, and max — the only choices verified on hosted NIM. Intermediate levels (minimal, low, medium, xhigh) are no longer mapped.
+
 ## [1.2.0] - 2026-07-16
 
 ### Added

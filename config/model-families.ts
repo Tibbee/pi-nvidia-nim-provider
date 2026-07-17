@@ -115,13 +115,15 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       supportsReasoningEffort: true,
       maxTokensField: "max_tokens",
     },
+    // Hosted NIM exposes only three verified choices in Pi:
+    // off, high, and max. Explicit nulls hide intermediate levels.
     thinkingLevelMap: {
       off: "none",
-      minimal: "high",
-      low: "high",
-      medium: "high",
+      minimal: null,
+      low: null,
+      medium: null,
       high: "high",
-      xhigh: "max",
+      xhigh: null,
       max: "max",
     },
   },

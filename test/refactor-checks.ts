@@ -81,8 +81,15 @@ assert.equal(STATIC_MODEL_MAP.get("thinkingmachines/inkling")?.thinkingLevelMap?
 const glmModel = STATIC_MODEL_MAP.get("z-ai/glm-5.2");
 assert.equal(glmModel?.compat?.thinkingFormat, "zai");
 assert.equal(glmModel?.compat?.supportsReasoningEffort, true);
-assert.equal(glmModel?.thinkingLevelMap?.high, "high");
-assert.equal(glmModel?.thinkingLevelMap?.max, "max");
+assert.deepEqual(glmModel?.thinkingLevelMap, {
+  off: "none",
+  minimal: null,
+  low: null,
+  medium: null,
+  high: "high",
+  xhigh: null,
+  max: "max",
+});
 
 // 5) GLM semantics and NIM transport hypotheses remain separate.
 assert.equal(getReasoningCapability("z-ai/glm-5.2"), GLM_52_REASONING_CAPABILITY);

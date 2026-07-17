@@ -2,6 +2,16 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.2.0] - 2026-07-16
+
+### Added
+
+- Exposed DeepSeek max reasoning level and expanded probe coverage for additional models.
+
+### Fixed
+
+- Restored hosted NIM reasoning effort mapping for GLM-5.2.
+
 ## [1.1.3] - 2026-07-16
 
 ### Changed

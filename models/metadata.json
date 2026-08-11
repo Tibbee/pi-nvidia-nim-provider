@@ -288,6 +288,22 @@
     "supportsVision": false
   },
   {
+    "id": "meta/muse-glimmer-30b",
+    "maxOutputTokens": 131072,
+    "supportsVision": true,
+    "supportsReasoning": true,
+    "reasoningEffortValues": [
+      "none",
+      "minimal",
+      "low",
+      "medium",
+      "high",
+      "max"
+    ],
+    "thinkingFormat": "reasoning-effort",
+    "contextWindow": 131072
+  },
+  {
     "id": "microsoft/kosmos-2",
     "supportsReasoning": false,
     "supportsVision": false

@@ -366,6 +366,28 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
+  // Muse Glimmer is a multimodal reasoning model. Hosted NIM exposes
+  // top-level reasoning_effort and streams reasoning_content separately.
+  {
+    name: "muse-glimmer",
+    pattern: /^meta\/muse-glimmer/,
+    compat: {
+      supportsDeveloperRole: false,
+      supportsReasoningEffort: true,
+      requiresReasoningContentOnAssistantMessages: true,
+      maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: {
+      off: "none",
+      minimal: "minimal",
+      low: "low",
+      medium: "medium",
+      high: "high",
+      xhigh: "max",
+      max: "max",
+    },
+  },
+
   {
     name: "llama",
     pattern: /^meta\/llama/,

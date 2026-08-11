@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { handleAfterProviderResponse, handleBeforeProviderRequest } from "../index";
-import { classifyThinkingFormat, mapThinkingFormatToCompat, STATIC_MODELS, STATIC_MODEL_MAP } from "../models/registry";
+import {
+  buildReasoningEffortThinkingLevelMap,
+  classifyThinkingFormat,
+  mapThinkingFormatToCompat,
+  STATIC_MODELS,
+  STATIC_MODEL_MAP,
+} from "../models/registry";
 import { applyFamilyCompat } from "../config/model-families";
 import type { NimModelConfig } from "../models/types";
 import {
@@ -9,6 +15,7 @@ import {
   INKLING_REASONING_CAPABILITY,
   LAGUNA_XS_21_REASONING_CAPABILITY,
   MINIMAX_M3_REASONING_CAPABILITY,
+  MUSE_GLIMMER_30B_REASONING_CAPABILITY,
   STEP_37_REASONING_CAPABILITY,
   getReasoningCapability,
 } from "../models/capabilities";
@@ -30,6 +37,18 @@ function baseModel(id: string): NimModelConfig {
 assert.deepEqual(mapThinkingFormatToCompat("reasoning-effort"), {
   supportsReasoningEffort: true,
 });
+assert.deepEqual(
+  buildReasoningEffortThinkingLevelMap(["none", "minimal", "low", "medium", "high", "max"]),
+  {
+    off: "none",
+    minimal: "minimal",
+    low: "low",
+    medium: "medium",
+    high: "high",
+    xhigh: "max",
+    max: "max",
+  },
+);
 
 // 2) Families that add thinking should surface reasoning=true.
 const stepfun = applyFamilyCompat([baseModel("stepfun-ai/step-3.5-flash")])[0];
@@ -90,6 +109,23 @@ assert.deepEqual(glmModel?.thinkingLevelMap, {
   xhigh: null,
   max: "max",
 });
+const museGlimmer = STATIC_MODEL_MAP.get("meta/muse-glimmer-30b");
+assert.ok(museGlimmer);
+assert.equal(museGlimmer.reasoning, true);
+assert.deepEqual(museGlimmer.input, ["text", "image"]);
+assert.equal(museGlimmer.contextWindow, 131072);
+assert.equal(museGlimmer.maxTokens, 131072);
+assert.equal(museGlimmer.compat?.supportsReasoningEffort, true);
+assert.equal(museGlimmer.compat?.requiresReasoningContentOnAssistantMessages, true);
+assert.deepEqual(museGlimmer.thinkingLevelMap, {
+  off: "none",
+  minimal: "minimal",
+  low: "low",
+  medium: "medium",
+  high: "high",
+  xhigh: "max",
+  max: "max",
+});
 
 // 5) GLM semantics and NIM transport hypotheses remain separate.
 assert.equal(getReasoningCapability("z-ai/glm-5.2"), GLM_52_REASONING_CAPABILITY);
@@ -112,6 +148,9 @@ assert.equal(MINIMAX_M3_REASONING_CAPABILITY.nimTransport.requestEncoding, "chat
 assert.equal(MINIMAX_M3_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
 assert.equal(MINIMAX_M3_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
 assert.equal(MINIMAX_M3_REASONING_CAPABILITY.verification.streaming, "probe-passed");
+assert.equal(getReasoningCapability("meta/muse-glimmer-30b"), MUSE_GLIMMER_30B_REASONING_CAPABILITY);
+assert.equal(MUSE_GLIMMER_30B_REASONING_CAPABILITY.nimTransport.requestEncoding, "reasoning-effort");
+assert.equal(MUSE_GLIMMER_30B_REASONING_CAPABILITY.verification.streaming, "probe-passed");
 assert.equal(getReasoningCapability("stepfun-ai/step-3.7-flash"), STEP_37_REASONING_CAPABILITY);
 assert.equal(STEP_37_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
 assert.equal(STEP_37_REASONING_CAPABILITY.semantics.canDisable, false);

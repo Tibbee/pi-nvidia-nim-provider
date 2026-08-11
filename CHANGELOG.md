@@ -2,6 +2,17 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## Unreleased
+
+### Added
+
+- Added Meta Muse Glimmer 30B (`meta/muse-glimmer-30b`) with text/image input, a 131,072-token context, top-level reasoning-effort mapping, and separate reasoning-content streaming.
+- Added generated single-model metadata updates and a fallback scraper for NVIDIA's ReadMe-powered API reference pages.
+
+### Verified
+
+- Hosted NIM accepted Muse Glimmer streaming, usage, documented reasoning-effort values, and tool payloads. Tool-call emission was not observed, and `reasoning_effort: "none"` still returned reasoning content.
+
 ## [1.2.1] - 2026-07-16
 
 ### Fixed

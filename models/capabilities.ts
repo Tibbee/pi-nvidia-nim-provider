@@ -265,6 +265,52 @@ export const MINIMAX_M3_REASONING_CAPABILITY: ReasoningCapability = {
 };
 
 /**
+ * Muse Glimmer hosted-NIM observation. NVIDIA documents text/image input,
+ * a 131,072-token context, top-level reasoning_effort, tool requests, and
+ * separate reasoning_content. Live probes confirmed streaming, usage, and
+ * reasoning_content; the hosted endpoint still emitted reasoning for `none`,
+ * so disabling reasoning is not treated as verified.
+ *
+ * References:
+ * - https://build.nvidia.com/meta/muse-glimmer-30b
+ * - https://docs.api.nvidia.com/nim/reference/meta-muse-glimmer-30b
+ * - https://docs.api.nvidia.com/nim/reference/meta-muse-glimmer-30b-infer
+ */
+export const MUSE_GLIMMER_30B_REASONING_CAPABILITY: ReasoningCapability = {
+  modelId: "meta/muse-glimmer-30b",
+  semantics: {
+    defaultEnabled: true,
+    canDisable: false,
+    supportsEffort: true,
+    acceptedEfforts: ["none", "minimal", "low", "medium", "high", "max"],
+    effectiveEffortMapping: {
+      off: "none (accepted, but reasoning still observed)",
+      minimal: "minimal",
+      low: "low",
+      medium: "medium",
+      high: "high",
+      xhigh: "max",
+      max: "max",
+    },
+    supportsInterleavedThinking: "unknown",
+    supportsPreservedThinking: "unknown",
+    responseField: "reasoning_content",
+  },
+  nimTransport: {
+    requestEncoding: "reasoning-effort",
+    responseEncoding: "reasoning_content",
+  },
+  verification: {
+    semantics: "documented",
+    requestTransport: "probe-passed",
+    responseTransport: "probe-passed",
+    streaming: "probe-passed",
+    tools: "documented",
+    preservedThinking: "unknown",
+  },
+};
+
+/**
  * Step-3.7 Flash hosted-NIM observation. NVIDIA's model page documents
  * low/medium/high effort and the live endpoint returned reasoning_content for
  * top-level and nested reasoning_effort requests. The hosted endpoint did not
@@ -311,6 +357,7 @@ const CAPABILITIES = new Map<string, ReasoningCapability>([
   [LAGUNA_XS_21_REASONING_CAPABILITY.modelId, LAGUNA_XS_21_REASONING_CAPABILITY],
   [GLM_52_REASONING_CAPABILITY.modelId, GLM_52_REASONING_CAPABILITY],
   [MINIMAX_M3_REASONING_CAPABILITY.modelId, MINIMAX_M3_REASONING_CAPABILITY],
+  [MUSE_GLIMMER_30B_REASONING_CAPABILITY.modelId, MUSE_GLIMMER_30B_REASONING_CAPABILITY],
   [STEP_37_REASONING_CAPABILITY.modelId, STEP_37_REASONING_CAPABILITY],
 ]);
 

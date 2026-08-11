@@ -16,7 +16,7 @@ interface MetadataEntry {
   exampleRequestExtra?: Record<string, unknown>;
 }
 
-const REASONING_EFFORT_ORDER = ["none", "low", "medium", "high", "max"] as const;
+const REASONING_EFFORT_ORDER = ["none", "minimal", "low", "medium", "high", "max"] as const;
 type ReasoningEffort = (typeof REASONING_EFFORT_ORDER)[number];
 
 function reasoningEffortRank(value: string): number | undefined {
@@ -86,10 +86,11 @@ export function buildReasoningEffortThinkingLevelMap(
   return {
     off: supported.includes("none") ? "none" : null,
     minimal: pick(1),
-    low: pick(1),
-    medium: pick(2),
-    high: pick(3),
-    xhigh: pick(4),
+    low: pick(2),
+    medium: pick(3),
+    high: pick(4),
+    xhigh: pick(5),
+    max: supported.includes("max") ? "max" : null,
   };
 }
 

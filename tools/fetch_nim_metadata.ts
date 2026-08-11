@@ -13,6 +13,7 @@ if (!NVIDIA_API_KEY) {
 
 const NIM_BASE_URL = "https://integrate.api.nvidia.com/v1";
 const BUILD_BASE_URL = "https://build.nvidia.com";
+const DOCS_REFERENCE_BASE_URL = "https://docs.api.nvidia.com/nim/reference";
 const OUTPUT_FILE = path.join(__dirname, "../models/metadata.json");
 
 const DEFAULT_BATCH_SIZE = 3;
@@ -38,6 +39,7 @@ if (process.argv.includes("--cards")) {
 }
 const _resumeMode = process.argv.includes("--resume");
 const fullMode = process.argv.includes("--full");
+const updateMode = process.argv.includes("--update");
 
 const singleModel = process.argv
   .find(arg => arg.startsWith("--model=") || arg.startsWith("-m=") || arg.startsWith("--model-name="))
@@ -46,9 +48,14 @@ const explicitOutput = process.argv
   .find(arg => arg.startsWith("--output=") || arg.startsWith("-o="));
 const outputFile = explicitOutput
   ? explicitOutput.replace(/^--?output[=-]?/, "")
-  : singleModel
+  : singleModel && !updateMode
     ? `test-${singleModel.replace(/\//g, "-")}.json`
     : OUTPUT_FILE;
+
+if (updateMode && !singleModel) {
+  console.error("Error: --update requires --model=<model-id>.");
+  process.exit(1);
+}
 
 const BATCH_SIZE = getNumericArg(["--batch-size="], DEFAULT_BATCH_SIZE);
 const DELAY_MS   = getNumericArg(["--delay="], DEFAULT_DELAY_MS);
@@ -114,6 +121,7 @@ function stripUnusedFields(results: ModelMetadata[]): ModelMetadata[] {
 
 function getYardstickFallback(modelId: string): { contextWindow?: number; maxOutputTokens?: number } {
   const families: { re: RegExp; ctx?: number; out?: number }[] = [
+    { re: /meta\/muse-glimmer/i, ctx: 131072, out: 131072 },
     { re: /llama-3\.[123]/i, ctx: 131072, out: 8192 },
     { re: /llama-4/i, ctx: 131072, out: 8192 },
     { re: /llama-3\.3/i, ctx: 131072, out: 8192 },
@@ -243,6 +251,58 @@ async function fetchModelIds(apiKey: string): Promise<{ id: string; owned_by: st
  * We find the marker in the raw HTML, locate the start of the JSON value,
  * and carefully track brace depth to extract the complete object.
  */
+function extractJsonObjectAfterMarker(html: string, marker: string): any | null {
+  const markerIndex = html.indexOf(marker);
+  if (markerIndex === -1) return null;
+
+  const valueStart = html.indexOf("{", markerIndex + marker.length);
+  if (valueStart === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = valueStart; i < html.length; i++) {
+    const char = html[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+    } else if (char === "{") {
+      depth++;
+    } else if (char === "}") {
+      depth--;
+      if (depth === 0) {
+        try {
+          return JSON.parse(html.slice(valueStart, i + 1));
+        } catch {
+          return null;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/** Extract the OpenAPI schema embedded by the ReadMe-powered API docs. */
+function extractDocsOpenApiSpec(html: string): any | null {
+  return extractJsonObjectAfterMarker(
+    html,
+    '"api":{"method":"post","path":"/chat/completions","schema":',
+  );
+}
+
 function extractOpenApiSpec(html: string): any | null {
   // Look for `"openAPISpec":{` in the RSC payload.
   // In the raw HTML, property names appear as: \"openAPISpec\"
@@ -538,6 +598,7 @@ function parseMetadataFromSpec(meta: ModelMetadata, spec: any): void {
 // ─────────────────────────────────────────────────────────────
 
 function detectThinkingFormat(modelId: string, _text?: string): string | undefined {
+  if (/^meta\/muse-glimmer/.test(modelId)) return "reasoning-effort";
   if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
   if (/^openai\/gpt-oss/.test(modelId)) return "reasoning-effort";
   if (/^poolside\/laguna-xs-2\.1$/.test(modelId)) return "qwen-chat-template";
@@ -567,6 +628,7 @@ function detectThinkingFormat(modelId: string, _text?: string): string | undefin
 }
 
 function detectToolCalling(_html: string, modelId: string): boolean {
+  if (/^meta\/muse-glimmer/i.test(modelId)) return true;
   if (/llama-3\.[1-9]/i.test(modelId)) return true;
   if (/llama-4/i.test(modelId)) return true;
   if (/mistral(?!-7b)/i.test(modelId)) return true;
@@ -583,7 +645,7 @@ function detectToolCallFormat(modelId: string): ToolCallFormat | undefined {
   if (/llama2|gemma-2|codestral|starcoder|fim/i.test(modelId)) return undefined;
   if (/mistral|mixtral|devstral|magistral|ministral/i.test(modelId)) return "mistral";
   if (/llama/i.test(modelId)) return "llama";
-  if (/qwen|glm|phi|deepseek|kimi|moonshot|gemma|minimax/i.test(modelId)) return "openai";
+  if (/muse-glimmer|qwen|glm|phi|deepseek|kimi|moonshot|gemma|minimax/i.test(modelId)) return "openai";
   return undefined;
 }
 
@@ -656,7 +718,47 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
       }
     }
   } catch {
-    // Modelcard fetch failed — will use fallbacks
+    // Modelcard fetch failed — try the API reference below.
+  }
+
+  // New model pages can appear in NVIDIA's ReadMe-powered API reference before
+  // build.nvidia.com exposes a /modelcard payload. Its endpoint page embeds the
+  // complete OpenAPI schema, so use it as a generated-metadata fallback.
+  if (!meta.contextWindow || meta.maxOutputTokens == null) {
+    const docsSlug = modelId.replace(/\//g, "-");
+    try {
+      const inferUrl = `${DOCS_REFERENCE_BASE_URL}/${docsSlug}-infer`;
+      const inferResponse = await fetchWithRetry(inferUrl, { signal: AbortSignal.timeout(20000) });
+      if (inferResponse.ok) {
+        const inferHtml = await inferResponse.text();
+        const docsSpec = extractDocsOpenApiSpec(inferHtml);
+        if (docsSpec) {
+          parseMetadataFromSpec(meta, docsSpec);
+          if (verbose) console.log(`  ✓ extracted docs spec for ${modelId}`);
+        } else if (verbose) {
+          console.log(`  ⚠ no OpenAPI spec found in API reference for ${modelId}`);
+        }
+      }
+    } catch {
+      // API reference fetch is best-effort; family fallbacks remain available.
+    }
+
+    if (!meta.contextWindow) {
+      try {
+        const referenceUrl = `${DOCS_REFERENCE_BASE_URL}/${docsSlug}`;
+        const referenceResponse = await fetchWithRetry(referenceUrl, { signal: AbortSignal.timeout(20000) });
+        if (referenceResponse.ok) {
+          const referenceHtml = await referenceResponse.text();
+          const docsContext = extractContextFromPageText(referenceHtml);
+          if (docsContext != null) {
+            meta.contextWindow = docsContext;
+            if (verbose) console.log(`  ✓ context from API reference: ${docsContext}`);
+          }
+        }
+      } catch {
+        // Context extraction is best-effort; yardstick fallbacks run below.
+      }
+    }
   }
 
   // Inkling's hosted model card describes text/image/audio input, while its
@@ -732,7 +834,7 @@ async function main() {
     let models: { id: string; owned_by: string }[];
 
     if (singleModel) {
-      console.log(`Testing single model: ${singleModel}`);
+      console.log(`${updateMode ? "Updating" : "Testing"} single model: ${singleModel}`);
       const org = singleModel.split("/")[0];
       models = [{ id: singleModel, owned_by: org }];
 
@@ -757,8 +859,25 @@ async function main() {
 
       const outPath = outputFile;
       stripUnusedFields([meta]);
-      fs.writeFileSync(outPath, JSON.stringify([meta], null, 2));
-      console.log(`\nWritten to: ${outPath}`);
+
+      if (updateMode) {
+        if (!fs.existsSync(outPath)) {
+          throw new Error(`Cannot update missing metadata file: ${outPath}`);
+        }
+        const parsed = JSON.parse(fs.readFileSync(outPath, "utf8"));
+        if (!Array.isArray(parsed)) {
+          throw new Error(`Cannot update non-array metadata file: ${outPath}`);
+        }
+        const existing = parsed as ModelMetadata[];
+        const updated = existing.filter(entry => entry.id !== meta.id);
+        updated.push(meta);
+        updated.sort((a, b) => a.id.localeCompare(b.id));
+        fs.writeFileSync(outPath, JSON.stringify(updated, null, 2) + "\n");
+        console.log(`\nUpdated ${meta.id} in: ${outPath}`);
+      } else {
+        fs.writeFileSync(outPath, JSON.stringify([meta], null, 2) + "\n");
+        console.log(`\nWritten to: ${outPath}`);
+      }
       console.log(`  contextWindow:           ${debug.contextWindow ?? "?"}`);
       console.log(`  maxOutputTokens:         ${debug.maxOutputTokens ?? "?"}`);
       console.log(`  inputModalities:         ${debug.inputModalities?.join(", ") ?? "?"}`);

@@ -31,8 +31,6 @@ Tools/nvidia_nim_models_by_category.txt
 
 alternative/
 
-# Tracked project documentation lives in these files; other local archival
-# notes under docs/ remain ignored.
+# docs/ is development material for this machine, not shipped to npm.
+# It is intentionally untracked; local archival notes live here too.
 docs/*
-!docs/README.md
-!docs/audit-findings.md

@@ -2,7 +2,7 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
-## Unreleased
+## [1.4.0] - 2026-08-12
 
 ### Added
 

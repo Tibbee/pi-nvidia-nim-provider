@@ -127,6 +127,27 @@ assert.deepEqual(museGlimmer.thinkingLevelMap, {
   max: "max",
 });
 
+// Nemotron 3.5 Lightning 30B: nemotron-3-super-effort handler transport
+// (enable_thinking + reasoning_budget), text-only, 1M context.
+const nemotron35Lightning = STATIC_MODEL_MAP.get("nvidia/nemotron-3.5-lightning-30b-a3b");
+assert.ok(nemotron35Lightning);
+assert.equal(nemotron35Lightning.reasoning, true);
+assert.deepEqual(nemotron35Lightning.input, ["text"]);
+assert.equal(nemotron35Lightning.contextWindow, 1048576);
+assert.equal(nemotron35Lightning.maxTokens, 32768);
+assert.equal(nemotron35Lightning.reasoningBudget, 32768);
+assert.equal(nemotron35Lightning.compat?.supportsReasoningEffort, true);
+assert.equal(nemotron35Lightning.compat?.maxTokensField, "max_tokens");
+assert.equal(classifyThinkingFormat("nvidia/nemotron-3.5-lightning-30b-a3b"), "nemotron-3-super-effort");
+assert.deepEqual(nemotron35Lightning.thinkingLevelMap, {
+  off: "none",
+  minimal: "low",
+  low: "low",
+  medium: "high",
+  high: "high",
+  xhigh: "high",
+});
+
 // 5) GLM semantics and NIM transport hypotheses remain separate.
 assert.equal(getReasoningCapability("z-ai/glm-5.2"), GLM_52_REASONING_CAPABILITY);
 assert.equal(GLM_52_REASONING_CAPABILITY.semantics.supportsEffort, true);

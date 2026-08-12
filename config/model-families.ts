@@ -355,6 +355,26 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
+  // Nemotron 3.5 Lightning 30B: enable_thinking + reasoning_budget. NVIDIA's
+  // API reference documents no reasoning_effort (probes accepted it, but the
+  // handler converts pi's levels into enable_thinking + low_effort anyway).
+  {
+    name: "nemotron-3.5-lightning",
+    pattern: /^nvidia\/nemotron-3\.5-lightning/,
+    compat: {
+      supportsDeveloperRole: false,
+      maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: {
+      off: "none",
+      minimal: "low",
+      low: "low",
+      medium: "high",
+      high: "high",
+      xhigh: "high",
+    },
+  },
+
   // Nemotron Ultra (unsuffixed) — deprecated/legacy, use deepseek-style as fallback.
   {
     name: "nemotron-ultra-deprecated",
@@ -623,6 +643,7 @@ const FAMILY_HANDLER_FORMATS: Partial<Record<string, NimThinkingFormat>> = {
   "nemotron-system-think": "nemotron-system-think",
   "nemotron-3-super-effort": "nemotron-3-super-effort",
   "nemotron-3-ultra-effort": "nemotron-3-super-effort",
+  "nemotron-3.5-lightning": "nemotron-3-super-effort",
   "seed-oss": "thinking-budget",
   "nemotron-ultra-deprecated": "deepseek-nim",
   "glm": "qwen-chat-template",

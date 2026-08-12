@@ -694,6 +694,20 @@
     "supportsVision": false
   },
   {
+    "id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "maxOutputTokens": 32768,
+    "reasoningBudget": 32768,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    },
+    "supportsReasoning": true,
+    "thinkingFormat": "nemotron-3-super-effort",
+    "contextWindow": 1048576,
+    "supportsVision": false
+  },
+  {
     "id": "nvidia/nemotron-3.5-content-safety",
     "maxOutputTokens": 4096,
     "supportsVision": true,

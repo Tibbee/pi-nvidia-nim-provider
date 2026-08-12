@@ -122,6 +122,7 @@ function stripUnusedFields(results: ModelMetadata[]): ModelMetadata[] {
 function getYardstickFallback(modelId: string): { contextWindow?: number; maxOutputTokens?: number } {
   const families: { re: RegExp; ctx?: number; out?: number }[] = [
     { re: /meta\/muse-glimmer/i, ctx: 131072, out: 131072 },
+    { re: /nemotron-3\.5-lightning/i, ctx: 1048576, out: 32768 },
     { re: /llama-3\.[123]/i, ctx: 131072, out: 8192 },
     { re: /llama-4/i, ctx: 131072, out: 8192 },
     { re: /llama-3\.3/i, ctx: 131072, out: 8192 },
@@ -610,6 +611,7 @@ function detectThinkingFormat(modelId: string, _text?: string): string | undefin
   if (/^nvidia\/nvidia-nemotron-nano-9b-v2/.test(modelId)) return "nemotron-system-think";
   if (/^nvidia\/nemotron-3-super-120b-a12b/.test(modelId)) return "nemotron-3-super-effort";
   if (/^nvidia\/nemotron-3-ultra-550b/.test(modelId)) return "nemotron-3-super-effort";
+  if (/^nvidia\/nemotron-3\.5-lightning/.test(modelId)) return "nemotron-3-super-effort";
   if (/^bytedance\/seed-oss/.test(modelId)) return "thinking-budget";
 
   if (/^deepseek-ai\/deepseek-(v3|r1)/.test(modelId)) return "deepseek-nim";
@@ -638,6 +640,7 @@ function detectToolCalling(_html: string, modelId: string): boolean {
   if (/kimi-k2/i.test(modelId)) return true;
   if (/deepseek-v3|deepseek-v4/i.test(modelId)) return true;
   if (/nemotron-(ultra|super)/i.test(modelId)) return true;
+  if (/nemotron-3\.5-lightning/i.test(modelId)) return true;
   return false;
 }
 
@@ -646,6 +649,7 @@ function detectToolCallFormat(modelId: string): ToolCallFormat | undefined {
   if (/mistral|mixtral|devstral|magistral|ministral/i.test(modelId)) return "mistral";
   if (/llama/i.test(modelId)) return "llama";
   if (/muse-glimmer|qwen|glm|phi|deepseek|kimi|moonshot|gemma|minimax/i.test(modelId)) return "openai";
+  if (/nemotron-3\.5-lightning/i.test(modelId)) return "openai";
   return undefined;
 }
 

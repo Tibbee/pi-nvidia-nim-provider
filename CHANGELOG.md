@@ -2,6 +2,17 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## Unreleased
+
+### Added
+
+- Added NVIDIA Nemotron 3.5 Lightning 30B (`nvidia/nemotron-3.5-lightning-30b-a3b`) with text input, a 1,048,576-token context, and 32,768-token output.
+- Nemotron 3.5 Lightning routes through the `nemotron-3-super-effort` handler (`enable_thinking` + `reasoning_budget`); NVIDIA documents no `reasoning_effort` for this model.
+
+### Verified
+
+- Hosted NIM accepted `enable_thinking`, `reasoning_budget`, streamed separate `reasoning_content`, and emitted live tool calls. Both `enable_thinking: false` and `reasoning_effort: none` stopped reasoning; all documented reasoning-effort values were accepted.
+
 ## [1.3.0] - 2026-08-11
 
 ### Added

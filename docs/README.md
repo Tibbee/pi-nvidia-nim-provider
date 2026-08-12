@@ -2,7 +2,7 @@
 
 > **Last updated:** 2026-07-16
 > **Project:** `E:/Munka/Programming/TypeJavaScript/NvidiaProvider`
-> **pi version:** v0.73.0 (with built-in `nvidia` provider)
+> **pi version:** v0.84.1 (with built-in `nvidia` provider)
 
 ---
 
@@ -17,7 +17,7 @@
   - [2.3 Model Pipeline](#23-model-pipeline)
 - [3. Directory Structure](#3-directory-structure)
 - [4. Model Curation](#4-model-curation)
-  - [4.1 Included Models (84 LLMs)](#41-included-models)
+  - [4.1 Included Models (85 LLMs)](#41-included-models)
   - [4.2 Excluded Categories](#42-excluded-categories)
   - [4.3 Model Family Compat Reference](#43-model-family-compat-reference)
 - [5. Thinking Format Handling](#5-thinking-format-handling)
@@ -41,7 +41,7 @@
 
 ## 1. Overview
 
-This extension registers **NVIDIA NIM** as a custom model provider (`nvidia-nim`) in the pi coding agent. It makes 84 chat, coding, reasoning, and vision LLMs available through pi's `/model` picker, using NVIDIA's free-tier inference API at:
+This extension registers **NVIDIA NIM** as a custom model provider (`nvidia-nim`) in the pi coding agent. It makes 85 chat, coding, reasoning, and vision LLMs available through pi's `/model` picker, using NVIDIA's free-tier inference API at:
 
 ```
 https://integrate.api.nvidia.com/v1
@@ -51,7 +51,7 @@ https://integrate.api.nvidia.com/v1
 
 **Key architectural decision:** Model-specific quirks (thinking formats, extra body parameters, compat flags) are handled through pi's `compat` system and a `before_provider_request` event hook, not custom streaming code.
 
-**Model pipeline:** `metadata.json` (124 scraped entries) → `isLLMModel()` filter → dedup → `metadataToModelConfig()` → `applyFamilyCompat()` → `STATIC_MODELS[]` (84 models). Family patterns are applied **first match wins** in a specific-to-general ordering.
+**Model pipeline:** `metadata.json` (125 scraped entries) → `isLLMModel()` filter → dedup → `metadataToModelConfig()` → `applyFamilyCompat()` → `STATIC_MODELS[]` (85 models). Family patterns are applied **first match wins** in a specific-to-general ordering.
 
 ### 1.5 Quick Start
 
@@ -95,7 +95,7 @@ NVIDIA NIM models use different `chat_template_kwargs` structures for thinking. 
 | `thinking-budget` | Seed OSS | `chat_template_kwargs: { thinking_budget }` extracted from pi's reasoning_effort via before_provider_request |
 | `nemotron-system-detailed` | Nemotron Super v1/v1.5 | Injects "think detailed" as system message + `chat_template_kwargs.thinking: true` via before_provider_request |
 | `nemotron-system-think` | Nemotron Ultra 253B | Injects "think" as system message + `chat_template_kwargs.thinking: true` via before_provider_request |
-| `nemotron-3-super-effort` | Nemotron 3 Super 120B, Nemotron 3 Ultra 550B | Extracts `thinking_budget` from reasoning_effort into `chat_template_kwargs` via before_provider_request |
+| `nemotron-3-super-effort` | Nemotron 3 Super 120B, Nemotron 3 Ultra 550B, Nemotron 3.5 Lightning 30B | Extracts `thinking_budget` from reasoning_effort into `chat_template_kwargs` via before_provider_request |
 | `reasoning-effort` | GPT-OSS 120B/20B, Muse Glimmer 30B | Standard OpenAI `reasoning_effort`; pi handles natively |
 
 ---
@@ -113,17 +113,17 @@ NVIDIA NIM models use different `chat_template_kwargs` structures for thinking. 
 
 Models are grouped by **family** (e.g., `deepseek`, `qwen`, `mistral`, `llama`). Each family defines `compat` flags (`thinkingFormat`, `supportsDeveloperRole`, `requiresToolResultName`, etc.) once, rather than repeating per-model.
 
-This is defined in `config/model-families.ts` with 47 families covering 84 models.
+This is defined in `config/model-families.ts` with 48 families covering 85 models.
 
 ### 2.3 Model Pipeline
 
 Models are built at module init time from `metadata.json`:
 
 ```
-metadata.json (124 raw entries)
+metadata.json (125 raw entries)
     │  isLLMModel() - excludes embeddings, TTS, ASR, guardrails, etc.
     ▼
-84 LLM entries
+85 LLM entries
     │  deduplicate by ID
     ▼
 unique LLM entries
@@ -153,9 +153,9 @@ NvidiaProvider/
 │   ├── types.ts                      # NimModelConfig, NimThinkingFormat
 │   ├── registry.ts                   # STATIC_MODELS pipeline (metadata → family compat)
 │   ├── metadata.ts                   # Back-compat re-export shim for registry.ts
-│   └── metadata.json                 # 124 models with scraped metadata (DO NOT edit manually)
+│   └── metadata.json                 # 125 models with scraped metadata (DO NOT edit manually)
 ├── config/
-│   ├── model-families.ts             # 47 families (first match wins) + classifyThinkingFormat()
+│   ├── model-families.ts             # 48 families (first match wins) + classifyThinkingFormat()
 │   └── defaults.ts                   # NIM_BASE_URL, NIM_API_KEY_REF, dual-env fallback
 ├── tools/
 │   ├── fetch_nim_metadata.ts         # NVIDIA docs scraper (API + build pages)
@@ -175,7 +175,7 @@ NvidiaProvider/
 
 ### 4.1 Included Models
 
-From the NIM catalog, we filter to 84 **LLMs suitable for a coding agent**:
+From the NIM catalog, we filter to 85 **LLMs suitable for a coding agent**:
 
 **Chat / Instruction (representative):**
 `meta/llama-3.1-8b-instruct`, `meta/llama-3.3-70b-instruct`, `meta/llama-4-maverick-17b-128e-instruct`, `google/gemma-3-12b-it`, `google/gemma-4-31b-it`, `microsoft/phi-4-mini-instruct`, `microsoft/phi-4-multimodal-instruct`, `mistralai/mistral-7b-instruct-v0.3`, `nvidia/nemotron-mini-4b-instruct`, `nvidia/llama-3.3-nemotron-super-49b-v1`, `nvidia/nvidia-nemotron-nano-9b-v2`, `upstage/solar-10.7b-instruct`, `stockmark/stockmark-2-100b-instruct`, `01-ai/yi-large`, `ai21labs/jamba-1.5-large-instruct`, `ibm/granite-3.0-8b-instruct`, `writer/palmyra-creative-122b`, `zyphra/zamba2-7b-instruct`
@@ -184,7 +184,7 @@ From the NIM catalog, we filter to 84 **LLMs suitable for a coding agent**:
 `deepseek-ai/deepseek-v4-flash`, `deepseek-ai/deepseek-v4-pro`, `bytedance/seed-oss-36b-instruct`, `mistralai/codestral-22b-instruct-v0.1`, `mistralai/mistral-nemotron`, `mistralai/mistral-small-4-119b-2603`, `moonshotai/kimi-k2.6`, `minimaxai/minimax-m2.7`, `nvidia/llama-3.1-nemotron-51b-instruct`, `nvidia/llama-3.1-nemotron-70b-instruct`, `abacusai/dracarys-llama-3.1-70b-instruct`, `sarvamai/sarvam-m`
 
 **Reasoning / Thinking:**
-`deepseek-ai/deepseek-v4-flash`, `deepseek-ai/deepseek-v4-pro`, `meta/muse-glimmer-30b`, `openai/gpt-oss-120b`, `openai/gpt-oss-20b`, `qwen/qwen3-next-80b-a3b-instruct`, `qwen/qwen3.5-122b-a10b`, `qwen/qwen3.5-397b-a17b`, `minimaxai/minimax-m3`, `z-ai/glm-5.2`, `moonshotai/kimi-k2.6`, `bytedance/seed-oss-36b-instruct`, `mistralai/mistral-large-3-675b-instruct-2512`, `mistralai/mistral-nemotron`, `nvidia/llama-3.1-nemotron-ultra-253b-v1`, `nvidia/llama-3.3-nemotron-super-49b-v1`, `nvidia/nemotron-3-super-120b-a12b`, `nvidia/nemotron-3-ultra-550b-a55b`, `stepfun-ai/step-3.5-flash`, `stepfun-ai/step-3.7-flash`, `thinkingmachines/inkling`, `poolside/laguna-xs-2.1`
+`deepseek-ai/deepseek-v4-flash`, `deepseek-ai/deepseek-v4-pro`, `meta/muse-glimmer-30b`, `openai/gpt-oss-120b`, `openai/gpt-oss-20b`, `qwen/qwen3-next-80b-a3b-instruct`, `qwen/qwen3.5-122b-a10b`, `qwen/qwen3.5-397b-a17b`, `minimaxai/minimax-m3`, `z-ai/glm-5.2`, `moonshotai/kimi-k2.6`, `bytedance/seed-oss-36b-instruct`, `mistralai/mistral-large-3-675b-instruct-2512`, `mistralai/mistral-nemotron`, `nvidia/llama-3.1-nemotron-ultra-253b-v1`, `nvidia/llama-3.3-nemotron-super-49b-v1`, `nvidia/nemotron-3-super-120b-a12b`, `nvidia/nemotron-3-ultra-550b-a55b`, `nvidia/nemotron-3.5-lightning-30b-a3b`, `stepfun-ai/step-3.5-flash`, `stepfun-ai/step-3.7-flash`, `thinkingmachines/inkling`, `poolside/laguna-xs-2.1`
 
 **Vision:**
 `meta/llama-3.2-11b-vision-instruct`, `meta/llama-3.2-90b-vision-instruct`, `meta/muse-glimmer-30b`, `nvidia/llama-3.1-nemotron-nano-vl-8b-v1`, `nvidia/nemotron-nano-12b-v2-vl`
@@ -232,6 +232,7 @@ All families set `supportsDeveloperRole: false` and `maxTokensField: "max_tokens
 | `seed` | `bytedance/` | `"qwen-chat-template"` | - | - |
 | `nemotron-3-super-effort` | `nvidia/nemotron-3-super-120b-a12b` | - | - | `thinkingLevelMap`: off→none, low→low, medium/high→high |
 | `nemotron-3-ultra-effort` | `nvidia/nemotron-3-ultra-550b-a55b` | - | - | `thinkingLevelMap`: off→none, minimal/low/medium→medium, high/xhigh→high |
+| `nemotron-3.5-lightning` | `nvidia/nemotron-3.5-lightning-30b-a3b` | - | - | `thinkingLevelMap`: off→none, minimal/low→low, medium/high/xhigh→high |
 | `nemotron-nano` | `nvidia/nvidia-nemotron-nano` | `"qwen-chat-template"` | - | - |
 | `nemotron` | `nvidia/.*nemotron` | - | `false` | `reasoningBudget: 32768` |
 | `mistral` | `mistralai/` | - | - | `requiresToolResultName: true`, `requiresThinkingAsText: true` |
@@ -392,9 +393,9 @@ M3 returns structured `reasoning_content` in responses (not inline `<antha>` tag
 
 ### 5.10 `nemotron-3-super-effort` (Handler)
 
-**Models:** `nvidia/nemotron-3-super-120b-a12b`, `nvidia/nemotron-3-ultra-550b-a55b`
+**Models:** `nvidia/nemotron-3-super-120b-a12b`, `nvidia/nemotron-3-ultra-550b-a55b`, `nvidia/nemotron-3.5-lightning-30b-a3b`
 
-**How it works:** Nemotron 3 Super and Ultra use `enable_thinking` + `low_effort` flag + `reasoning_budget` in the payload:
+**How it works:** Nemotron 3 Super, Ultra, and 3.5 Lightning use `enable_thinking` + `low_effort` flag + `reasoning_budget` in the payload:
 
 1. Pi injects `reasoning_effort` via `supportsReasoningEffort: true`.
 2. Our handler converts `reasoning_effort` into `chat_template_kwargs.enable_thinking` (boolean)
@@ -464,8 +465,8 @@ The actual thinking transforms are implemented in `handlers/thinking.ts`:
 | Phase | Description | Status |
 |-------|-------------|--------|
 | **Phase 1** | Core extension structure (`package.json`, `index.ts`) | ✅ Complete |
-| **Phase 2** | Model registry (`types.ts`, `registry.ts`, `metadata.json`) | ✅ Complete (124 raw entries, 84 LLMs) |
-| **Phase 3** | Family compat configuration (`model-families.ts`, `defaults.ts`) | ✅ Complete (47 families) |
+| **Phase 2** | Model registry (`types.ts`, `registry.ts`, `metadata.json`) | ✅ Complete (125 raw entries, 85 LLMs) |
+| **Phase 3** | Family compat configuration (`model-families.ts`, `defaults.ts`) | ✅ Complete (48 families) |
 | **Phase 4** | `before_provider_request` handler + thinking transforms | ✅ Complete (8 handler-based formats) |
 | **Phase 5** | Model metadata scraping (`fetch_nim_metadata.ts`) | ✅ Complete (context window, output tokens, reasoning budget, effort values, exampleRequestExtra) |
 | **Phase 6** | Comparison tool (`fetch_modelsdev_nvidia.ts`) | ✅ Complete (cross-reference against models.dev) |
@@ -512,7 +513,7 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 
 | # | Category | Models | Priority |
 |---|----------|--------|----------|
-| 1 | **Model list verification** | All 84 | P0 |
+| 1 | **Model list verification** | All 85 | P0 |
 | 2 | **Basic streaming** | Llama-3.3-70b, Gemma-3-12b, Mistral-Large-2, Nemotron-4-340b, Granite-3.0-8b | P0 |
 | 3 | **DeepSeek V4 thinking** | `deepseek-v4-flash`, `deepseek-v4-pro` | **P0** |
 | 4 | **DeepSeek NIM / Kimi / StepFun / Nemotron thinking** | `kimi-k2.6`, `step-3.5-flash`, `nemotron-ultra-253b`, `nemotron-super-49b-v1` | P0 |
@@ -527,7 +528,7 @@ pi --list-models -e E:/Munka/Programming/TypeJavaScript/NvidiaProvider | grep nv
 
 ### Current verification snapshot
 
-- **Probe-passed:** DeepSeek V4 Flash, GLM-5.2, MiniMax M3, Muse Glimmer 30B, Step-3.7 Flash, Inkling, and Laguna XS 2.1 request/response/streaming paths.
+- **Probe-passed:** DeepSeek V4 Flash, GLM-5.2, MiniMax M3, Muse Glimmer 30B, Nemotron 3.5 Lightning 30B, Step-3.7 Flash, Inkling, and Laguna XS 2.1 request/response/streaming paths.
 - **Request-contract tested:** Kimi K2.6 and Nemotron routing cases.
 - **Still unknown:** reliable tool-call emission, tool-result replay, and full non-NIM regression behavior.
 
@@ -648,7 +649,7 @@ npm pack --dry-run
 ### Key Architecture Points
 
 1. **No custom streaming** — Uses `api: "openai-completions"`, pi handles API calls
-2. **Family-based config** — 47 families in `MODEL_FAMILIES`, ordered specific→general, first match wins
+2. **Family-based config** — 48 families in `MODEL_FAMILIES`, ordered specific→general, first match wins
 3. **Two-tier merge** — Family `compat` under model-level `compat` from metadata, with `supportsStore: false` applied at the registry merge point
 4. **Handler fixes old bug** — `before_provider_request` looks up raw model ID, not provider-prefixed
 5. **8 handler-based thinking formats** — deepseek-v4, deepseek-nim, thinking-budget, nemotron-3-super-effort, nemotron-system-detailed, nemotron-system-think, minimax-inline, and qwen-chat-template (GLM and Laguna) — plus native pi handling for reasoning-effort
@@ -661,14 +662,14 @@ npm pack --dry-run
 
 ## 11. Coexistence with Official `nvidia` Provider
 
-pi v0.73.0 now ships a **built-in `nvidia` provider** with ~20 curated models. This extension provides `nvidia-nim` with 84 models and model-family-aware reasoning controls.
+pi v0.84.1 ships a **built-in `nvidia` provider** with 31 curated models (22 reasoning-class, 13 vision). This extension provides `nvidia-nim` with 85 models and NIM-family-aware reasoning controls.
 
 ### Key Differences
 
 | Aspect | Official `nvidia` | This extension `nvidia-nim` |
 |--------|-------------------|---------------------------|
-| Model count | ~20 | 84 |
-| Thinking support | None (no `thinkingFormat` in compat) | 8 handler-based formats |
+| Model count | 31 | 85 |
+| Thinking support | None sent; pi drops the selected level (no `thinkingFormat`, `supportsReasoningEffort: false`) | 8 handler-based formats |
 | `NVCF-POLL-SECONDS` header | ✅ Yes | ✅ **Set on every model** (`models/registry.ts:90`) |
 | `supportsStrictMode` | Explicitly `false` | Explicitly `false` |
 | Request normalization | ❌ No | ✅ Yes |
@@ -677,9 +678,9 @@ pi v0.73.0 now ships a **built-in `nvidia` provider** with ~20 curated models. T
 ### Thinking coverage at a glance
 
 Models with configured thinking support: DeepSeek V4, Kimi K2.6, Qwen3,
-GLM-5.2, MiniMax M3, Seed OSS, Nemotron (Ultra, Super, 3-Super), GPT-OSS,
-StepFun, Inkling, and Laguna XS 2.1. Live verification is narrower; see the
-compatibility matrix in the root README.
+GLM-5.2, MiniMax M3, Muse Glimmer, Seed OSS, Nemotron (Ultra, Super, 3-Super,
+3.5 Lightning), GPT-OSS, StepFun, Inkling, and Laguna XS 2.1. Live
+verification is narrower; see the compatibility matrix in the root README.
 
 Notable:
 - **GLM-5.2** — boolean NIM thinking control via `enable_thinking` and
@@ -702,7 +703,7 @@ Notable:
 - **Request content normalization** — converts structured `[{type:"text"}]` content
   arrays to plain strings for older models
 - **47-family regex routing** — accurate thinking format and compat assignment
-  across all 84 models
+  across all 85 models
 - **Per-model reasoning effort mapping** — non-standard effort values handled
   automatically (e.g. `off→none`, `minimal→low`)
 - **Architecturally clean** — uses `before_provider_request` event hook, no custom

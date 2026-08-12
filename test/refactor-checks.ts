@@ -67,9 +67,14 @@ assert.equal(genericNim.compat?.supportsStore, false);
 // 3) Model filter should exclude known embedding-only models.
 assert.equal(STATIC_MODELS.some((model) => model.id === "baai/bge-m3"), false);
 
+// Retired DeepSeek V4 endpoints must not resurface in the static list.
+assert.equal(STATIC_MODELS.some((model) => model.id === "deepseek-ai/deepseek-v4-flash"), false);
+assert.equal(STATIC_MODELS.some((model) => model.id === "deepseek-ai/deepseek-v4-pro"), false);
+assert.equal(STATIC_MODEL_MAP.has("deepseek-ai/deepseek-v4-flash-0731"), true);
+
 // 4) Known models should still classify as expected.
 assert.equal(
-  classifyThinkingFormat("deepseek-ai/deepseek-v4-flash"),
+  classifyThinkingFormat("deepseek-ai/deepseek-v4-flash-0731"),
   "deepseek-v4"
 );
 const deepseekV4Levels = {
@@ -81,7 +86,7 @@ const deepseekV4Levels = {
   xhigh: null,
   max: "max",
 };
-for (const modelId of ["deepseek-ai/deepseek-v4-flash", "deepseek-ai/deepseek-v4-pro"]) {
+for (const modelId of ["deepseek-ai/deepseek-v4-flash-0731"]) {
   const model = STATIC_MODEL_MAP.get(modelId);
   assert.deepEqual(model?.thinkingLevelMap, deepseekV4Levels, modelId);
 }
@@ -154,7 +159,7 @@ assert.equal(GLM_52_REASONING_CAPABILITY.semantics.supportsEffort, true);
 assert.equal(GLM_52_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
 assert.equal(GLM_52_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
 assert.equal(GLM_52_REASONING_CAPABILITY.verification.streaming, "probe-passed");
-assert.equal(getReasoningCapability("deepseek-ai/deepseek-v4-flash"), DEEPSEEK_V4_FLASH_REASONING_CAPABILITY);
+assert.equal(getReasoningCapability("deepseek-ai/deepseek-v4-flash-0731"), DEEPSEEK_V4_FLASH_REASONING_CAPABILITY);
 assert.equal(DEEPSEEK_V4_FLASH_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
 assert.equal(getReasoningCapability("thinkingmachines/inkling"), INKLING_REASONING_CAPABILITY);
 assert.equal(INKLING_REASONING_CAPABILITY.semantics.canDisable, false);
@@ -221,7 +226,7 @@ handleAfterProviderResponse({ status: 429, headers: {} }, undefined as any);
 
 // 8) DeepSeek V4 rewrite should move thinking fields into chat_template_kwargs.
 const deepseekPayload = {
-  model: "deepseek-ai/deepseek-v4-flash",
+  model: "deepseek-ai/deepseek-v4-flash-0731",
   thinking: { type: "enabled" },
   reasoning_effort: "high",
   messages: [],

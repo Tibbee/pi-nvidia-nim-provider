@@ -111,12 +111,16 @@ export const GLM_52_REASONING_CAPABILITY: ReasoningCapability = {
  * chat_template_kwargs shape returned content-only non-think responses and
  * separate reasoning_content for high/max.
  *
+ * The unsuffixed deepseek-v4-flash and deepseek-v4-pro endpoints reached end
+ * of life on 2026-08-07; NVIDIA replaced them with deepseek-v4-flash-0731.
+ * The same transport was re-verified against the new endpoint.
+ *
  * References:
- * - https://build.nvidia.com/deepseek-ai/deepseek-v4-flash.md
+ * - https://build.nvidia.com/deepseek-ai/deepseek-v4-flash-0731
  * - https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash
  */
 export const DEEPSEEK_V4_FLASH_REASONING_CAPABILITY: ReasoningCapability = {
-  modelId: "deepseek-ai/deepseek-v4-flash",
+  modelId: "deepseek-ai/deepseek-v4-flash-0731",
   semantics: {
     defaultEnabled: false,
     canDisable: true,

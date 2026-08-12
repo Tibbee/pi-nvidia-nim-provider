@@ -64,7 +64,7 @@
     "supportsVision": false
   },
   {
-    "id": "deepseek-ai/deepseek-v4-flash",
+    "id": "deepseek-ai/deepseek-v4-flash-0731",
     "maxOutputTokens": 16384,
     "reasoningEffortValues": [
       "none",
@@ -80,25 +80,6 @@
     "supportsReasoning": true,
     "thinkingFormat": "deepseek-v4",
     "contextWindow": 1000000,
-    "supportsVision": false
-  },
-  {
-    "id": "deepseek-ai/deepseek-v4-pro",
-    "maxOutputTokens": 16384,
-    "reasoningEffortValues": [
-      "none",
-      "high",
-      "max"
-    ],
-    "exampleRequestExtra": {
-      "chat_template_kwargs": {
-        "thinking": true,
-        "reasoning_effort": "max"
-      }
-    },
-    "supportsReasoning": true,
-    "contextWindow": 1048576,
-    "thinkingFormat": "deepseek-v4",
     "supportsVision": false
   },
   {
@@ -694,6 +675,18 @@
     "supportsVision": false
   },
   {
+    "id": "nvidia/nemotron-3.5-content-safety",
+    "maxOutputTokens": 4096,
+    "supportsVision": true,
+    "supportsReasoning": true,
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "request_categories": "/categories"
+      }
+    },
+    "contextWindow": 131072
+  },
+  {
     "id": "nvidia/nemotron-3.5-lightning-30b-a3b",
     "maxOutputTokens": 32768,
     "reasoningBudget": 32768,
@@ -706,18 +699,6 @@
     "thinkingFormat": "nemotron-3-super-effort",
     "contextWindow": 1048576,
     "supportsVision": false
-  },
-  {
-    "id": "nvidia/nemotron-3.5-content-safety",
-    "maxOutputTokens": 4096,
-    "supportsVision": true,
-    "supportsReasoning": true,
-    "exampleRequestExtra": {
-      "chat_template_kwargs": {
-        "request_categories": "/categories"
-      }
-    },
-    "contextWindow": 131072
   },
   {
     "id": "nvidia/nemotron-4-340b-instruct",

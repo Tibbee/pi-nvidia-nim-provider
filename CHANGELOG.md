@@ -2,6 +2,16 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [Unreleased]
+
+### Changed
+
+- Pointed DeepSeek V4 at `deepseek-ai/deepseek-v4-flash-0731` after NVIDIA retired the unsuffixed `deepseek-v4-flash` and `deepseek-v4-pro` endpoints (end of life 2026-08-07). The same `chat_template_kwargs` thinking transport was re-verified on the new endpoint for none/high/max modes.
+
+### Removed
+
+- Removed the dead `deepseek-ai/deepseek-v4-flash` and `deepseek-ai/deepseek-v4-pro` metadata entries, which now return HTTP 410. Sessions pinned to the old IDs must switch to `deepseek-ai/deepseek-v4-flash-0731`.
+
 ## [1.4.0] - 2026-08-12
 
 ### Added

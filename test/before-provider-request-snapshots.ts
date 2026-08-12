@@ -18,13 +18,13 @@ const cases = [
     name: "deepseek-v4-flash rewrites to chat_template_kwargs",
     provider: "nvidia-nim",
     payload: {
-      model: "deepseek-ai/deepseek-v4-flash",
+      model: "deepseek-ai/deepseek-v4-flash-0731",
       thinking: { type: "enabled" },
       reasoning_effort: "high",
       messages: [{ role: "user", content: "hello" }],
     },
     expected: {
-      model: "deepseek-ai/deepseek-v4-flash",
+      model: "deepseek-ai/deepseek-v4-flash-0731",
       messages: [{ role: "user", content: "hello" }],
       chat_template_kwargs: {
         thinking: true,

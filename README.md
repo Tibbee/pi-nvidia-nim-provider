@@ -67,7 +67,7 @@ Run `/login nvidia-nim` in pi's interactive mode and select the API-key login. T
 
 ```bash
 pi --provider nvidia-nim \
-  --model deepseek-ai/deepseek-v4-flash \
+  --model deepseek-ai/deepseek-v4-flash-0731 \
   --thinking high \
   -p "Give me a short solution to this coding problem: reverse a linked list."
 ```

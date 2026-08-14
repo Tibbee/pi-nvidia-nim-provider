@@ -43,11 +43,8 @@ export function mapThinkingFormatToCompat(
     case "zai":
       return { thinkingFormat: "zai", supportsReasoningEffort: true };
     case "deepseek-v4":
-    case "deepseek-nim":
       return {}; // Handled by before_provider_request handler
     case "minimax-inline":
-      return {}; // Handled by before_provider_request handler
-    case "thinking-budget":
       return {}; // Handled by before_provider_request handler
     case "nemotron-3-super-effort":
       return { supportsReasoningEffort: true }; // Pi sends reasoning_effort, handler converts to enable_thinking + low_effort

@@ -11,6 +11,10 @@ All notable changes to `pi-extension-nvidia-nim` are documented here.
 ### Removed
 
 - Removed the dead `deepseek-ai/deepseek-v4-flash` and `deepseek-ai/deepseek-v4-pro` metadata entries, which now return HTTP 410. Sessions pinned to the old IDs must switch to `deepseek-ai/deepseek-v4-flash-0731`.
+- Removed 25 additional retired NIM models confirmed HTTP 410 Gone against the live catalog: Dracarys Llama 3.1, Seed OSS 36B, Gemma 2 2B, Gemma 3N e2b/e4b, Llama 4 Maverick, Phi-4 Mini/Multimodal, MiniMax M2.7, Ministral 14B, Mistral Large 3 675B, Mistral Medium 3.5, Mistral Small 4, Mixtral 8x7B, GLiNER PII, Ising Calibration 1-35b, both retired content-safety models, Qwen3 Next 80B, Qwen3.5 122B/397B, Sarvam M, Step 3.5 Flash, Stockmark 2, Solar 10.7B.
+- Dropped families and handler branches that only served retired models: Seed OSS `thinking-budget` transport, MiniMax M2 family, and 15 other zero-match family patterns.
+- Removed 32 further models that are still listed in the `/v1/models` catalog but return an instant 404 "Function not found for account" on chat requests (verified across three sweeps spanning hours, with healthy controls in the same runs): Yi Large, Jamba 1.5, DBRX, DeepSeek Coder 6.7B, Gemma 2B/3, Granite 3.0, Codellama 70B, Llama 2 70B, Phi-3 Vision/MoE, Codestral 22B, Mistral 7B/Large/Large 2, Mixtral 8x22B, Kimi K2.6, Mistral Nemo, Llama 3.1 Nemotron 51B/70B/Ultra 253B, Mistral Nemo Minitron, Nemotron 4 340B, Nemotron Nano 3 30B, VILA, all four Palmyra models, Zamba 2.
+- Dropped the `deepseek-nim` handler format entirely (Kimi K2.6 and Nemotron Ultra were its last consumers) and 11 zero-match families (kimi-k2.6, kimi, mixtral, phi, writer, granite, jamba, yi, dbrx, zamba, nemotron-ultra).
 
 ## [1.4.0] - 2026-08-12
 

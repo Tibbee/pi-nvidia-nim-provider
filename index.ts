@@ -25,10 +25,9 @@ export function handleBeforeProviderRequest(
   // payload.model is the raw NIM model ID, not a provider-prefixed ID.
   const modelId = payload.model as string | undefined;
   if (!modelId || !STATIC_MODEL_MAP.has(modelId)) return;
-  // Older/smaller NIM models (e.g. solar, baichuan, falcon) reject
-  // [{type:"text", text:"..."}] content arrays and require a plain
-  // string. Normalize here so all models receive a universally-accepted
-  // payload without needing a custom streamSimple.
+  // Some NIM models reject [{type:"text", text:"..."}] content arrays and
+  // require a plain string. Normalize here so all models receive a
+  // universally-accepted payload without needing a custom streamSimple.
   normalizeContentArrays(payload);
 
   const modelConfig = STATIC_MODEL_MAP.get(modelId)!;
@@ -64,10 +63,8 @@ export function handleBeforeProviderRequest(
   }
 
   // Expose reasoning/thinking budget when available (schema-extracted).
-  // Different models use different parameter names for the same concept.
   if (modelConfig.reasoningBudget != null && thinkingEnabledAfterTransform) {
-    const budgetParamName = format === "thinking-budget" ? "thinking_budget" : "reasoning_budget";
-    payload[budgetParamName] = modelConfig.reasoningBudget;
+    payload.reasoning_budget = modelConfig.reasoningBudget;
     modified = true;
   }
 
@@ -115,9 +112,9 @@ export function handleAfterProviderResponse(
   }
 }
 
-// Older/smaller NIM models (e.g. solar, baichuan, falcon) reject
-// multipart content arrays and require plain strings. Normalize text-only
-// arrays inline so multi-modal messages with images are left untouched.
+// Some NIM models reject multipart content arrays and require plain strings.
+// Normalize text-only arrays inline so multi-modal messages with images are
+// left untouched.
 function normalizeContentArrays(payload: Record<string, unknown>): void {
   const messages = payload.messages as Array<Record<string, unknown>> | undefined;
   if (!messages) return;

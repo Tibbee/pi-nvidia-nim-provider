@@ -374,12 +374,6 @@ function buildCases(model: string): ProbeCase[] {
     make("deepseek-v4-max-non-stream", false, {
       chat_template_kwargs: { thinking: true, reasoning_effort: "max" },
     }),
-    make("deepseek-nim-off", true, {
-      chat_template_kwargs: { thinking: false },
-    }),
-    make("deepseek-nim-on", true, {
-      chat_template_kwargs: { thinking: true },
-    }),
     make("qwen-chat-template-off", true, {
       chat_template_kwargs: { enable_thinking: false, preserve_thinking: true },
     }),

@@ -36,73 +36,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
   },
 
   // Qwen/GLM use qwen-chat-template natively.
-  {
-    name: "qwen3-coder",
-    pattern: /^qwen\/qwen3-coder/,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "qwen3-next",
-    pattern: /^qwen\/qwen3-next/,
-    compat: {
-      supportsDeveloperRole: false,
-      thinkingFormat: "qwen-chat-template",
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "qwen3.5",
-    pattern: /^qwen\/qwen3\.5/,
-    compat: {
-      supportsDeveloperRole: false,
-      thinkingFormat: "qwen-chat-template",
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "qwen3",
-    pattern: /^qwen\/qwen3-/,
-    compat: {
-      supportsDeveloperRole: false,
-      thinkingFormat: "qwen-chat-template",
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "qwq",
-    pattern: /^qwen\/qwq/,
-    compat: {
-      supportsDeveloperRole: false,
-      thinkingFormat: "qwen-chat-template",
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "qwen2.5-coder",
-    pattern: /^qwen\/qwen2\.5-coder/,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "qwen2",
-    pattern: /^qwen\/qwen2/,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
   // GLM uses NIM's boolean chat-template controls plus a top-level
   // reasoning_effort field. Pi's `zai` format gives the handler both the
   // selected effort and the enabled/disabled state before conversion.
@@ -151,31 +84,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // MiniMax M2.x think inline via <antha> tags — no toggle, no kwargs.
-  // Thinking conversion is handled by the extension's before_provider_request
-  // handler (minimax-inline), not by pi's native thinkingFormat.
-  {
-    name: "minimax-m2",
-    pattern: /^minimaxai\/minimax-m2/,
-    compat: {
-      supportsDeveloperRole: false,
-      requiresThinkingAsText: true,
-      maxTokensField: "max_tokens",
-    },
-    thinkingLevelMap: { off: null }, // Cannot disable thinking
-  },
-
-  // Magistral always thinks — no toggle, no params.
-  {
-    name: "magistral",
-    pattern: /^mistralai\/magistral/,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
-    thinkingLevelMap: { off: null }, // Cannot disable thinking
-  },
-
   // Inkling's hosted endpoint always returns reasoning content and ignores
   // top-level and chat-template thinking toggles. Do not send unsupported
   // thinking controls; expose it as always-on reasoning instead.
@@ -204,38 +112,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // Kimi/Nemotron deepseek-style thinking.
-  // kimi-k2-thinking always thinks — no toggle, no params.
-  {
-    name: "kimi-k2-thinking",
-    pattern: /^moonshotai\/kimi-k2-thinking/,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
-    thinkingLevelMap: { off: null }, // Cannot disable thinking
-  },
-
-  {
-    name: "kimi-k2.6",
-    pattern: /^moonshotai\/kimi-k2\.6/,
-    compat: {
-      supportsDeveloperRole: false,
-      thinkingFormat: "deepseek",
-      requiresReasoningContentOnAssistantMessages: true,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "kimi",
-    pattern: /^moonshotai\/kimi/,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
   // GPT-OSS maps minimal → low.
   {
     name: "gpt-oss",
@@ -246,35 +122,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       maxTokensField: "max_tokens",
     },
     thinkingLevelMap: { minimal: "low" },
-  },
-
-  // Seed OSS uses top-level thinking_budget.
-  {
-    name: "seed-oss",
-    pattern: /^bytedance\/seed-oss/,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "seed",
-    pattern: /^bytedance\//,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  // Nemotron Nano (non-v2 variants) — no structured thinking parameters.
-  {
-    name: "nvidia-nemotron-nano-vl",
-    pattern: /^nvidia\/nvidia-nemotron-nano-vl/,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
   },
 
   // Nemotron Super v1 uses system-message-based thinking ("detailed thinking on/off").
@@ -375,17 +222,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // Nemotron Ultra (unsuffixed) — deprecated/legacy, use deepseek-style as fallback.
-  {
-    name: "nemotron-ultra-deprecated",
-    pattern: /^nvidia\/llama-3\.1-nemotron-ultra/,
-    compat: {
-      supportsDeveloperRole: false,
-      thinkingFormat: "deepseek",
-      maxTokensField: "max_tokens",
-    },
-  },
-
   // Muse Glimmer is a multimodal reasoning model. Hosted NIM exposes
   // top-level reasoning_effort and streams reasoning_content separately.
   {
@@ -415,18 +251,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       supportsDeveloperRole: false,
       supportsReasoningEffort: false,
       maxTokensField: "max_tokens",
-    },
-  },
-
-  // Mixtral — before generic mistral catch-all (order matters: first match wins).
-  {
-    name: "mixtral",
-    pattern: /^mistralai\/mixtral/,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      maxTokensField: "max_tokens",
-      requiresToolResultName: true,
     },
   },
 
@@ -473,116 +297,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  {
-    name: "phi",
-    pattern: /^microsoft\/phi/,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "dracarys",
-    pattern: /^abacusai\//,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "sarvam",
-    pattern: /^sarvamai\//,
-    compat: {
-      supportsDeveloperRole: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "solar",
-    pattern: /^upstage\//,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "stockmark",
-    pattern: /^stockmark\//,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "writer",
-    pattern: /^writer\//,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "granite",
-    pattern: /^ibm\/granite/,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "jamba",
-    pattern: /^ai21labs\//,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "yi",
-    pattern: /^01-ai\//,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "dbrx",
-    pattern: /^databricks\//,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  {
-    name: "zamba",
-    pattern: /^zyphra\//,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      maxTokensField: "max_tokens",
-    },
-  },
-
-  // StepFun models use reasoning_effort directly (low/medium/high).
-  // Thinking is always on — cannot be disabled.
   {
     name: "stepfun",
     pattern: /^stepfun-ai\//,
@@ -636,16 +350,12 @@ export function findFamily(modelId: string): ModelFamily | undefined {
 // thinking, new kwarg structures).
 const FAMILY_HANDLER_FORMATS: Partial<Record<string, NimThinkingFormat>> = {
   "deepseek-v4": "deepseek-v4",
-  "kimi-k2.6": "deepseek-nim",
-  "minimax-m2": "minimax-inline",
   "minimax-m3": "minimax-inline",
   "nemotron-super-detailed": "nemotron-system-detailed",
   "nemotron-system-think": "nemotron-system-think",
   "nemotron-3-super-effort": "nemotron-3-super-effort",
   "nemotron-3-ultra-effort": "nemotron-3-super-effort",
   "nemotron-3.5-lightning": "nemotron-3-super-effort",
-  "seed-oss": "thinking-budget",
-  "nemotron-ultra-deprecated": "deepseek-nim",
   "glm": "qwen-chat-template",
 };
 

@@ -65,31 +65,6 @@ export function applyCustomThinkingFormat(
       return { modified: true, thinkingEnabled: thinking };
     }
 
-    case "deepseek-nim": {
-      if (!hasThinkingParams) return { modified: false };
-      // DeepSeek/Nemotron/Kimi only need chat_template_kwargs.thinking.
-      const thinking = isDeepSeekThinkingEnabled(payload);
-      const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
-
-      delete payload.thinking;
-      delete payload.reasoning_effort;
-
-      payload.chat_template_kwargs = {
-        ...(kwargs ?? {}),
-        thinking,
-      };
-      return { modified: true, thinkingEnabled: thinking };
-    }
-
-    case "thinking-budget": {
-      if (!hasThinkingParams) return { modified: false };
-      // Always-on thinking with top-level thinking_budget param (Seed OSS).
-      // Clean up any pi-injected params; the budget is injected by index.ts.
-      delete payload.thinking;
-      delete payload.reasoning_effort;
-      return { modified: true, thinkingEnabled: true };
-    }
-
     case "nemotron-3-super-effort": {
       if (!hasThinkingParams) return { modified: false };
       // Nemotron 3 Super 120B: enable_thinking + low_effort + reasoning_budget.
@@ -212,7 +187,7 @@ export function applyCustomThinkingFormat(
     }
     case "minimax-inline": {
       if (!hasThinkingParams) return { modified: false };
-      // MiniMax M2/M3: thinking_mode in chat_template_kwargs.
+      // MiniMax M3: thinking_mode in chat_template_kwargs.
       // Maps pi thinking levels to 3 NIM modes:
       //   "disabled" — no thinking
       //   "adaptive" — model decides when to think (native MiniMax default)

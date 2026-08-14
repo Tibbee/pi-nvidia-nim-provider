@@ -111,7 +111,7 @@ function inferKind(model: ModelsDevModel): ParsedModelKind {
   if (id.includes("embed") || id.includes("rerank") || id.includes("embedding")) return "embedding";
   if (hasAny([/guard/, /safety/, /jailbreak/, /pii/], id)) return "guard";
   if (output.includes("image")) return "image-generation";
-  if (hasAny([/coder/, /codestral/, /starcoder/, /devstral/, /deepseek-coder/], id)) return "code";
+  if (hasAny([/coder/, /deepseek-coder/], id)) return "code";
   if (model.reasoning) return "reasoning";
   if (input.some(x => x === "image" || x === "video")) return "vision";
   return "chat";
@@ -123,19 +123,13 @@ function isExtensionCandidate(kind: ParsedModelKind): boolean {
 
 function recommendedThinkingFormat(modelId: string): string | undefined {
   if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
-  if (/^deepseek-ai\/deepseek-(v3|r1)/.test(modelId)) return "deepseek-nim";
-  if (/^moonshotai\/kimi-k2-thinking/.test(modelId)) return "deepseek-nim";
-  if (/^moonshotai\/kimi-k2\.5/.test(modelId)) return "deepseek-nim";
-  if (/^nvidia\/llama-3\.\d-nemotron-(ultra|super)/.test(modelId)) return "deepseek-nim";
+  if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1$/.test(modelId)) return "nemotron-system-detailed";
+  if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1\.5/.test(modelId)) return "nemotron-system-think";
   if (/^stepfun-ai\//.test(modelId)) return "reasoning-effort";
-  if (/^minimaxai\/minimax-m2\.5/.test(modelId)) return "minimax-inline";
+  if (/^minimaxai\/minimax-m3/.test(modelId)) return "minimax-inline";
   if (/^openai\/gpt-oss/.test(modelId)) return "reasoning-effort";
   if (/^z-ai\/glm/.test(modelId)) return "qwen-chat-template";
-  if (/^microsoft\/phi-4-mini/.test(modelId)) return "qwen-chat-template";
-  if (/^bytedance\/seed-oss/.test(modelId)) return "qwen-chat-template";
   if (/^nvidia\/(nvidia-)?nemotron-nano-9b/.test(modelId)) return "qwen-chat-template";
-  if (/^nvidia\/llama-3\.\d-nemotron-(ultra|super)/.test(modelId)) return "deepseek-nim";
-  if (/^qwen\/qwen3/.test(modelId)) return "qwen-chat-template";
   return undefined;
 }
 

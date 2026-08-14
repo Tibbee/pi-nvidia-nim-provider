@@ -51,13 +51,13 @@ assert.deepEqual(
 );
 
 // 2) Families that add thinking should surface reasoning=true.
-const stepfun = applyFamilyCompat([baseModel("stepfun-ai/step-3.5-flash")])[0];
+const stepfun = applyFamilyCompat([baseModel("stepfun-ai/step-3.7-flash")])[0];
 assert.equal(stepfun.reasoning, true);
 
 const deepseek = applyFamilyCompat([baseModel("deepseek-ai/deepseek-v4-test")])[0];
 assert.equal(deepseek.reasoning, true);
 
-const minimax = applyFamilyCompat([baseModel("minimaxai/minimax-m2.7")])[0];
+const minimax = applyFamilyCompat([baseModel("minimaxai/minimax-m3")])[0];
 assert.equal(minimax.reasoning, true);
 
 // NIM must not inherit pi's OpenAI storage default for any family.
@@ -71,6 +71,78 @@ assert.equal(STATIC_MODELS.some((model) => model.id === "baai/bge-m3"), false);
 assert.equal(STATIC_MODELS.some((model) => model.id === "deepseek-ai/deepseek-v4-flash"), false);
 assert.equal(STATIC_MODELS.some((model) => model.id === "deepseek-ai/deepseek-v4-pro"), false);
 assert.equal(STATIC_MODEL_MAP.has("deepseek-ai/deepseek-v4-flash-0731"), true);
+
+// Retired 2026-07/08 (HTTP 410 Gone). Must not be re-added by future scraper runs.
+const RETIRED_2026 = [
+  "microsoft/phi-4-mini-instruct",
+  "microsoft/phi-4-multimodal-instruct",
+  "nvidia/nemotron-3-content-safety",
+  "nvidia/nemotron-content-safety-reasoning-4b",
+  "stockmark/stockmark-2-100b-instruct",
+  "qwen/qwen3.5-122b-a10b",
+  "mistralai/mistral-large-3-675b-instruct-2512",
+  "abacusai/dracarys-llama-3.1-70b-instruct",
+  "bytedance/seed-oss-36b-instruct",
+  "google/gemma-2-2b-it",
+  "google/gemma-3n-e2b-it",
+  "google/gemma-3n-e4b-it",
+  "meta/llama-4-maverick-17b-128e-instruct",
+  "minimaxai/minimax-m2.7",
+  "mistralai/ministral-14b-instruct-2512",
+  "mistralai/mistral-small-4-119b-2603",
+  "mistralai/mixtral-8x7b-instruct-v0.1",
+  "nvidia/gliner-pii",
+  "nvidia/ising-calibration-1-35b-a3b",
+  "qwen/qwen3-next-80b-a3b-instruct",
+  "qwen/qwen3.5-397b-a17b",
+  "sarvamai/sarvam-m",
+  "stepfun-ai/step-3.5-flash",
+  "upstage/solar-10.7b-instruct",
+  "mistralai/mistral-medium-3.5-128b",
+];
+for (const id of RETIRED_2026) {
+  assert.equal(STATIC_MODEL_MAP.has(id), false, id);
+}
+
+// Ghost 2026-08: listed in the catalog but chat requests 404
+// "Function not found for account" (dead routing, not EOL-announced).
+const GHOST_2026_08 = [
+  "01-ai/yi-large",
+  "ai21labs/jamba-1.5-large-instruct",
+  "databricks/dbrx-instruct",
+  "deepseek-ai/deepseek-coder-6.7b-instruct",
+  "google/gemma-2b",
+  "google/gemma-3-12b-it",
+  "google/gemma-3-4b-it",
+  "ibm/granite-3.0-3b-a800m-instruct",
+  "ibm/granite-3.0-8b-instruct",
+  "meta/codellama-70b",
+  "meta/llama2-70b",
+  "microsoft/phi-3-vision-128k-instruct",
+  "microsoft/phi-3.5-moe-instruct",
+  "mistralai/codestral-22b-instruct-v0.1",
+  "mistralai/mistral-7b-instruct-v0.3",
+  "mistralai/mistral-large",
+  "mistralai/mistral-large-2-instruct",
+  "mistralai/mixtral-8x22b-v0.1",
+  "moonshotai/kimi-k2.6",
+  "nv-mistralai/mistral-nemo-12b-instruct",
+  "nvidia/llama-3.1-nemotron-51b-instruct",
+  "nvidia/llama-3.1-nemotron-70b-instruct",
+  "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+  "nvidia/mistral-nemo-minitron-8b-8k-instruct",
+  "nvidia/nemotron-4-340b-instruct",
+  "nvidia/nemotron-nano-3-30b-a3b",
+  "nvidia/vila",
+  "writer/palmyra-creative-122b",
+  "writer/palmyra-fin-70b-32k",
+  "writer/palmyra-med-70b",
+  "writer/palmyra-med-70b-32k",
+  "zyphra/zamba2-7b-instruct",
+];
+for (const id of GHOST_2026_08) {
+  assert.equal(STATIC_MODEL_MAP.has(id), false, id);
+}
 
 // 4) Known models should still classify as expected.
 assert.equal(
@@ -90,13 +162,12 @@ for (const modelId of ["deepseek-ai/deepseek-v4-flash-0731"]) {
   const model = STATIC_MODEL_MAP.get(modelId);
   assert.deepEqual(model?.thinkingLevelMap, deepseekV4Levels, modelId);
 }
-assert.equal(classifyThinkingFormat("moonshotai/kimi-k2.6"), "deepseek-nim");
-assert.equal(classifyThinkingFormat("minimaxai/minimax-m2.7"), "minimax-inline");
+assert.equal(classifyThinkingFormat("minimaxai/minimax-m3"), "minimax-inline");
 assert.equal(
   classifyThinkingFormat("openai/gpt-oss-120b"),
   "none"
 );
-assert.equal(STATIC_MODEL_MAP.get("stepfun-ai/step-3.5-flash")?.reasoning, true);
+assert.equal(STATIC_MODEL_MAP.get("stepfun-ai/step-3.7-flash")?.reasoning, true);
 assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.reasoning, true);
 assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.compat?.thinkingFormat, "qwen-chat-template");
 assert.equal(STATIC_MODEL_MAP.get("thinkingmachines/inkling")?.reasoning, true);

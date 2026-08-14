@@ -124,57 +124,21 @@ function getYardstickFallback(modelId: string): { contextWindow?: number; maxOut
     { re: /meta\/muse-glimmer/i, ctx: 131072, out: 131072 },
     { re: /nemotron-3\.5-lightning/i, ctx: 1048576, out: 32768 },
     { re: /llama-3\.[123]/i, ctx: 131072, out: 8192 },
-    { re: /llama-4/i, ctx: 131072, out: 8192 },
     { re: /llama-3\.3/i, ctx: 131072, out: 8192 },
     { re: /llama3/i, ctx: 131072, out: 8192 },
-    { re: /llama2/i, ctx: 4096, out: 4096 },
-    { re: /gemma-3/i, ctx: 131072, out: 8192 },
     { re: /gemma-4/i, ctx: 131072, out: 8192 },
-    { re: /phi-4/i, ctx: 131072, out: 4096 },
-    { re: /phi-3\.5/i, ctx: 131072, out: 4096 },
-    { re: /phi-3.*128k/i, ctx: 131072, out: 4096 },
-    { re: /mistral-medium-3\.5-128b/i, ctx: 262144, out: 32768 },
-    { re: /mistral-medium-3/i, ctx: 131072, out: 32768 },
-    { re: /mistral-small/i, ctx: 131072, out: 8192 },
-    { re: /devstral/i, ctx: 262144, out: 16384 },
-    { re: /magistral/i, ctx: 131072, out: 8192 },
-    { re: /mistral-large/i, ctx: 131072, out: 8192 },
-    { re: /mistral-nemo/i, ctx: 131072, out: 8192 },
-    { re: /ministral/i, ctx: 131072, out: 8192 },
-    { re: /codestral/i, ctx: 32768, out: 4096 },
-    { re: /mixtral-8x22b/i, ctx: 65536, out: 4096 },
-    { re: /mixtral-8x7b/i, ctx: 32768, out: 4096 },
-    { re: /mistral-7b/i, ctx: 32768, out: 8192 },
-    { re: /deepseek-v3/i, ctx: 131072, out: 16384 },
+    { re: /mistral-nemotron/i, ctx: 131072, out: 8192 },
     { re: /deepseek-v4/i, ctx: 1000000, out: 16384 },
-    { re: /deepseek-r1/i, ctx: 131072, out: 16384 },
-    { re: /kimi-k2/i, ctx: 204800, out: 16384 },
-    { re: /jamba-1\.5/i, ctx: 262144, out: 8192 },
-    { re: /granite-3/i, ctx: 131072, out: 8192 },
-    { re: /qwen3/i, ctx: 262144, out: 8192 },
     // Inkling's upstream config declares a 1M-token context window.
     { re: /thinkingmachines\/inkling/i, ctx: 1048576, out: 16384 },
-    { re: /qwen2\.5-coder/i, ctx: 131072, out: 4096 },
-    { re: /qwen2/i, ctx: 32768, out: 4096 },
     { re: /glm-5/i, ctx: 200000, out: 32768 },
-    { re: /glm/i, ctx: 128000, out: 8192 },
-    { re: /stockmark/i, ctx: 32768, out: 8192 },
-    { re: /palmyra/i, ctx: 32768, out: 4096 },
-    { re: /nemotron-4-340b/i, ctx: 4096, out: 4096 },
     { re: /nemotron-3-super/i, ctx: 1000000, out: 32768 },
     { re: /nemotron-mini/i, ctx: 4096, out: 4096 },
     { re: /nemotron-nano/i, ctx: 4096, out: 4096 },
-    { re: /yi-large/i, ctx: 32768, out: 4096 },
-    { re: /dbrx/i, ctx: 32768, out: 4096 },
-    { re: /solar-10\.7b/i, ctx: 4096, out: 4096 },
-    { re: /seed-oss/i, ctx: 131072, out: 8192 },
-    { re: /step-3\.5|step-3\.7/i, ctx: 256000, out: 262144 },
+    { re: /step-3\.7/i, ctx: 256000, out: 262144 },
     { re: /nemotron-3-ultra-550b/i, ctx: 1000000, out: 32768 },
     { re: /minimax-m3/i, ctx: 1000000, out: 16384 },
-    { re: /minimax-m2\.[6-9]/i, ctx: 204800, out: 16384 },
-    { re: /minimax/i, ctx: 131072, out: 16384 },
     { re: /gpt-oss/i, ctx: 131072, out: 4096 },
-    { re: /zamba/i, ctx: 4096, out: 4096 },
   ];
 
   for (const f of families) {
@@ -184,9 +148,12 @@ function getYardstickFallback(modelId: string): { contextWindow?: number; maxOut
 }
 
 const FALLBACK_LIMITS_MAP: Record<string, { contextWindow?: number; maxOutputTokens?: number }> = {
-  "google/gemma-2-2b-it": { contextWindow: 8192, maxOutputTokens: 4096 },
-  "google/gemma-2b": { contextWindow: 8192, maxOutputTokens: 8192 },
-  "deepseek-ai/deepseek-coder-6.7b-instruct": { contextWindow: 16384, maxOutputTokens: 4096 },
+  "deepseek-ai/deepseek-v4-flash-0731": { contextWindow: 1000000, maxOutputTokens: 16384 },
+  // Non-picker (filtered) entries that the yardstick no longer matches.
+  "ibm/granite-34b-code-instruct": { contextWindow: 131072, maxOutputTokens: 8192 },
+  "ibm/granite-8b-code-instruct": { contextWindow: 131072, maxOutputTokens: 8192 },
+  "nvidia/nemotron-4-340b-reward": { contextWindow: 4096, maxOutputTokens: 4096 },
+  "nvidia/nv-embedqa-mistral-7b-v2": { contextWindow: 32768, maxOutputTokens: 8192 },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -604,25 +571,16 @@ function detectThinkingFormat(modelId: string, _text?: string): string | undefin
   if (/^openai\/gpt-oss/.test(modelId)) return "reasoning-effort";
   if (/^poolside\/laguna-xs-2\.1$/.test(modelId)) return "qwen-chat-template";
 
-  if (/^mistralai\/mistral-(medium|small)/.test(modelId)) return "reasoning-effort";
-
   if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1$/.test(modelId)) return "nemotron-system-detailed";
   if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1\.5/.test(modelId)) return "nemotron-system-think";
   if (/^nvidia\/nvidia-nemotron-nano-9b-v2/.test(modelId)) return "nemotron-system-think";
   if (/^nvidia\/nemotron-3-super-120b-a12b/.test(modelId)) return "nemotron-3-super-effort";
   if (/^nvidia\/nemotron-3-ultra-550b/.test(modelId)) return "nemotron-3-super-effort";
   if (/^nvidia\/nemotron-3\.5-lightning/.test(modelId)) return "nemotron-3-super-effort";
-  if (/^bytedance\/seed-oss/.test(modelId)) return "thinking-budget";
-
-  if (/^deepseek-ai\/deepseek-(v3|r1)/.test(modelId)) return "deepseek-nim";
-  if (/^moonshotai\/kimi-k2\.5/.test(modelId)) return "deepseek-nim";
-  if (/^moonshotai\/kimi-k2\.6/.test(modelId)) return "deepseek-nim";
-  if (/^nvidia\/llama-3\.1-nemotron-ultra/.test(modelId)) return "deepseek-nim";
 
   if (/^stepfun-ai\//.test(modelId)) return "reasoning-effort";
 
   if (/^z-ai\/glm/.test(modelId)) return "zai";
-  if (/^qwen\/qwen3\.5/.test(modelId)) return "qwen-chat-template";
   if (/^google\/gemma-4/.test(modelId)) return "qwen-chat-template";
   if (/^nvidia\/nemotron-3-nano/.test(modelId)) return "qwen-chat-template";
 
@@ -632,32 +590,27 @@ function detectThinkingFormat(modelId: string, _text?: string): string | undefin
 function detectToolCalling(_html: string, modelId: string): boolean {
   if (/^meta\/muse-glimmer/i.test(modelId)) return true;
   if (/llama-3\.[1-9]/i.test(modelId)) return true;
-  if (/llama-4/i.test(modelId)) return true;
   if (/mistral(?!-7b)/i.test(modelId)) return true;
-  if (/qwen[23]/i.test(modelId)) return true;
-  if (/gemma-[34]/i.test(modelId)) return true;
-  if (/phi-4/i.test(modelId)) return true;
-  if (/kimi-k2/i.test(modelId)) return true;
-  if (/deepseek-v3|deepseek-v4/i.test(modelId)) return true;
+  if (/gemma-4/i.test(modelId)) return true;
+  if (/deepseek-v4/i.test(modelId)) return true;
   if (/nemotron-(ultra|super)/i.test(modelId)) return true;
   if (/nemotron-3\.5-lightning/i.test(modelId)) return true;
   return false;
 }
 
 function detectToolCallFormat(modelId: string): ToolCallFormat | undefined {
-  if (/llama2|gemma-2|codestral|starcoder|fim/i.test(modelId)) return undefined;
-  if (/mistral|mixtral|devstral|magistral|ministral/i.test(modelId)) return "mistral";
+  if (/starcoder|fim/i.test(modelId)) return undefined;
+  if (/mistral/i.test(modelId)) return "mistral";
   if (/llama/i.test(modelId)) return "llama";
-  if (/muse-glimmer|qwen|glm|phi|deepseek|kimi|moonshot|gemma|minimax/i.test(modelId)) return "openai";
+  if (/muse-glimmer|glm|deepseek|gemma|minimax/i.test(modelId)) return "openai";
   if (/nemotron-3\.5-lightning/i.test(modelId)) return "openai";
   return undefined;
 }
 
 function detectStructuredOutput(modelId: string): boolean {
   if (/response_format/i.test(modelId)) return true;
-  if (/llama-3\.[1-9]|llama-4/i.test(modelId)) return true;
-  if (/mistral|mixtral/i.test(modelId)) return true;
-  if (/qwen[23]/i.test(modelId)) return true;
+  if (/llama-3\.[1-9]/i.test(modelId)) return true;
+  if (/mistral/i.test(modelId)) return true;
   return false;
 }
 
@@ -675,8 +628,8 @@ function detectModelCategory(modelId: string, supportsReasoning: boolean): Model
   const id = modelId.toLowerCase();
   if (/embed|rerank|retriev/i.test(id)) return "embedding";
   if (/guard|safety|jailbreak|content.safety|pii/i.test(id)) return "guard";
-  if (/stable.diffusion|flux\.|dalle|imagen|vista|vila|nv-clip|\bvl\b/i.test(id)) return "vision";
-  if (/coder|codestral|starcoder|devstral|deepseek-coder/i.test(id)) return "code";
+  if (/stable.diffusion|flux\.|dalle|imagen|vista|nv-clip|\bvl\b/i.test(id)) return "vision";
+  if (/coder|deepseek-coder/i.test(id)) return "code";
   if (supportsReasoning) return "reasoning";
   return "chat";
 }

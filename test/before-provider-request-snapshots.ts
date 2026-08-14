@@ -34,51 +34,6 @@ const cases = [
     },
   },
   {
-    name: "kimi k2.6 rewrites to deepseek-nim kwargs",
-    provider: "nvidia-nim",
-    payload: {
-      model: "moonshotai/kimi-k2.6",
-      thinking: { type: "enabled" },
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "moonshotai/kimi-k2.6",
-      messages: [{ role: "user", content: "hello" }],
-      chat_template_kwargs: { thinking: true },
-      max_tokens: 65536,
-    },
-  },
-  {
-    name: "minimax m2 rewrites to thinking_mode",
-    provider: "nvidia-nim",
-    payload: {
-      model: "minimaxai/minimax-m2.7",
-      reasoning_effort: "xhigh",
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "minimaxai/minimax-m2.7",
-      messages: [{ role: "user", content: "hello" }],
-      chat_template_kwargs: { thinking_mode: "enabled" },
-      max_tokens: 16384,
-    },
-  },
-  {
-    name: "seed-oss injects top-level thinking_budget",
-    provider: "nvidia-nim",
-    payload: {
-      model: "bytedance/seed-oss-36b-instruct",
-      thinking: { type: "enabled" },
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "bytedance/seed-oss-36b-instruct",
-      messages: [{ role: "user", content: "hello" }],
-      thinking_budget: 16384,
-      max_tokens: 32768,
-    },
-  },
-  {
     name: "glm-5.2 injects clear_thinking with thinking enabled",
     provider: "nvidia-nim",
     payload: {

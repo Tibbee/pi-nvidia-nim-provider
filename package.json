@@ -13,7 +13,9 @@
         "handlers/",
         "lib/",
         "models/",
-        "tools/",
+        "tools/fetch_nim_metadata.ts",
+        "tools/fetch_modelsdev_nvidia.ts",
+        "tools/probe_nim.ts",
         "index.ts",
         "package.json"
     ],

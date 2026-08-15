@@ -127,6 +127,7 @@ DeepSeek V4, GLM-5.2, MiniMax M3, Muse Glimmer, Nemotron (Ultra, Super, 3-Super,
 - MiniMax M3 has a three-mode thinking toggle (disabled, adaptive, enabled) mapped from pi's thinking levels.
 - Nemotron uses system-message-driven thinking modes (detailed think, /think, and reasoning budget variants).
 - DeepSeek V4 Flash: live NIM requests confirmed content-only non-think and separate `reasoning_content` for high and max via `chat_template_kwargs`. Pi exposes only `off`, `high`, and `max` for these models.
+- The extension ships the current live DeepSeek V4 Flash endpoint, `deepseek-ai/deepseek-v4-flash-0731`. NVIDIA retired the unsuffixed `deepseek-v4-flash` and `deepseek-v4-pro` IDs on 2026-08-07; they now return HTTP 410 and are not listed.
 - DeepSeek V4 puts `reasoning_effort` inside `chat_template_kwargs`, with `off` mapped to `none` and `max` mapped to `max`.
 - Muse Glimmer 30B supports text and image input with a 131,072-token context. Hosted NIM accepts top-level `reasoning_effort` and streams separate `reasoning_content`; `none` was accepted but still produced reasoning in live probes.
 - Nemotron 3.5 Lightning 30B has a 1,048,576-token context with text input. NVIDIA documents no `reasoning_effort`; thinking is toggled via `enable_thinking` with a top-level `reasoning_budget` (default 16384, max 32768). Live probes confirmed `enable_thinking: false` and `reasoning_effort: none` both stop reasoning, and tool calls work.

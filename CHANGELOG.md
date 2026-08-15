@@ -2,6 +2,12 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.5.1] - 2026-08-15
+
+### Changed
+
+- Documented in the README that the extension ships the current live DeepSeek V4 Flash endpoint, `deepseek-ai/deepseek-v4-flash-0731`, and that NVIDIA retired the unsuffixed `deepseek-v4-flash` and `deepseek-v4-pro` IDs on 2026-08-07.
+
 ## [1.5.0] - 2026-08-15
 
 ### Changed

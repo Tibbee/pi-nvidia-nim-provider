@@ -84,21 +84,21 @@ This smoke test should show Pi's structured reasoning indicator and a separate f
 
 ## Comparison with pi's built-in `nvidia` provider
 
-Pi ships a built-in `nvidia` provider with 31 curated models (pi 0.84+; 22 reasoning-class, 13 vision). This extension (`nvidia-nim`) fills in the gaps with the full NIM catalog and NIM-family-specific thinking transforms:
+Pi ships a built-in `nvidia` provider with 30 curated models (pi 0.84.2; 21 reasoning-class, 12 vision). This extension (`nvidia-nim`) fills in the gaps with the full NIM catalog and NIM-family-specific thinking transforms:
 
 | Aspect | Built-in `nvidia` | This extension `nvidia-nim` |
 |--------|-------------------|-----------------------------|
-| Models | 31 curated | 31 curated (live NIM catalog) |
+| Models | 30 curated | 31 curated (live NIM catalog) |
 | Thinking formats | None sent; the selected level is dropped | 6 handler-based formats + reasoning-effort |
 | Request normalization | No | Yes |
 | Rate-limit warnings | No | Yes (429 handler) |
 | API key | `NVIDIA_API_KEY` env | `NVIDIA_NIM_API_KEY` + `NVIDIA_API_KEY` fallback |
 
-Use `nvidia-nim/...` for the full feature set, `nvidia/...` for pi's native handling of its 31 built-in models.
+Use `nvidia-nim/...` for the full feature set, `nvidia/...` for pi's native handling of its 30 built-in models.
 
 ### Deep dive: what the built-in provider leaves on the table
 
-Pi's built-in `nvidia` provider flags most of its 31 models as reasoning models, and the model picker happily shows thinking levels for them. But every one of those models ships with `supportsReasoningEffort: false`, no `thinkingFormat`, and no `thinkingLevelMap`. When pi assembles the request, none of its thinking branches match, so the level you picked is dropped before the request goes out. `--thinking off` and `--thinking high` produce the exact same payload. The model then runs at whatever the hosted endpoint defaults to, which for most reasoning models means thinking on, with no way to turn it off or scale it.
+Pi's built-in `nvidia` provider flags most of its 30 models as reasoning models, and the model picker happily shows thinking levels for them. But every one of those models ships with `supportsReasoningEffort: false`, no `thinkingFormat`, and no `thinkingLevelMap`. When pi assembles the request, none of its thinking branches match, so the level you picked is dropped before the request goes out. `--thinking off` and `--thinking high` produce the exact same payload. The model then runs at whatever the hosted endpoint defaults to, which for most reasoning models means thinking on, with no way to turn it off or scale it.
 
 You do see the reasoning. Pi's stream parser recognizes `reasoning_content` deltas, renders them in the thinking panel, and replays them on assistant messages. That is a display feature, though. Nothing about the request changes.
 
@@ -112,7 +112,7 @@ This extension exists to close that gap. The thinking level you choose is conver
 
 Each family also carries its own `thinkingLevelMap`, so non-standard pi levels land somewhere sensible: `minimal` maps to `low` on GPT-OSS, `xhigh` and `max` map to `max` on Muse Glimmer, and so on. The built-in provider never even offers xhigh or max, because those levels require a map its catalog never defines.
 
-Coverage is the other difference. The extension carries 31 models, 8 of which the built-in provider does not list at all: DeepSeek V4 Flash with its 1M context, Muse Glimmer 30B, Gemma 4 31B, Mistral Nemotron, Nemotron Mini 4B, and the Llama 3.2 1B/3B pair. The built-in list is a hand-picked subset; the extension carries the live catalog.
+Coverage is the other difference. The extension carries 31 models, 8 of which the built-in provider does not list at all: DeepSeek V4 Flash with its 1M context, Muse Glimmer 30B, Gemma 4 31B, DiffusionGemma 26B, Mistral Nemotron, Nemotron Mini 4B, and the Llama 3.2 1B/3B pair. The built-in list is a hand-picked subset; the extension carries the live catalog. The built-in list also still ships 7 models that this sweep proved dead or ghost (gemma-3 ×2, mistral-7b, kimi-k2.6, cosmos-reason2, nemotron-70b, ultra-253b); they fail on hosted NIM today.
 
 There are also request-shape fixes the built-in does not attempt. Some older NIM models reject `[{type:"text"}]` content arrays, so the extension flattens text-only arrays to plain strings. Some reject requests without `max_tokens`, so the extension sets a sensible default per model. And when NVIDIA answers with a 429 or a 5xx, the extension surfaces retry-after info or the request ID, which makes rate limits easier to diagnose.
 

@@ -149,6 +149,12 @@ function getYardstickFallback(modelId: string): { contextWindow?: number; maxOut
 
 const FALLBACK_LIMITS_MAP: Record<string, { contextWindow?: number; maxOutputTokens?: number }> = {
   "deepseek-ai/deepseek-v4-flash-0731": { contextWindow: 1000000, maxOutputTokens: 16384 },
+  // Kimi K3's build card is a JS shell and the API reference does not cover
+  // it. Context window is the 1M spec Moonshot ships on its own platform
+  // (NVIDIA does not host nerfed context windows); max output is a lineage
+  // estimate carried from the verified Kimi K2.6 entry. Everything else
+  // about K3 (vision, tools, thinking transport) is live-probe-verified.
+  "moonshotai/kimi-k3": { contextWindow: 1000000, maxOutputTokens: 65536 },
   // Non-picker (filtered) entries that the yardstick no longer matches.
   "ibm/granite-34b-code-instruct": { contextWindow: 131072, maxOutputTokens: 8192 },
   "ibm/granite-8b-code-instruct": { contextWindow: 131072, maxOutputTokens: 8192 },
@@ -568,19 +574,16 @@ function parseMetadataFromSpec(meta: ModelMetadata, spec: any): void {
 function detectThinkingFormat(modelId: string, _text?: string): string | undefined {
   if (/^meta\/muse-glimmer/.test(modelId)) return "reasoning-effort";
   if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
+  if (/^moonshotai\/kimi-k3/.test(modelId)) return "kimi";
   if (/^openai\/gpt-oss/.test(modelId)) return "reasoning-effort";
   if (/^poolside\/laguna-xs-2\.1$/.test(modelId)) return "qwen-chat-template";
 
-  if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1$/.test(modelId)) return "nemotron-system-detailed";
-  if (/^nvidia\/llama-3\.3-nemotron-super-49b-v1\.5/.test(modelId)) return "nemotron-system-think";
-  if (/^nvidia\/nvidia-nemotron-nano-9b-v2/.test(modelId)) return "nemotron-system-think";
   if (/^nvidia\/nemotron-3-super-120b-a12b/.test(modelId)) return "nemotron-3-super-effort";
   if (/^nvidia\/nemotron-3-ultra-550b/.test(modelId)) return "nemotron-3-super-effort";
   if (/^nvidia\/nemotron-3\.5-lightning/.test(modelId)) return "nemotron-3-super-effort";
 
   if (/^stepfun-ai\//.test(modelId)) return "reasoning-effort";
 
-  if (/^z-ai\/glm/.test(modelId)) return "zai";
   if (/^google\/gemma-4/.test(modelId)) return "qwen-chat-template";
   if (/^nvidia\/nemotron-3-nano/.test(modelId)) return "qwen-chat-template";
 
@@ -589,6 +592,7 @@ function detectThinkingFormat(modelId: string, _text?: string): string | undefin
 
 function detectToolCalling(_html: string, modelId: string): boolean {
   if (/^meta\/muse-glimmer/i.test(modelId)) return true;
+  if (/^moonshotai\/kimi-k3/i.test(modelId)) return true;
   if (/llama-3\.[1-9]/i.test(modelId)) return true;
   if (/mistral(?!-7b)/i.test(modelId)) return true;
   if (/gemma-4/i.test(modelId)) return true;
@@ -602,7 +606,7 @@ function detectToolCallFormat(modelId: string): ToolCallFormat | undefined {
   if (/starcoder|fim/i.test(modelId)) return undefined;
   if (/mistral/i.test(modelId)) return "mistral";
   if (/llama/i.test(modelId)) return "llama";
-  if (/muse-glimmer|glm|deepseek|gemma|minimax/i.test(modelId)) return "openai";
+  if (/muse-glimmer|glm|deepseek|gemma|minimax|kimi/i.test(modelId)) return "openai";
   if (/nemotron-3\.5-lightning/i.test(modelId)) return "openai";
   return undefined;
 }

@@ -115,20 +115,6 @@
     "supportsVision": false
   },
   {
-    "id": "meta/llama-3.1-70b-instruct",
-    "contextWindow": 131072,
-    "maxOutputTokens": 8192,
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "meta/llama-3.1-8b-instruct",
-    "contextWindow": 131072,
-    "maxOutputTokens": 8192,
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
     "id": "meta/llama-3.2-11b-vision-instruct",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
@@ -136,28 +122,7 @@
     "supportsVision": false
   },
   {
-    "id": "meta/llama-3.2-1b-instruct",
-    "maxOutputTokens": 4096,
-    "contextWindow": 131072,
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "meta/llama-3.2-3b-instruct",
-    "maxOutputTokens": 4096,
-    "contextWindow": 131072,
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
     "id": "meta/llama-3.2-90b-vision-instruct",
-    "contextWindow": 131072,
-    "maxOutputTokens": 8192,
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "meta/llama-3.3-70b-instruct",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
@@ -204,6 +169,14 @@
     "supportsVision": false
   },
   {
+    "id": "moonshotai/kimi-k3",
+    "maxOutputTokens": 65536,
+    "supportsReasoning": true,
+    "contextWindow": 1000000,
+    "thinkingFormat": "kimi",
+    "supportsVision": true
+  },
+  {
     "id": "nvidia/ai-synthetic-video-detector",
     "supportsReasoning": false,
     "supportsVision": false
@@ -241,20 +214,6 @@
     "supportsVision": false
   },
   {
-    "id": "nvidia/llama-3.1-nemotron-nano-8b-v1",
-    "contextWindow": 131072,
-    "maxOutputTokens": 8192,
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
-    "maxOutputTokens": 2048,
-    "supportsVision": true,
-    "contextWindow": 131072,
-    "supportsReasoning": false
-  },
-  {
     "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
@@ -273,22 +232,6 @@
     "contextWindow": 131072,
     "maxOutputTokens": 8192,
     "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "nvidia/llama-3.3-nemotron-super-49b-v1",
-    "thinkingFormat": "nemotron-system-detailed",
-    "supportsReasoning": true,
-    "contextWindow": 131072,
-    "maxOutputTokens": 8192,
-    "supportsVision": false
-  },
-  {
-    "id": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
-    "thinkingFormat": "nemotron-system-think",
-    "supportsReasoning": true,
-    "contextWindow": 131072,
-    "maxOutputTokens": 8192,
     "supportsVision": false
   },
   {
@@ -416,20 +359,6 @@
     "supportsVision": false
   },
   {
-    "id": "nvidia/nemotron-mini-4b-instruct",
-    "maxOutputTokens": 2048,
-    "contextWindow": 4096,
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "nvidia/nemotron-nano-12b-v2-vl",
-    "maxOutputTokens": 8192,
-    "supportsVision": true,
-    "contextWindow": 4096,
-    "supportsReasoning": false
-  },
-  {
     "id": "nvidia/nemotron-parse",
     "maxOutputTokens": 8192,
     "supportsVision": true,
@@ -465,18 +394,6 @@
   {
     "id": "nvidia/nvclip",
     "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "nvidia/nvidia-nemotron-nano-9b-v2",
-    "maxOutputTokens": 8192,
-    "exampleRequestExtra": {
-      "min_thinking_tokens": 500,
-      "max_thinking_tokens": 2000
-    },
-    "supportsReasoning": true,
-    "contextWindow": 131072,
-    "thinkingFormat": "nemotron-system-think",
     "supportsVision": false
   },
   {
@@ -571,26 +488,5 @@
     "supportsVision": true,
     "supportsReasoning": true,
     "contextWindow": 262144
-  },
-  {
-    "id": "thinkingmachines/inkling",
-    "maxOutputTokens": 16384,
-    "supportsReasoning": true,
-    "supportsVision": true,
-    "contextWindow": 1048576
-  },
-  {
-    "id": "z-ai/glm-5.2",
-    "maxOutputTokens": 32768,
-    "exampleRequestExtra": {
-      "chat_template_kwargs": {
-        "enable_thinking": true,
-        "clear_thinking": false
-      }
-    },
-    "supportsReasoning": true,
-    "contextWindow": 1000000,
-    "thinkingFormat": "qwen-chat-template",
-    "supportsVision": false
   }
 ]

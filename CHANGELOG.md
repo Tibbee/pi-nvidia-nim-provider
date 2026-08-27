@@ -2,6 +2,23 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.7.0] - 2026-08-27
+
+### Added
+
+- Added Kimi K3 (`moonshotai/kimi-k3`), the newest Moonshot model on NIM: text/image input, 1M context, 65,536-token output, OpenAI-format tool calls, and a boolean `chat_template_kwargs.thinking` toggle with separate `reasoning_content`. It is live on the API but unlisted from the build page catalog and undocumented in the API reference; vision, tools, on/off thinking, and streaming are probe-verified (2026-08-27). Context is the upstream Moonshot 1M spec; max output is a lineage estimate from Kimi K2.6. **Practical warning: near unusable at times — probe latency ranged 1-46 s for the same request.**
+- New `kimi` handler format and family routing; the level map collapses every non-off pi level onto the single hosted on-mode.
+
+### Removed
+
+- Removed 14 models confirmed HTTP 410 Gone in the 2026-08-27 aliveness sweep: Llama 3.1 70B/8B, Llama 3.2 1B/3B, Llama 3.3 70B, Nemotron Nano 8B v1 + VL 8B, Nemotron Super 49B v1/v1.5, Nemotron Mini 4B, Nemotron Nano 12B v2 VL, Nemotron Nano 9B v2, Inkling, and GLM-5.2. Sessions pinned to any of these must switch to a current model.
+- Dropped the families and handler branches that only served removed models: `glm` (`zai` transport), `inkling`, `nemotron-super-detailed` (`nemotron-system-detailed`), and `nemotron-system-think`. The GLM request-contract test file was removed with them.
+
+### Changed
+
+- Kept DeepSeek V4 Flash 0731 despite it returning instant 404 "function not found" on chat requests across five attempts — judged a temporary outage (the build-page card is still present). Pin `deepseek-ai/deepseek-v4-pro-0813` for reliable DeepSeek V4 access meanwhile; the Pro endpoint answered live.
+- Documented NIM availability volatility in the README: models retire at short notice, staged endpoints answer intermittently, and per-model latency swings between 1 s and 45 s.
+
 ## [1.6.0] - 2026-08-27
 
 ### Added

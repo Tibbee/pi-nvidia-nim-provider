@@ -29,29 +29,17 @@ export function mapThinkingFormatToCompat(
   thinkingFormat: string | undefined,
   modelId?: string,
 ): NimModelCompat {
-  // GLM's scraped metadata historically reported the generic Qwen template,
-  // but hosted NIM also accepts effort through the top-level Z.ai shape. Keep
-  // this compatibility rule here so existing generated metadata gets the
-  // corrected transport without being edited by hand.
-  if (/^z-ai\/glm/.test(modelId ?? "")) {
-    return { thinkingFormat: "zai", supportsReasoningEffort: true };
-  }
-
   switch (thinkingFormat) {
     case "qwen-chat-template":
       return { thinkingFormat: "qwen-chat-template" };
-    case "zai":
-      return { thinkingFormat: "zai", supportsReasoningEffort: true };
     case "deepseek-v4":
       return {}; // Handled by before_provider_request handler
+    case "kimi":
+      return {}; // Handled by before_provider_request handler (boolean thinking kwarg)
     case "minimax-inline":
       return {}; // Handled by before_provider_request handler
     case "nemotron-3-super-effort":
       return { supportsReasoningEffort: true }; // Pi sends reasoning_effort, handler converts to enable_thinking + low_effort
-    case "nemotron-system-detailed":
-      return {}; // Handled by before_provider_request handler (system message injection)
-    case "nemotron-system-think":
-      return {}; // Handled by before_provider_request handler (system message injection)
     case "reasoning-effort":
       return { supportsReasoningEffort: true };
     case "none":

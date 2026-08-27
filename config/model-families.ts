@@ -35,29 +35,29 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // Qwen/GLM use qwen-chat-template natively.
-  // GLM uses NIM's boolean chat-template controls plus a top-level
-  // reasoning_effort field. Pi's `zai` format gives the handler both the
-  // selected effort and the enabled/disabled state before conversion.
+  // Kimi K3 exposes a single boolean thinking mode via chat_template_kwargs.
+  // Hosted NIM ignores reasoning effort for it; only off/on is meaningful
+  // (probe-verified 2026-08-27: on/off, separate reasoning_content, tools,
+  // vision input). Unlisted on the build page but live on the API.
   {
-    name: "glm",
-    pattern: /^z-ai\/glm/,
+    name: "kimi",
+    pattern: /^moonshotai\/kimi-k3/,
     compat: {
       supportsDeveloperRole: false,
-      thinkingFormat: "zai",
+      thinkingFormat: "deepseek",
       supportsReasoningEffort: true,
       maxTokensField: "max_tokens",
     },
-    // Hosted NIM exposes only three verified choices in Pi:
-    // off, high, and max. Explicit nulls hide intermediate levels.
+    // Single on-mode: every non-off level lands on the same boolean. Explicit
+    // entries keep pi from offering effort distinctions the model cannot honor.
     thinkingLevelMap: {
       off: "none",
-      minimal: null,
-      low: null,
-      medium: null,
+      minimal: "high",
+      low: "high",
+      medium: "high",
       high: "high",
-      xhigh: null,
-      max: "max",
+      xhigh: "high",
+      max: "high",
     },
   },
 
@@ -84,20 +84,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // Inkling's hosted endpoint always returns reasoning content and ignores
-  // top-level and chat-template thinking toggles. Do not send unsupported
-  // thinking controls; expose it as always-on reasoning instead.
-  {
-    name: "inkling",
-    pattern: /^thinkingmachines\/inkling$/,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      maxTokensField: "max_tokens",
-    },
-    thinkingLevelMap: { off: null },
-  },
-
   // Laguna XS 2.1 uses chat_template_kwargs.enable_thinking. Pi's native
   // qwen-chat-template path handles the boolean toggle and preservation flag.
   {
@@ -122,48 +108,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       maxTokensField: "max_tokens",
     },
     thinkingLevelMap: { minimal: "low" },
-  },
-
-  // Nemotron Super v1 uses system-message-based thinking ("detailed thinking on/off").
-  // supportsReasoningEffort: true causes pi to send reasoning_effort, which the
-  // handler then converts into a system message.
-  {
-    name: "nemotron-super-detailed",
-    pattern: /^nvidia\/llama-3\.3-nemotron-super-49b-v1$/,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: true,
-      maxTokensField: "max_tokens",
-    },
-    thinkingLevelMap: {
-      off: "none",
-      minimal: "high",
-      low: "high",
-      medium: "high",
-      high: "high",
-      xhigh: "high",
-    },
-  },
-
-  // Nemotron Super v1.5 and Nemotron Nano 9B v2 use system message /think or /no_think.
-  // supportsReasoningEffort: true causes pi to send reasoning_effort, which the
-  // handler then converts into a system message.
-  {
-    name: "nemotron-system-think",
-    pattern: /^nvidia\/llama-3\.3-nemotron-super-49b-v1\.5$|^nvidia\/nvidia-nemotron-nano-9b-v2/,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: true,
-      maxTokensField: "max_tokens",
-    },
-    thinkingLevelMap: {
-      off: "none",
-      minimal: "high",
-      low: "high",
-      medium: "high",
-      high: "high",
-      xhigh: "high",
-    },
   },
 
   // Nemotron 3 Super 120B: none/low/high effort + low_effort flag + reasoning_budget.
@@ -350,13 +294,11 @@ export function findFamily(modelId: string): ModelFamily | undefined {
 // thinking, new kwarg structures).
 const FAMILY_HANDLER_FORMATS: Partial<Record<string, NimThinkingFormat>> = {
   "deepseek-v4": "deepseek-v4",
+  "kimi": "kimi",
   "minimax-m3": "minimax-inline",
-  "nemotron-super-detailed": "nemotron-system-detailed",
-  "nemotron-system-think": "nemotron-system-think",
   "nemotron-3-super-effort": "nemotron-3-super-effort",
   "nemotron-3-ultra-effort": "nemotron-3-super-effort",
   "nemotron-3.5-lightning": "nemotron-3-super-effort",
-  "glm": "qwen-chat-template",
 };
 
 // Init-time safety check: every family that sets thinkingFormat: "deepseek"

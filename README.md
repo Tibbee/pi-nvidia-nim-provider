@@ -6,9 +6,9 @@ NVIDIA NIM exposes a lot of reasoning models through an OpenAI-compatible API, b
 
 ## Features
 
-- 31 curated models for chat, reasoning, code, and vision
-- 67 scraped entries, filtered, deduplicated, and family-mapped
-- 6 handler-based thinking formats: DeepSeek V4, Nemotron system modes (3 variants), MiniMax inline, Qwen chat-template, plus native pi handling for reasoning-effort
+- 19 curated models for chat, reasoning, code, and vision — every one verified live against hosted NIM as of 2026-08-27
+- 55 scraped entries, filtered, deduplicated, and family-mapped
+- 5 handler-based thinking formats: DeepSeek V4, Kimi, MiniMax inline, Nemotron 3 effort, Qwen chat-template, plus native pi handling for reasoning-effort
 - Per-model `chat_template_kwargs` injection (thinking effort, budgets, system-message toggles) and request content-array normalization for older models
 - No custom streaming. Uses pi's built-in `openai-completions`.
 
@@ -67,7 +67,7 @@ Run `/login nvidia-nim` in pi's interactive mode and select the API-key login. T
 
 ```bash
 pi --provider nvidia-nim \
-  --model deepseek-ai/deepseek-v4-flash-0731 \
+  --model deepseek-ai/deepseek-v4-pro-0813 \
   --thinking high \
   -p "Give me a short solution to this coding problem: reverse a linked list."
 ```
@@ -78,23 +78,23 @@ This smoke test should show Pi's structured reasoning indicator and a separate f
 
 - Uses pi's built-in `openai-completions` streaming. No custom `streamSimple`.
 - Model-specific quirks (thinking formats, extra body kwargs, compat flags) are handled via `before_provider_request` and pi's `compat` system.
-- Family-based config in `config/model-families.ts` (20 families, first-match-wins) drives thinking format routing and model metadata.
+- Family-based config in `config/model-families.ts` (17 families, first-match-wins) drives thinking format routing and model metadata.
 - All cost fields are `$0` because NVIDIA NIM is free tier.
 - Works alongside pi's built-in `nvidia` provider. Use `nvidia-nim/...` for NIM-family-specific thinking transforms and the full catalog, `nvidia/...` for pi's native handling.
 
 ## Comparison with pi's built-in `nvidia` provider
 
-Pi ships a built-in `nvidia` provider with 30 curated models (pi 0.84.2; 21 reasoning-class, 12 vision). This extension (`nvidia-nim`) fills in the gaps with the full NIM catalog and NIM-family-specific thinking transforms:
+Pi ships a built-in `nvidia` provider with 32 curated models (pi 0.84.2). This extension (`nvidia-nim`) fills in the gaps with a live-verified NIM catalog and NIM-family-specific thinking transforms:
 
 | Aspect | Built-in `nvidia` | This extension `nvidia-nim` |
 |--------|-------------------|-----------------------------|
-| Models | 30 curated | 31 curated (live NIM catalog) |
-| Thinking formats | None sent; the selected level is dropped | 6 handler-based formats + reasoning-effort |
+| Models | 32 curated (several dead per the 2026-08-27 sweep) | 19 curated (live-verified NIM catalog) |
+| Thinking formats | None sent; the selected level is dropped | 5 handler-based formats + reasoning-effort |
 | Request normalization | No | Yes |
 | Rate-limit warnings | No | Yes (429 handler) |
 | API key | `NVIDIA_API_KEY` env | `NVIDIA_NIM_API_KEY` + `NVIDIA_API_KEY` fallback |
 
-Use `nvidia-nim/...` for the full feature set, `nvidia/...` for pi's native handling of its 30 built-in models.
+Use `nvidia-nim/...` for the full feature set, `nvidia/...` for pi's native handling of its 32 built-in models.
 
 ### Deep dive: what the built-in provider leaves on the table
 
@@ -106,13 +106,16 @@ This extension exists to close that gap. The thinking level you choose is conver
 
 - GLM-5.2 gets `enable_thinking` and `clear_thinking` plus top-level `reasoning_effort` (`high` or `max`). Hosted NIM ignores effort nested inside `chat_template_kwargs`, so the handler sends it at the top level.
 - Nemotron 3 Super, Ultra, and 3.5 Lightning get `chat_template_kwargs.enable_thinking`, a `low_effort` flag when you pick low, and a top-level `reasoning_budget` of 32768.
-- DeepSeek V4 Flash gets `chat_template_kwargs` with the effort values NVIDIA actually accepts: `none`, `high`, `max`.
+- DeepSeek V4 Flash and Pro get `chat_template_kwargs` with the effort values NVIDIA actually accepts: `none`, `high`, `max`.
+- Kimi K3 gets a boolean `chat_template_kwargs.thinking` toggle — the hosted endpoint exposes a single on-mode, so effort levels are not offered.
 - MiniMax M3 gets a three-way `thinking_mode` toggle: disabled, adaptive, enabled.
-- GLM and Laguna get qwen-chat-template kwargs; Nemotron Super models get system-message thinking modes.
+- Laguna and DiffusionGemma get qwen-chat-template kwargs, handled natively by pi.
 
 Each family also carries its own `thinkingLevelMap`, so non-standard pi levels land somewhere sensible: `minimal` maps to `low` on GPT-OSS, `xhigh` and `max` map to `max` on Muse Glimmer, and so on. The built-in provider never even offers xhigh or max, because those levels require a map its catalog never defines.
 
-Coverage is the other difference. The extension carries 32 models, 9 of which the built-in provider does not list at all: DeepSeek V4 Flash with its 1M context, DeepSeek V4 Pro 0813, Muse Glimmer 30B, Gemma 4 31B, DiffusionGemma 26B, Mistral Nemotron, Nemotron Mini 4B, and the Llama 3.2 1B/3B pair. The built-in list is a hand-picked subset; the extension carries the live catalog. The built-in list also still ships 7 models that this sweep proved dead or ghost (gemma-3 ×2, mistral-7b, kimi-k2.6, cosmos-reason2, nemotron-70b, ultra-253b); they fail on hosted NIM today.
+Coverage is the other difference. The extension carries 19 models — every one verified live against hosted NIM on 2026-08-27 — including the latest endpoints the built-in catalog lacks: DeepSeek V4 Pro 0813, DiffusionGemma 26B, and Mistral Nemotron. The built-in list, meanwhile, still ships 10 models that sweeps proved dead or ghost (gemma-3 ×2, mistral-7b, kimi-k2.6, cosmos-reason2, nemotron-70b, ultra-253b, llama-3.1-70b/8b, llama-3.3-70b); they fail on hosted NIM today.
+
+A note on NVIDIA NIM availability: hosted NIM is volatile. Models retire with HTTP 410 at short notice (fourteen did in the 2026-08-27 wave alone), some staged endpoints answer only intermittently, and latency per model can swing between 1 s and 45 s depending on backend capacity. The extension ships what was verified working at release time; if a model stops responding, that is NVIDIA's side, not the request shape.
 
 There are also request-shape fixes the built-in does not attempt. Some older NIM models reject `[{type:"text"}]` content arrays, so the extension flattens text-only arrays to plain strings. Some reject requests without `max_tokens`, so the extension sets a sensible default per model. And when NVIDIA answers with a 429 or a 5xx, the extension surfaces retry-after info or the request ID, which makes rate limits easier to diagnose.
 
@@ -120,15 +123,14 @@ None of this means the built-in provider is broken. For a quick chat with a main
 
 ### Models with thinking support
 
-DeepSeek V4, GLM-5.2, MiniMax M3, Muse Glimmer, Nemotron (Ultra, Super, 3-Super, 3.5 Lightning), GPT-OSS, StepFun, Inkling, and Laguna XS 2.1.
+DeepSeek V4 (Flash 0731 and Pro 0813), Kimi K3, MiniMax M3, Muse Glimmer, DiffusionGemma, Nemotron (3-Nano Omni, 3-Super, 3-Ultra, 3.5 Lightning), GPT-OSS, StepFun, and Laguna XS 2.1.
 
-- GLM-5.2 exposes three Pi thinking choices: off, high, and max. It uses boolean NIM thinking control via `enable_thinking` and `clear_thinking`, plus top-level `reasoning_effort` (`high` or `max`). Nested effort inside `chat_template_kwargs` is ignored by hosted NIM.
 - StepFun: live NIM probing confirmed `reasoning_effort` requests return separate `reasoning_content`. Step-3.7 Flash stays always-on on the hosted endpoint even when `enable_thinking: false` is sent.
 - MiniMax M3 has a three-mode thinking toggle (disabled, adaptive, enabled) mapped from pi's thinking levels.
-- Nemotron uses system-message-driven thinking modes (detailed think, /think, and reasoning budget variants).
-- DeepSeek V4 Flash: live NIM requests confirmed content-only non-think and separate `reasoning_content` for high and max via `chat_template_kwargs`. Pi exposes only `off`, `high`, and `max` for these models.
-- The extension ships the current live DeepSeek V4 Flash endpoint, `deepseek-ai/deepseek-v4-flash-0731`, plus DeepSeek V4 Pro, `deepseek-ai/deepseek-v4-pro-0813`, which uses the same transport. NVIDIA retired the unsuffixed `deepseek-v4-flash` and `deepseek-v4-pro` IDs on 2026-08-07; they now return HTTP 410 and are not listed.
+- DeepSeek V4: live NIM requests confirmed content-only non-think and separate `reasoning_content` for high and max via `chat_template_kwargs`. Pi exposes only `off`, `high`, and `max` for these models.
+- The extension ships the current live DeepSeek V4 Pro endpoint, `deepseek-ai/deepseek-v4-pro-0813`, alongside DeepSeek V4 Flash `deepseek-ai/deepseek-v4-flash-0731`. NVIDIA retired the unsuffixed `deepseek-v4-flash` and `deepseek-v4-pro` IDs on 2026-08-07. As of 2026-08-27 the Flash 0731 endpoint returns 404 on chat requests; it is kept in the catalog as a suspected temporary outage, so pin `deepseek-v4-pro-0813` for reliable V4 access meanwhile.
 - DeepSeek V4 puts `reasoning_effort` inside `chat_template_kwargs`, with `off` mapped to `none` and `max` mapped to `max`.
+- Kimi K3 (`moonshotai/kimi-k3`) is the newest Moonshot model on NIM: text/image input, 1M context, OpenAI-format tool calls, and a boolean `chat_template_kwargs.thinking` toggle with separate `reasoning_content`. It is unlisted from the build page catalog (the card is reachable but not linked) and undocumented in the API reference. **Practical warning: it is near unusable at times** — probe latency ranged from 1 s to 46 s for the same request, so expect intermittent multi-minute-feeling turns; treat it as a preview endpoint.
 - Muse Glimmer 30B supports text and image input with a 131,072-token context. Hosted NIM accepts top-level `reasoning_effort` and streams separate `reasoning_content`; `none` was accepted but still produced reasoning in live probes.
 - Nemotron 3.5 Lightning 30B has a 1,048,576-token context with text input. NVIDIA documents no `reasoning_effort`; thinking is toggled via `enable_thinking` with a top-level `reasoning_budget` (default 16384, max 32768). Live probes confirmed `enable_thinking: false` and `reasoning_effort: none` both stop reasoning, and tool calls work.
 
@@ -139,13 +141,15 @@ A `probe-passed` transport result means the request shape produced the expected 
 | Model | Reasoning control | Request | Response | Streaming | Tools |
 |-------|-------------------|---------|----------|-----------|-------|
 | DeepSeek V4 Flash 0731 | off / high / max | `chat_template_kwargs` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
-| GLM-5.2 | boolean toggle + high/max effort (probe-passed) | `chat_template_kwargs` + top-level `reasoning_effort` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | claimed |
+| DeepSeek V4 Pro 0813 | off / high / max | `chat_template_kwargs` (same transport as Flash) | `reasoning_content` (claimed) | claimed | documented |
+| Kimi K3 | off / on (single mode) | `chat_template_kwargs.thinking` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | probe-passed |
 | MiniMax M3 | disabled / adaptive / enabled | `thinking_mode` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
 | Step-3.7 Flash | low / medium / high; always-on hosted | `reasoning_effort` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | claimed |
-| Inkling | always-on; no toggle | no control exposed | `reasoning_content` (probe-passed) | probe-passed | unknown |
 | Laguna XS 2.1 | on / off toggle | `enable_thinking` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | unknown |
 | Muse Glimmer 30B | none / minimal / low / medium / high / max | `reasoning_effort` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
 | Nemotron 3.5 Lightning 30B | enable_thinking on/off | `enable_thinking` + `reasoning_budget` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | probe-passed |
+
+Probe dates: all rows except Kimi K3 were verified in earlier releases (August 2026); Kimi K3 was probed on 2026-08-27. DeepSeek V4 Flash 0731 passed those probes but currently returns 404 on chat (treated as a temporary outage); DeepSeek V4 Pro 0813 answered live on 2026-08-27.
 
 The remaining models work through their family rules, but don't call them live-verified unless they appear in this matrix or have a matching compatibility report.
 
@@ -153,7 +157,7 @@ The remaining models work through their family rules, but don't call them live-v
 
 - Rate-limit warnings: shows HTTP 429 responses with retry-after info.
 - Request content normalization: converts `[{type:"text"}]` to plain strings for older models that reject structured content arrays.
-- 20-family regex routing: assigns thinking formats and compat settings across all 32 models.
+- 17-family regex routing: assigns thinking formats and compat settings across all 19 models.
 - Per-model reasoning effort mapping: non-standard values like off or minimal are mapped automatically to what the model expects.
 - No custom `streamSimple`: uses `before_provider_request` event hook, avoiding provider conflicts.
 

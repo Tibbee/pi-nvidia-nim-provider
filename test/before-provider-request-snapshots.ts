@@ -34,103 +34,52 @@ const cases = [
     },
   },
   {
-    name: "glm-5.2 injects clear_thinking with thinking enabled",
+    name: "kimi-k3 enables thinking without effort",
     provider: "nvidia-nim",
     payload: {
-      model: "z-ai/glm-5.2",
-      chat_template_kwargs: { enable_thinking: true },
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "z-ai/glm-5.2",
-      chat_template_kwargs: { enable_thinking: true, clear_thinking: false },
-      messages: [{ role: "user", content: "hello" }],
-      max_tokens: 32768,
-    },
-  },
-  {
-    name: "glm-5.2 keeps verified top-level high effort",
-    provider: "nvidia-nim",
-    payload: {
-      model: "z-ai/glm-5.2",
+      model: "moonshotai/kimi-k3",
       thinking: { type: "enabled" },
       reasoning_effort: "high",
       messages: [{ role: "user", content: "hello" }],
     },
     expected: {
-      model: "z-ai/glm-5.2",
-      chat_template_kwargs: { enable_thinking: true, clear_thinking: false },
-      reasoning_effort: "high",
+      model: "moonshotai/kimi-k3",
       messages: [{ role: "user", content: "hello" }],
-      max_tokens: 32768,
+      chat_template_kwargs: {
+        thinking: true,
+      },
+      max_tokens: 65536,
     },
   },
   {
-    name: "glm-5.2 maps xhigh to verified top-level max effort",
+    name: "kimi-k3 disables thinking boolean-only",
     provider: "nvidia-nim",
     payload: {
-      model: "z-ai/glm-5.2",
-      thinking: { type: "enabled" },
-      reasoning_effort: "xhigh",
+      model: "moonshotai/kimi-k3",
+      thinking: { type: "disabled" },
+      reasoning_effort: "none",
       messages: [{ role: "user", content: "hello" }],
     },
     expected: {
-      model: "z-ai/glm-5.2",
-      chat_template_kwargs: { enable_thinking: true, clear_thinking: false },
-      reasoning_effort: "max",
+      model: "moonshotai/kimi-k3",
       messages: [{ role: "user", content: "hello" }],
-      max_tokens: 32768,
+      chat_template_kwargs: {
+        thinking: false,
+      },
+      max_tokens: 65536,
     },
   },
   {
-    name: "glm-5.2 disables thinking with clear_thinking:true",
+    name: "kimi-k3 without thinking params only gets max_tokens default",
     provider: "nvidia-nim",
     payload: {
-      model: "z-ai/glm-5.2",
-      chat_template_kwargs: { enable_thinking: false },
+      model: "moonshotai/kimi-k3",
       messages: [{ role: "user", content: "hello" }],
     },
     expected: {
-      model: "z-ai/glm-5.2",
-      chat_template_kwargs: { enable_thinking: false, clear_thinking: true },
+      model: "moonshotai/kimi-k3",
       messages: [{ role: "user", content: "hello" }],
-      max_tokens: 32768,
-    },
-  },
-  {
-    name: "nvidia-nemotron-nano-9b-v2 injects system think mode",
-    provider: "nvidia-nim",
-    payload: {
-      model: "nvidia/nvidia-nemotron-nano-9b-v2",
-      reasoning_effort: "high",
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "nvidia/nvidia-nemotron-nano-9b-v2",
-      messages: [
-        { role: "system", content: "/think" },
-        { role: "user", content: "hello" },
-      ],
-      min_thinking_tokens: 1024,
-      max_thinking_tokens: 4096,
-      max_tokens: 8192,
-    },
-  },
-  {
-    name: "nemotron super uses detailed thinking system mode",
-    provider: "nvidia-nim",
-    payload: {
-      model: "nvidia/llama-3.3-nemotron-super-49b-v1",
-      reasoning_effort: "high",
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "nvidia/llama-3.3-nemotron-super-49b-v1",
-      messages: [
-        { role: "system", content: "detailed thinking on" },
-        { role: "user", content: "hello" },
-      ],
-      max_tokens: 8192,
+      max_tokens: 65536,
     },
   },
   {
@@ -165,19 +114,6 @@ const cases = [
     },
   },
   {
-    name: "inkling remains always-on without thinking controls",
-    provider: "nvidia-nim",
-    payload: {
-      model: "thinkingmachines/inkling",
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "thinkingmachines/inkling",
-      messages: [{ role: "user", content: "hello" }],
-      max_tokens: 16384,
-    },
-  },
-  {
     name: "laguna xs 2.1 uses chat-template thinking",
     provider: "nvidia-nim",
     payload: {
@@ -207,8 +143,8 @@ const cases = [
     name: "known NIM model is untouched for another provider",
     provider: "openrouter",
     payload: {
-      model: "z-ai/glm-5.2",
-      chat_template_kwargs: { enable_thinking: true },
+      model: "moonshotai/kimi-k3",
+      thinking: { type: "enabled" },
       messages: [{ role: "user", content: "hello" }],
     },
     expected: undefined,

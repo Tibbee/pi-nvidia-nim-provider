@@ -57,55 +57,6 @@ export interface ReasoningCapability {
 }
 
 /**
- * Upstream GLM-5.2 semantics and the current NIM transport hypothesis.
- *
- * Live hosted-NIM probes confirmed the boolean chat_template_kwargs toggle,
- * top-level reasoning_effort values, and streaming response shape. The
- * endpoint accepts high and max effort; nested reasoning_effort is ignored.
- *
- * Reference semantics:
- * - https://docs.z.ai/guides/capabilities/thinking-mode
- * - https://recipes.vllm.ai/zai-org/GLM-5.2
- * Hosted NIM references:
- * - https://docs.api.nvidia.com/nim/reference/z-ai-glm-5.2
- * - https://docs.nvidia.com/nim/large-language-models/latest/api-reference.html
- * - https://docs.nvidia.com/nim/large-language-models/1.15.0/reasoning-model.html
- */
-export const GLM_52_REASONING_CAPABILITY: ReasoningCapability = {
-  modelId: "z-ai/glm-5.2",
-  semantics: {
-    defaultEnabled: true,
-    canDisable: true,
-    supportsEffort: true,
-    acceptedEfforts: ["none", "minimal", "low", "medium", "high", "xhigh", "max"],
-    effectiveEffortMapping: {
-      none: "none",
-      minimal: "none",
-      low: "high",
-      medium: "high",
-      high: "high",
-      xhigh: "max",
-      max: "max",
-    },
-    supportsInterleavedThinking: true,
-    supportsPreservedThinking: true,
-    responseField: "reasoning_content",
-  },
-  nimTransport: {
-    requestEncoding: "chat-template-kwargs+reasoning-effort",
-    responseEncoding: "reasoning_content",
-  },
-  verification: {
-    semantics: "documented",
-    requestTransport: "probe-passed",
-    responseTransport: "probe-passed",
-    streaming: "probe-passed",
-    tools: "claimed",
-    preservedThinking: "unknown",
-  },
-};
-
-/**
  * DeepSeek V4 Flash hosted-NIM observation. The NVIDIA model page documents
  * non-think, high, and max modes. Live requests using the production handler's
  * chat_template_kwargs shape returned content-only non-think responses and
@@ -145,41 +96,6 @@ export const DEEPSEEK_V4_FLASH_REASONING_CAPABILITY: ReasoningCapability = {
     responseTransport: "probe-passed",
     streaming: "probe-passed",
     tools: "documented",
-    preservedThinking: "unknown",
-  },
-};
-
-/**
- * Thinking Machines Inkling hosted-NIM observation. The endpoint returned
- * separate reasoning_content without an exposed thinking toggle in live
- * probes; the upstream model is multimodal and always-on for reasoning.
- *
- * References:
- * - https://build.nvidia.com/thinkingmachines/inkling
- * - https://huggingface.co/thinkingmachines/Inkling
- */
-export const INKLING_REASONING_CAPABILITY: ReasoningCapability = {
-  modelId: "thinkingmachines/inkling",
-  semantics: {
-    defaultEnabled: true,
-    canDisable: false,
-    supportsEffort: false,
-    acceptedEfforts: [],
-    effectiveEffortMapping: { off: "always-on" },
-    supportsInterleavedThinking: "unknown",
-    supportsPreservedThinking: "unknown",
-    responseField: "reasoning_content",
-  },
-  nimTransport: {
-    requestEncoding: "unknown",
-    responseEncoding: "reasoning_content",
-  },
-  verification: {
-    semantics: "documented",
-    requestTransport: "unknown",
-    responseTransport: "probe-passed",
-    streaming: "probe-passed",
-    tools: "unknown",
     preservedThinking: "unknown",
   },
 };
@@ -355,11 +271,60 @@ export const STEP_37_REASONING_CAPABILITY: ReasoningCapability = {
   },
 };
 
+/**
+ * Moonshot Kimi K3 hosted-NIM observation. The model is live on the API
+ * (moonshotai/kimi-k3) but unlisted from the build page's catalog and the
+ * API reference does not cover it, so the evidence below comes from live
+ * probes against the hosted endpoint (2026-08-27): the boolean
+ * chat_template_kwargs thinking toggle, separate reasoning_content,
+ * streaming, OpenAI-format tool calls, and image input. Context is the 1M
+ * spec Moonshot ships upstream (NVIDIA does not host reduced context
+ * windows); max output is a lineage estimate from Kimi K2.6. Practical
+ * caveat: probe latency ranged 1-46 s; treat the endpoint as
+ * capacity-constrained and expect intermittent slowness.
+ *
+ * References:
+ * - https://build.nvidia.com/moonshotai/kimi-k3 (card reachable but unlisted)
+ * - https://platform.moonshot.ai (upstream Kimi K3 spec)
+ */
+export const KIMI_K3_REASONING_CAPABILITY: ReasoningCapability = {
+  modelId: "moonshotai/kimi-k3",
+  semantics: {
+    defaultEnabled: true,
+    canDisable: true,
+    supportsEffort: false,
+    acceptedEfforts: [],
+    effectiveEffortMapping: {
+      off: "disabled",
+      minimal: "enabled",
+      low: "enabled",
+      medium: "enabled",
+      high: "enabled",
+      xhigh: "enabled",
+      max: "enabled",
+    },
+    supportsInterleavedThinking: "unknown",
+    supportsPreservedThinking: "unknown",
+    responseField: "reasoning_content",
+  },
+  nimTransport: {
+    requestEncoding: "chat-template-kwargs",
+    responseEncoding: "reasoning_content",
+  },
+  verification: {
+    semantics: "probe-passed",
+    requestTransport: "probe-passed",
+    responseTransport: "probe-passed",
+    streaming: "probe-passed",
+    tools: "probe-passed",
+    preservedThinking: "unknown",
+  },
+};
+
 const CAPABILITIES = new Map<string, ReasoningCapability>([
   [DEEPSEEK_V4_FLASH_REASONING_CAPABILITY.modelId, DEEPSEEK_V4_FLASH_REASONING_CAPABILITY],
-  [INKLING_REASONING_CAPABILITY.modelId, INKLING_REASONING_CAPABILITY],
+  [KIMI_K3_REASONING_CAPABILITY.modelId, KIMI_K3_REASONING_CAPABILITY],
   [LAGUNA_XS_21_REASONING_CAPABILITY.modelId, LAGUNA_XS_21_REASONING_CAPABILITY],
-  [GLM_52_REASONING_CAPABILITY.modelId, GLM_52_REASONING_CAPABILITY],
   [MINIMAX_M3_REASONING_CAPABILITY.modelId, MINIMAX_M3_REASONING_CAPABILITY],
   [MUSE_GLIMMER_30B_REASONING_CAPABILITY.modelId, MUSE_GLIMMER_30B_REASONING_CAPABILITY],
   [STEP_37_REASONING_CAPABILITY.modelId, STEP_37_REASONING_CAPABILITY],

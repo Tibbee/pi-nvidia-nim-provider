@@ -11,8 +11,7 @@ import { applyFamilyCompat } from "../config/model-families";
 import type { NimModelConfig } from "../models/types";
 import {
   DEEPSEEK_V4_FLASH_REASONING_CAPABILITY,
-  GLM_52_REASONING_CAPABILITY,
-  INKLING_REASONING_CAPABILITY,
+  KIMI_K3_REASONING_CAPABILITY,
   LAGUNA_XS_21_REASONING_CAPABILITY,
   MINIMAX_M3_REASONING_CAPABILITY,
   MUSE_GLIMMER_30B_REASONING_CAPABILITY,
@@ -134,6 +133,22 @@ const GHOST_2026_08 = [
   "nvidia/nemotron-4-340b-instruct",
   "nvidia/nemotron-nano-3-30b-a3b",
   "nvidia/vila",
+  // Retired 2026-08-27 sweep (HTTP 410): Llama 3.x base generation,
+  // Nemotron Super v1/v1.5 + Nano VL/Nano 9B v2 + Mini 4B, Inkling, GLM-5.2.
+  "meta/llama-3.1-70b-instruct",
+  "meta/llama-3.1-8b-instruct",
+  "meta/llama-3.2-1b-instruct",
+  "meta/llama-3.2-3b-instruct",
+  "meta/llama-3.3-70b-instruct",
+  "nvidia/llama-3.1-nemotron-nano-8b-v1",
+  "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
+  "nvidia/llama-3.3-nemotron-super-49b-v1",
+  "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+  "nvidia/nemotron-mini-4b-instruct",
+  "nvidia/nemotron-nano-12b-v2-vl",
+  "nvidia/nvidia-nemotron-nano-9b-v2",
+  "thinkingmachines/inkling",
+  "z-ai/glm-5.2",
   "writer/palmyra-creative-122b",
   "writer/palmyra-fin-70b-32k",
   "writer/palmyra-med-70b",
@@ -170,20 +185,19 @@ assert.equal(
 assert.equal(STATIC_MODEL_MAP.get("stepfun-ai/step-3.7-flash")?.reasoning, true);
 assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.reasoning, true);
 assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.compat?.thinkingFormat, "qwen-chat-template");
-assert.equal(STATIC_MODEL_MAP.get("thinkingmachines/inkling")?.reasoning, true);
-assert.deepEqual(STATIC_MODEL_MAP.get("thinkingmachines/inkling")?.input, ["text", "image"]);
-assert.equal(STATIC_MODEL_MAP.get("thinkingmachines/inkling")?.thinkingLevelMap?.off, null);
-const glmModel = STATIC_MODEL_MAP.get("z-ai/glm-5.2");
-assert.equal(glmModel?.compat?.thinkingFormat, "zai");
-assert.equal(glmModel?.compat?.supportsReasoningEffort, true);
-assert.deepEqual(glmModel?.thinkingLevelMap, {
+assert.equal(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.reasoning, true);
+assert.deepEqual(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.input, ["text", "image"]);
+assert.equal(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.contextWindow, 1000000);
+assert.equal(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.maxTokens, 65536);
+assert.equal(classifyThinkingFormat("moonshotai/kimi-k3"), "kimi");
+assert.deepEqual(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.thinkingLevelMap, {
   off: "none",
-  minimal: null,
-  low: null,
-  medium: null,
+  minimal: "high",
+  low: "high",
+  medium: "high",
   high: "high",
-  xhigh: null,
-  max: "max",
+  xhigh: "high",
+  max: "high",
 });
 const museGlimmer = STATIC_MODEL_MAP.get("meta/muse-glimmer-30b");
 assert.ok(museGlimmer);
@@ -224,18 +238,14 @@ assert.deepEqual(nemotron35Lightning.thinkingLevelMap, {
   xhigh: "high",
 });
 
-// 5) GLM semantics and NIM transport hypotheses remain separate.
-assert.equal(getReasoningCapability("z-ai/glm-5.2"), GLM_52_REASONING_CAPABILITY);
-assert.equal(GLM_52_REASONING_CAPABILITY.semantics.supportsEffort, true);
-assert.equal(GLM_52_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
-assert.equal(GLM_52_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
-assert.equal(GLM_52_REASONING_CAPABILITY.verification.streaming, "probe-passed");
+// 5) Kimi K3 semantics and NIM transport remain separately recorded.
+assert.equal(getReasoningCapability("moonshotai/kimi-k3"), KIMI_K3_REASONING_CAPABILITY);
+assert.equal(KIMI_K3_REASONING_CAPABILITY.semantics.supportsEffort, false);
+assert.equal(KIMI_K3_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
+assert.equal(KIMI_K3_REASONING_CAPABILITY.verification.tools, "probe-passed");
+assert.equal(KIMI_K3_REASONING_CAPABILITY.verification.streaming, "probe-passed");
 assert.equal(getReasoningCapability("deepseek-ai/deepseek-v4-flash-0731"), DEEPSEEK_V4_FLASH_REASONING_CAPABILITY);
 assert.equal(DEEPSEEK_V4_FLASH_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
-assert.equal(getReasoningCapability("thinkingmachines/inkling"), INKLING_REASONING_CAPABILITY);
-assert.equal(INKLING_REASONING_CAPABILITY.semantics.canDisable, false);
-assert.equal(INKLING_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
-assert.equal(INKLING_REASONING_CAPABILITY.verification.streaming, "probe-passed");
 assert.equal(getReasoningCapability("poolside/laguna-xs-2.1"), LAGUNA_XS_21_REASONING_CAPABILITY);
 assert.equal(LAGUNA_XS_21_REASONING_CAPABILITY.nimTransport.requestEncoding, "chat-template-kwargs");
 assert.equal(LAGUNA_XS_21_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");

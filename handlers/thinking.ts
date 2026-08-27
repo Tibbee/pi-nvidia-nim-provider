@@ -91,98 +91,28 @@ export function applyCustomThinkingFormat(
       return { modified: true, thinkingEnabled: thinking };
     }
 
-    case "nemotron-system-detailed": {
+    case "kimi": {
       if (!hasThinkingParams) return { modified: false };
-      // Llama 3.3 Nemotron Super 49B v1: system message "detailed thinking on/off".
-      const thinking = getReasoningEffort(payload) != null;
+      // Kimi K3: a single boolean thinking mode via chat_template_kwargs.
+      // Hosted NIM ignores reasoning effort for it; only on/off is meaningful
+      // (probe-verified 2026-08-27: on/off, separate reasoning_content, tools).
+      const thinking = isDeepSeekThinkingEnabled(payload);
 
       delete payload.thinking;
       delete payload.reasoning_effort;
 
-      const messages = (payload.messages as any[]) || [];
-      // Remove any existing "detailed thinking" system messages.
-      const filtered = messages.filter((m: any) =>
-        !(m.role === "system" && typeof m.content === "string" &&
-          (m.content.includes("detailed thinking on") || m.content.includes("detailed thinking off")))
-      );
-      // Inject the appropriate system message at the beginning.
-      filtered.unshift({
-        role: "system",
-        content: thinking ? "detailed thinking on" : "detailed thinking off",
-      });
-      payload.messages = filtered;
-      return { modified: true, thinkingEnabled: thinking };
-    }
-
-    case "nemotron-system-think": {
-      if (!hasThinkingParams) return { modified: false };
-      // Nemotron Super v1.5 / Nano 9B v2: system message /think or /no_think.
-      const thinking = getReasoningEffort(payload) != null;
-
-      delete payload.thinking;
-      delete payload.reasoning_effort;
-
-      const messages = (payload.messages as any[]) || [];
-      // Remove any existing /think or /no_think system messages.
-      const filtered = messages.filter((m: any) =>
-        !(m.role === "system" && typeof m.content === "string" &&
-          (m.content === "/think" || m.content === "/no_think"))
-      );
-      // Inject the appropriate system message at the beginning.
-      filtered.unshift({
-        role: "system",
-        content: thinking ? "/think" : "/no_think",
-      });
-      payload.messages = filtered;
-
-      // For Nano 9B v2: inject min/max_thinking_tokens when thinking is on.
-      if (thinking && /nvidia-nemotron-nano-9b-v2/.test(payload.model as string || "")) {
-        payload.min_thinking_tokens = 1024;
-        payload.max_thinking_tokens = 4096;
-      }
-
+      const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
+      payload.chat_template_kwargs = {
+        ...(kwargs ?? {}),
+        thinking,
+      };
       return { modified: true, thinkingEnabled: thinking };
     }
 
     case "qwen-chat-template": {
-      // GLM models use chat-template booleans, while NIM accepts effort as a
-      // top-level reasoning_effort field. Pi's `zai` serializer supplies the
-      // top-level thinking state and mapped effort before this handler runs.
-      // See also: https://recipes.vllm.ai/zai-org/GLM-5.2
-      const modelId = (payload.model as string | undefined) || "";
-      if (/^z-ai\/glm/.test(modelId)) {
-        const enabled = hasEnabledThinking(payload);
-        const rawEffort = payload.reasoning_effort as string | undefined;
-        const mappedEffort =
-          rawEffort && !["off", "none", "minimal"].includes(rawEffort)
-            ? ["xhigh", "max"].includes(rawEffort) ? "max" : "high"
-            : undefined;
-        const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
-        delete payload.thinking;
-        // Strip preserve_thinking if pi's native handler set it — GLM uses
-        // clear_thinking instead. Keep effort top-level: nested effort is
-        // accepted by NIM but ignored by the hosted GLM endpoint.
-        const { preserve_thinking: _, ...base } = kwargs ?? {};
-        if (enabled) {
-          payload.chat_template_kwargs = {
-            ...base,
-            enable_thinking: true,
-            clear_thinking: false,
-          };
-          if (mappedEffort) payload.reasoning_effort = mappedEffort;
-          else delete payload.reasoning_effort;
-          return { modified: true, thinkingEnabled: true };
-        }
-
-        delete payload.reasoning_effort;
-        payload.chat_template_kwargs = {
-          ...base,
-          enable_thinking: false,
-          clear_thinking: true,
-        };
-        return { modified: true, thinkingEnabled: false };
-      }
-      // Other qwen-chat-template models are handled natively by pi.
+      // Laguna XS 2.1 and DiffusionGemma are handled natively by pi — the
+      // native serializer injects enable_thinking/preserve_thinking. (The GLM
+      // branch that used to live here was dropped with the retired GLM-5.2.)
       return { modified: false };
     }
     case "minimax-inline": {

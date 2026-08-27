@@ -39,6 +39,25 @@
     "supportsVision": false
   },
   {
+    "id": "deepseek-ai/deepseek-v4-pro-0813",
+    "maxOutputTokens": 16384,
+    "reasoningEffortValues": [
+      "none",
+      "high",
+      "max"
+    ],
+    "exampleRequestExtra": {
+      "chat_template_kwargs": {
+        "thinking": true,
+        "reasoning_effort": "max"
+      }
+    },
+    "supportsReasoning": true,
+    "contextWindow": 1000000,
+    "thinkingFormat": "deepseek-v4",
+    "supportsVision": false
+  },
+  {
     "id": "google/codegemma-1.1-7b",
     "supportsReasoning": false,
     "supportsVision": false

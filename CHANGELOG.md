@@ -2,6 +2,12 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.6.0] - 2026-08-27
+
+### Added
+
+- Added DeepSeek V4 Pro (`deepseek-ai/deepseek-v4-pro-0813`) with text input, a 1,000,000-token context, and 16,384-token output. It routes through the existing `deepseek-v4` family: `chat_template_kwargs` thinking transport with `none`/`high`/`max` efforts (default `max`), matching the probe-verified V4 Flash handling.
+
 ## [1.5.1] - 2026-08-15
 
 ### Changed

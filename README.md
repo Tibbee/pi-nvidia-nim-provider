@@ -153,7 +153,7 @@ The remaining models work through their family rules, but don't call them live-v
 
 - Rate-limit warnings: shows HTTP 429 responses with retry-after info.
 - Request content normalization: converts `[{type:"text"}]` to plain strings for older models that reject structured content arrays.
-- 20-family regex routing: assigns thinking formats and compat settings across all 31 models.
+- 20-family regex routing: assigns thinking formats and compat settings across all 32 models.
 - Per-model reasoning effort mapping: non-standard values like off or minimal are mapped automatically to what the model expects.
 - No custom `streamSimple`: uses `before_provider_request` event hook, avoiding provider conflicts.
 

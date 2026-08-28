@@ -35,7 +35,13 @@ Sign up at [build.nvidia.com](https://build.nvidia.com) (free tier, 40 requests 
 
 ### 2. Set the credential (pick one)
 
-**Option A: Environment variable**
+**Option A: Interactive login (recommended)**
+
+In pi's interactive mode, run `/login nvidia-nim`, pick the API-key login, and paste your key — pi stores it under the `nvidia-nim` provider in `~/.pi/agent/auth.json` and manages it from then on. No environment variables needed. Selecting built-in `nvidia` in the same menu authenticates a different provider.
+
+**Option B: Environment variable**
+
+For headless setups, CI, or when you prefer env configuration:
 
 ```bash
 export NVIDIA_NIM_API_KEY="nvapi-..."
@@ -49,9 +55,9 @@ $env:NVIDIA_NIM_API_KEY = "nvapi-..."
 
 `NVIDIA_API_KEY` is accepted as a fallback for backward compatibility with pi's built-in `nvidia` provider.
 
-**Option B: Auth file (`~/.pi/agent/auth.json`)**
+**Option C: Manual auth file (`~/.pi/agent/auth.json`)**
 
-Add an entry so pi resolves the key automatically for all NVIDIA providers:
+Equivalent to what `/login` writes — add the entry by hand if you script your setup:
 
 ```json
 {
@@ -59,9 +65,7 @@ Add an entry so pi resolves the key automatically for all NVIDIA providers:
 }
 ```
 
-**Option C: Interactive login**
-
-Run `/login nvidia-nim` in pi's interactive mode and select the API-key login. The key is stored under the `nvidia-nim` provider in `auth.json` and managed automatically. Selecting built-in `nvidia` authenticates a different provider.
+**Precedence:** a stored credential (from `/login` or the auth file) wins over environment variables. To switch back to env-based auth, remove the entry with `/logout nvidia-nim`.
 
 ### 3. Select a model and test reasoning
 
@@ -186,7 +190,7 @@ Pi retries the failed turn after approximately 2, 4, 8, and 16 seconds. The sing
 - Confirm the selected model starts with `nvidia-nim/`. Pi's built-in `nvidia/` provider uses a different catalog and compatibility path.
 - If `--thinking` appears ignored, run `npm run probe -- --model=...` from the extension checkout and check the selected model's family and verification status.
 - If a model is missing, refresh the catalog and confirm the exact NIM model ID still exists on its NVIDIA model page.
-- If authentication fails, check `NVIDIA_NIM_API_KEY` first, then the `NVIDIA_API_KEY` fallback, and verify the variable is visible to the Pi process.
+- If authentication fails, check for a stored credential first (`/login nvidia-nim` or the `auth.json` entry — a stored key overrides environment variables), then `NVIDIA_NIM_API_KEY`, then the `NVIDIA_API_KEY` fallback, and verify the variable is visible to the pi process.
 - Tool calling and reasoning are tracked separately. A reasoning-capable model is not automatically tool-call verified.
 - Enable `NIM_DEBUG=1` only when needed. Avoid sharing payload logs without removing prompts and other sensitive data.
 

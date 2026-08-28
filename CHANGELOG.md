@@ -2,6 +2,16 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.7.1] - 2026-08-28
+
+### Added
+
+- Kimi K3 thinking-effort ladder: pi now offers off / low / high / max for `moonshotai/kimi-k3`. The `kimi` handler keeps the mapped top-level `reasoning_effort` when thinking is on (defaults `"high"` when absent) and deletes it when off, alongside the probe-verified boolean `chat_template_kwargs.thinking` toggle. NVIDIA's build card documents exactly this transport (`reasoningEffortValues: low, high, max`; the canonical example sends top-level `reasoning_effort` with no kwargs and runs clean on the hosted endpoint). The depth difference between effort levels is not yet measured under the free tier's capacity limits (429 bursts).
+
+### Changed
+
+- Kimi K3 is officially listed on the build page as of 2026-08-28; the catalog entry was refreshed through the scraper instead of estimates: official `contextWindow` 1,048,576 (was the 1M upstream-spec estimate), and the card-provided `reasoningEffortValues` and `exampleRequestExtra` now ride on the entry. The scraper fallback map mirrors the official values. README corrected accordingly (listing status, context size, effort ladder, matrix row).
+
 ## [1.7.0] - 2026-08-27
 
 ### Added

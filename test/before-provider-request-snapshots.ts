@@ -34,7 +34,7 @@ const cases = [
     },
   },
   {
-    name: "kimi-k3 enables thinking without effort",
+    name: "kimi-k3 passes reasoning_effort through when enabled",
     provider: "nvidia-nim",
     payload: {
       model: "moonshotai/kimi-k3",
@@ -48,6 +48,63 @@ const cases = [
       chat_template_kwargs: {
         thinking: true,
       },
+      reasoning_effort: "high",
+      max_tokens: 65536,
+    },
+  },
+  {
+    name: "kimi-k3 max effort passes through top-level",
+    provider: "nvidia-nim",
+    payload: {
+      model: "moonshotai/kimi-k3",
+      thinking: { type: "enabled" },
+      reasoning_effort: "max",
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "moonshotai/kimi-k3",
+      messages: [{ role: "user", content: "hello" }],
+      chat_template_kwargs: {
+        thinking: true,
+      },
+      reasoning_effort: "max",
+      max_tokens: 65536,
+    },
+  },
+  {
+    name: "kimi-k3 low effort passes through top-level",
+    provider: "nvidia-nim",
+    payload: {
+      model: "moonshotai/kimi-k3",
+      thinking: { type: "enabled" },
+      reasoning_effort: "low",
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "moonshotai/kimi-k3",
+      messages: [{ role: "user", content: "hello" }],
+      chat_template_kwargs: {
+        thinking: true,
+      },
+      reasoning_effort: "low",
+      max_tokens: 65536,
+    },
+  },
+  {
+    name: "kimi-k3 enabled without effort defaults to high",
+    provider: "nvidia-nim",
+    payload: {
+      model: "moonshotai/kimi-k3",
+      thinking: { type: "enabled" },
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "moonshotai/kimi-k3",
+      messages: [{ role: "user", content: "hello" }],
+      chat_template_kwargs: {
+        thinking: true,
+      },
+      reasoning_effort: "high",
       max_tokens: 65536,
     },
   },

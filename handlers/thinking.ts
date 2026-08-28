@@ -93,10 +93,13 @@ export function applyCustomThinkingFormat(
 
     case "kimi": {
       if (!hasThinkingParams) return { modified: false };
-      // Kimi K3: a single boolean thinking mode via chat_template_kwargs.
-      // Hosted NIM ignores reasoning effort for it; only on/off is meaningful
-      // (probe-verified 2026-08-27: on/off, separate reasoning_content, tools).
+      // Kimi K3: boolean chat_template_kwargs.thinking + top-level
+      // reasoning_effort (upstream spec: low | high | max, default max).
+      // On/off via the boolean is probe-verified (2026-08-27: separate
+      // reasoning_content, tools, streaming). Effort pass-through mirrors
+      // the upstream API; NIM acceptance is pending wire verification.
       const thinking = isDeepSeekThinkingEnabled(payload);
+      const effort = getReasoningEffort(payload);
 
       delete payload.thinking;
       delete payload.reasoning_effort;
@@ -106,6 +109,10 @@ export function applyCustomThinkingFormat(
         ...(kwargs ?? {}),
         thinking,
       };
+
+      if (thinking) {
+        payload.reasoning_effort = effort ?? "high";
+      }
       return { modified: true, thinkingEnabled: thinking };
     }
 

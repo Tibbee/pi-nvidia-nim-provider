@@ -107,13 +107,13 @@ This extension exists to close that gap. The thinking level you choose is conver
 - GLM-5.2 gets `enable_thinking` and `clear_thinking` plus top-level `reasoning_effort` (`high` or `max`). Hosted NIM ignores effort nested inside `chat_template_kwargs`, so the handler sends it at the top level.
 - Nemotron 3 Super, Ultra, and 3.5 Lightning get `chat_template_kwargs.enable_thinking`, a `low_effort` flag when you pick low, and a top-level `reasoning_budget` of 32768.
 - DeepSeek V4 Flash and Pro get `chat_template_kwargs` with the effort values NVIDIA actually accepts: `none`, `high`, `max`.
-- Kimi K3 gets a boolean `chat_template_kwargs.thinking` toggle — the hosted endpoint exposes a single on-mode, so effort levels are not offered.
+- Kimi K3 gets a boolean `chat_template_kwargs.thinking` toggle plus a top-level `reasoning_effort` pass-through (`low` / `high` / `max`, card-documented by NVIDIA; on/off is probe-passed, the depth difference between levels is not yet verified).
 - MiniMax M3 gets a three-way `thinking_mode` toggle: disabled, adaptive, enabled.
 - Laguna and DiffusionGemma get qwen-chat-template kwargs, handled natively by pi.
 
 Each family also carries its own `thinkingLevelMap`, so non-standard pi levels land somewhere sensible: `minimal` maps to `low` on GPT-OSS, `xhigh` and `max` map to `max` on Muse Glimmer, and so on. The built-in provider never even offers xhigh or max, because those levels require a map its catalog never defines.
 
-Coverage is the other difference. The extension carries 19 models — every one verified live against hosted NIM on 2026-08-27 — including the latest endpoints the built-in catalog lacks: DeepSeek V4 Pro 0813, DiffusionGemma 26B, and Mistral Nemotron. The built-in list, meanwhile, still ships 10 models that sweeps proved dead or ghost (gemma-3 ×2, mistral-7b, kimi-k2.6, cosmos-reason2, nemotron-70b, ultra-253b, llama-3.1-70b/8b, llama-3.3-70b); they fail on hosted NIM today.
+Coverage is the other difference. The extension carries 19 models — every one verified live against hosted NIM — including the latest endpoints the built-in catalog lacks: DeepSeek V4 Pro 0813, Kimi K3, DiffusionGemma 26B, and Mistral Nemotron. The built-in list, meanwhile, still ships 10 models that sweeps proved dead or ghost (gemma-3 ×2, mistral-7b, kimi-k2.6, cosmos-reason2, nemotron-70b, ultra-253b, llama-3.1-70b/8b, llama-3.3-70b); they fail on hosted NIM today.
 
 A note on NVIDIA NIM availability: hosted NIM is volatile. Models retire with HTTP 410 at short notice (fourteen did in the 2026-08-27 wave alone), some staged endpoints answer only intermittently, and latency per model can swing between 1 s and 45 s depending on backend capacity. The extension ships what was verified working at release time; if a model stops responding, that is NVIDIA's side, not the request shape.
 
@@ -130,7 +130,7 @@ DeepSeek V4 (Flash 0731 and Pro 0813), Kimi K3, MiniMax M3, Muse Glimmer, Diffus
 - DeepSeek V4: live NIM requests confirmed content-only non-think and separate `reasoning_content` for high and max via `chat_template_kwargs`. Pi exposes only `off`, `high`, and `max` for these models.
 - The extension ships the current live DeepSeek V4 Pro endpoint, `deepseek-ai/deepseek-v4-pro-0813`, alongside DeepSeek V4 Flash `deepseek-ai/deepseek-v4-flash-0731`. NVIDIA retired the unsuffixed `deepseek-v4-flash` and `deepseek-v4-pro` IDs on 2026-08-07. As of 2026-08-27 the Flash 0731 endpoint returns 404 on chat requests; it is kept in the catalog as a suspected temporary outage, so pin `deepseek-v4-pro-0813` for reliable V4 access meanwhile.
 - DeepSeek V4 puts `reasoning_effort` inside `chat_template_kwargs`, with `off` mapped to `none` and `max` mapped to `max`.
-- Kimi K3 (`moonshotai/kimi-k3`) is the newest Moonshot model on NIM: text/image input, 1M context, OpenAI-format tool calls, and a boolean `chat_template_kwargs.thinking` toggle with separate `reasoning_content`. It is unlisted from the build page catalog (the card is reachable but not linked) and undocumented in the API reference. **Practical warning: it is near unusable at times** — probe latency ranged from 1 s to 46 s for the same request, so expect intermittent multi-minute-feeling turns; treat it as a preview endpoint.
+- Kimi K3 (`moonshotai/kimi-k3`) is the newest Moonshot model on NIM: text/image input, 1,048,576-token context (NVIDIA's official card value), 65,536-token output, OpenAI-format tool calls, a boolean `chat_template_kwargs.thinking` toggle plus card-documented `reasoning_effort` levels (`low` / `high` / `max`), and separate `reasoning_content`. The card became officially listed on the build page on 2026-08-28; before that the extension carried it from live probes alone. **Practical warning: it is near unusable at times** — probe latency ranged from 1 s to 46 s for the same request and the free-tier endpoint repeatedly rate-limits (429) in bursts, so expect intermittent multi-minute-feeling turns; treat it as a capacity-constrained endpoint.
 - Muse Glimmer 30B supports text and image input with a 131,072-token context. Hosted NIM accepts top-level `reasoning_effort` and streams separate `reasoning_content`; `none` was accepted but still produced reasoning in live probes.
 - Nemotron 3.5 Lightning 30B has a 1,048,576-token context with text input. NVIDIA documents no `reasoning_effort`; thinking is toggled via `enable_thinking` with a top-level `reasoning_budget` (default 16384, max 32768). Live probes confirmed `enable_thinking: false` and `reasoning_effort: none` both stop reasoning, and tool calls work.
 
@@ -142,14 +142,14 @@ A `probe-passed` transport result means the request shape produced the expected 
 |-------|-------------------|---------|----------|-----------|-------|
 | DeepSeek V4 Flash 0731 | off / high / max | `chat_template_kwargs` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
 | DeepSeek V4 Pro 0813 | off / high / max | `chat_template_kwargs` (same transport as Flash) | `reasoning_content` (claimed) | claimed | documented |
-| Kimi K3 | off / on (single mode) | `chat_template_kwargs.thinking` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | probe-passed |
+| Kimi K3 | off / low / high / max | `chat_template_kwargs.thinking` + top-level `reasoning_effort` (card-documented; on/off probe-passed) | `reasoning_content` (probe-passed) | probe-passed | probe-passed |
 | MiniMax M3 | disabled / adaptive / enabled | `thinking_mode` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
 | Step-3.7 Flash | low / medium / high; always-on hosted | `reasoning_effort` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | claimed |
 | Laguna XS 2.1 | on / off toggle | `enable_thinking` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | unknown |
 | Muse Glimmer 30B | none / minimal / low / medium / high / max | `reasoning_effort` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
 | Nemotron 3.5 Lightning 30B | enable_thinking on/off | `enable_thinking` + `reasoning_budget` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | probe-passed |
 
-Probe dates: all rows except Kimi K3 were verified in earlier releases (August 2026); Kimi K3 was probed on 2026-08-27. DeepSeek V4 Flash 0731 passed those probes but currently returns 404 on chat (treated as a temporary outage); DeepSeek V4 Pro 0813 answered live on 2026-08-27.
+Probe dates: all rows except Kimi K3 were verified in earlier releases (August 2026); Kimi K3 on/off thinking, tools, streaming, and vision were probed on 2026-08-27, and the effort ladder follows NVIDIA's own build-card documentation (2026-08-28) with the depth difference between levels unverified due to endpoint capacity. DeepSeek V4 Flash 0731 passed those probes but currently returns 404 on chat (treated as a temporary outage); DeepSeek V4 Pro 0813 answered live on 2026-08-27.
 
 The remaining models work through their family rules, but don't call them live-verified unless they appear in this matrix or have a matching compatibility report.
 

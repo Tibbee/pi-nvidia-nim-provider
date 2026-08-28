@@ -187,17 +187,14 @@ assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.reasoning, true);
 assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.compat?.thinkingFormat, "qwen-chat-template");
 assert.equal(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.reasoning, true);
 assert.deepEqual(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.input, ["text", "image"]);
-assert.equal(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.contextWindow, 1000000);
+assert.equal(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.contextWindow, 1048576); // official build-card value (2026-08-28)
 assert.equal(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.maxTokens, 65536);
 assert.equal(classifyThinkingFormat("moonshotai/kimi-k3"), "kimi");
 assert.deepEqual(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.thinkingLevelMap, {
   off: "none",
-  minimal: "high",
-  low: "high",
-  medium: "high",
+  low: "low",
   high: "high",
-  xhigh: "high",
-  max: "high",
+  max: "max",
 });
 const museGlimmer = STATIC_MODEL_MAP.get("meta/muse-glimmer-30b");
 assert.ok(museGlimmer);
@@ -240,7 +237,8 @@ assert.deepEqual(nemotron35Lightning.thinkingLevelMap, {
 
 // 5) Kimi K3 semantics and NIM transport remain separately recorded.
 assert.equal(getReasoningCapability("moonshotai/kimi-k3"), KIMI_K3_REASONING_CAPABILITY);
-assert.equal(KIMI_K3_REASONING_CAPABILITY.semantics.supportsEffort, false);
+assert.equal(KIMI_K3_REASONING_CAPABILITY.semantics.supportsEffort, true);
+assert.deepEqual(KIMI_K3_REASONING_CAPABILITY.semantics.acceptedEfforts, ["low", "high", "max"]);
 assert.equal(KIMI_K3_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
 assert.equal(KIMI_K3_REASONING_CAPABILITY.verification.tools, "probe-passed");
 assert.equal(KIMI_K3_REASONING_CAPABILITY.verification.streaming, "probe-passed");

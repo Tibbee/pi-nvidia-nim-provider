@@ -48,16 +48,16 @@ export const MODEL_FAMILIES: ModelFamily[] = [
       supportsReasoningEffort: true,
       maxTokensField: "max_tokens",
     },
-    // Single on-mode: every non-off level lands on the same boolean. Explicit
-    // entries keep pi from offering effort distinctions the model cannot honor.
+    // Upstream spec (Moonshot/Together): top-level reasoning_effort with
+    // low | high | max (default max). Intermediate pi levels are hidden.
+    // Boolean on/off is probe-verified on NIM (2026-08-27); effort
+    // pass-through follows the upstream API and awaits wire verification
+    // (tools/probe_kimi_effort.sh, scheduled 2026-08-28).
     thinkingLevelMap: {
       off: "none",
-      minimal: "high",
-      low: "high",
-      medium: "high",
+      low: "low",
       high: "high",
-      xhigh: "high",
-      max: "high",
+      max: "max",
     },
   },
 

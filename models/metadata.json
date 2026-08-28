@@ -171,10 +171,18 @@
   {
     "id": "moonshotai/kimi-k3",
     "maxOutputTokens": 65536,
+    "supportsVision": true,
+    "reasoningEffortValues": [
+      "low",
+      "high",
+      "max"
+    ],
+    "exampleRequestExtra": {
+      "reasoning_effort": "low"
+    },
     "supportsReasoning": true,
-    "contextWindow": 1000000,
-    "thinkingFormat": "kimi",
-    "supportsVision": true
+    "contextWindow": 1048576,
+    "thinkingFormat": "kimi"
   },
   {
     "id": "nvidia/ai-synthetic-video-detector",

@@ -149,12 +149,11 @@ function getYardstickFallback(modelId: string): { contextWindow?: number; maxOut
 
 const FALLBACK_LIMITS_MAP: Record<string, { contextWindow?: number; maxOutputTokens?: number }> = {
   "deepseek-ai/deepseek-v4-flash-0731": { contextWindow: 1000000, maxOutputTokens: 16384 },
-  // Kimi K3's build card is a JS shell and the API reference does not cover
-  // it. Context window is the 1M spec Moonshot ships on its own platform
-  // (NVIDIA does not host nerfed context windows); max output is a lineage
-  // estimate carried from the verified Kimi K2.6 entry. Everything else
-  // about K3 (vision, tools, thinking transport) is live-probe-verified.
-  "moonshotai/kimi-k3": { contextWindow: 1000000, maxOutputTokens: 65536 },
+  // Kimi K3 is officially listed since 2026-08-28 and the card reports
+  // contextWindow 1048576 / maxOutputTokens 65536 / reasoningEffort low,
+  // high, max — these fallback values now mirror that card and are only
+  // used if a future card fetch fails.
+  "moonshotai/kimi-k3": { contextWindow: 1048576, maxOutputTokens: 65536 },
   // Non-picker (filtered) entries that the yardstick no longer matches.
   "ibm/granite-34b-code-instruct": { contextWindow: 131072, maxOutputTokens: 8192 },
   "ibm/granite-8b-code-instruct": { contextWindow: 131072, maxOutputTokens: 8192 },

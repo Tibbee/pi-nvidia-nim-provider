@@ -277,7 +277,12 @@ export const STEP_37_REASONING_CAPABILITY: ReasoningCapability = {
  * API reference does not cover it, so the evidence below comes from live
  * probes against the hosted endpoint (2026-08-27): the boolean
  * chat_template_kwargs thinking toggle, separate reasoning_content,
- * streaming, OpenAI-format tool calls, and image input. Context is the 1M
+ * streaming, OpenAI-format tool calls, and image input. Thinking effort
+ * follows NVIDIA's own build-card documentation (2026-08-28):
+ * reasoningEffortValues low | high | max, and the card's canonical
+ * example sends top-level reasoning_effort with no kwargs — confirmed
+ * running clean on the hosted endpoint. The depth difference between
+ * levels is not yet measured under the free tier's capacity limits. Context is the 1M
  * spec Moonshot ships upstream (NVIDIA does not host reduced context
  * windows); max output is a lineage estimate from Kimi K2.6. Practical
  * caveat: probe latency ranged 1-46 s; treat the endpoint as
@@ -292,16 +297,13 @@ export const KIMI_K3_REASONING_CAPABILITY: ReasoningCapability = {
   semantics: {
     defaultEnabled: true,
     canDisable: true,
-    supportsEffort: false,
-    acceptedEfforts: [],
+    supportsEffort: true,
+    acceptedEfforts: ["low", "high", "max"],
     effectiveEffortMapping: {
-      off: "disabled",
-      minimal: "enabled",
-      low: "enabled",
-      medium: "enabled",
-      high: "enabled",
-      xhigh: "enabled",
-      max: "enabled",
+      off: "none",
+      low: "low",
+      high: "high",
+      max: "max",
     },
     supportsInterleavedThinking: "unknown",
     supportsPreservedThinking: "unknown",

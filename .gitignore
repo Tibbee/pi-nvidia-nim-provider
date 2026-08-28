@@ -34,3 +34,4 @@ alternative/
 # docs/ is development material for this machine, not shipped to npm.
 # It is intentionally untracked; local archival notes live here too.
 docs/*
+.commandcode/

@@ -36,8 +36,6 @@ export function mapThinkingFormatToCompat(
       return {}; // Handled by before_provider_request handler
     case "kimi":
       return {}; // Handled by before_provider_request handler (boolean thinking kwarg)
-    case "minimax-inline":
-      return {}; // Handled by before_provider_request handler
     case "nemotron-3-super-effort":
       return { supportsReasoningEffort: true }; // Pi sends reasoning_effort, handler converts to enable_thinking + low_effort
     case "reasoning-effort":

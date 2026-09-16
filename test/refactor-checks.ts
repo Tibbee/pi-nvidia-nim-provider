@@ -11,11 +11,10 @@ import { applyFamilyCompat } from "../config/model-families";
 import type { NimModelConfig } from "../models/types";
 import {
   DEEPSEEK_V4_FLASH_REASONING_CAPABILITY,
+  GLM_53_REASONING_CAPABILITY,
   KIMI_K3_REASONING_CAPABILITY,
   LAGUNA_XS_21_REASONING_CAPABILITY,
-  MINIMAX_M3_REASONING_CAPABILITY,
   MUSE_GLIMMER_30B_REASONING_CAPABILITY,
-  STEP_37_REASONING_CAPABILITY,
   getReasoningCapability,
 } from "../models/capabilities";
 
@@ -49,19 +48,40 @@ assert.deepEqual(
   },
 );
 
-// 2) Families that add thinking should surface reasoning=true.
-const stepfun = applyFamilyCompat([baseModel("stepfun-ai/step-3.7-flash")])[0];
-assert.equal(stepfun.reasoning, true);
-
+// 2) Families and metadata that add thinking should surface reasoning=true.
 const deepseek = applyFamilyCompat([baseModel("deepseek-ai/deepseek-v4-test")])[0];
 assert.equal(deepseek.reasoning, true);
 
-const minimax = applyFamilyCompat([baseModel("minimaxai/minimax-m3")])[0];
-assert.equal(minimax.reasoning, true);
+// GLM 5.3 carries no dedicated family: its reasoning flag, effort ladder and
+// clear_thinking kwarg all come from models/metadata.json, so verify that the
+// default catch-all preserves metadata-driven fields.
+const glmMetadataModel = STATIC_MODEL_MAP.get("z-ai/glm-5.3")!;
+const glmApplied = applyFamilyCompat([glmMetadataModel])[0];
+assert.equal(glmApplied.reasoning, true);
+assert.equal(glmApplied.compat?.supportsReasoningEffort, true);
+assert.equal(glmApplied.thinkingLevelMap?.off, null);
 
-// NIM must not inherit pi's OpenAI storage default for any family.
+// NIM must not inherit unsupported OpenAI storage, strict-mode, or long-cache
+// parameters for any family. These are provider-level defaults, not only
+// fallback-family fields, because specific families win before the catch-all.
 const genericNim = applyFamilyCompat([baseModel("meta/llama-3.3-70b-instruct")])[0];
 assert.equal(genericNim.compat?.supportsStore, false);
+assert.equal(genericNim.compat?.supportsStrictMode, false);
+assert.equal(genericNim.compat?.supportsLongCacheRetention, false);
+
+const deepSeekNim = applyFamilyCompat([
+  baseModel("deepseek-ai/deepseek-v4-flash-0731"),
+])[0];
+assert.equal(deepSeekNim.compat?.supportsStrictMode, false);
+assert.equal(deepSeekNim.compat?.supportsLongCacheRetention, false);
+assert.equal(
+  STATIC_MODELS.every(
+    (model) =>
+      model.compat?.supportsStrictMode === false &&
+      model.compat?.supportsLongCacheRetention === false,
+  ),
+  true,
+);
 
 // 3) Model filter should exclude known embedding-only models.
 assert.equal(STATIC_MODELS.some((model) => model.id === "baai/bge-m3"), false);
@@ -102,6 +122,41 @@ const RETIRED_2026 = [
 for (const id of RETIRED_2026) {
   assert.equal(STATIC_MODEL_MAP.has(id), false, id);
 }
+
+// Retired 2026-08-28 → 2026-09-14 (HTTP 410 Gone). Each ID answers with an
+// explicit "reached its end of life on <date>" body on every attempt and is
+// absent from /v1/models; the /modelcard pages still return 200, so the
+// aliveness sweep — not the build page — is the liveness signal.
+const RETIRED_2026_09 = [
+  "stepfun-ai/step-3.7-flash",
+  "nvidia/nemotron-3-nano-30b-a3b",
+  "openai/gpt-oss-120b",
+  "minimaxai/minimax-m3",
+  "deepseek-ai/deepseek-v4-pro-0813",
+];
+for (const id of RETIRED_2026_09) {
+  assert.equal(STATIC_MODEL_MAP.has(id), false, id);
+}
+
+// GLM 5.3 and 5.3 Flash: thinking is always on (pi must hide the off level),
+// the effort ladder is low/high/max, and clear_thinking is injected from
+// metadata. Flash is multimodal upstream; GLM 5.3 itself is text-only.
+for (const id of ["z-ai/glm-5.3", "z-ai/glm-5.3-flash"]) {
+  const glm = STATIC_MODEL_MAP.get(id);
+  assert.equal(glm?.reasoning, true, id);
+  assert.equal(glm?.contextWindow, 1048576, id);
+  assert.equal(glm?.maxTokens, 131072, id);
+  assert.equal(glm?.compat?.supportsReasoningEffort, true, id);
+  assert.equal(glm?.thinkingLevelMap?.off, null, id);
+  assert.deepEqual(
+    glm?.exampleRequestExtra,
+    { chat_template_kwargs: { clear_thinking: true } },
+    id,
+  );
+}
+assert.deepEqual(STATIC_MODEL_MAP.get("z-ai/glm-5.3")?.input, ["text"]);
+assert.deepEqual(STATIC_MODEL_MAP.get("z-ai/glm-5.3-flash")?.input, ["text", "image"]);
+assert.equal(classifyThinkingFormat("z-ai/glm-5.3"), "none");
 
 // Ghost 2026-08: listed in the catalog but chat requests 404
 // "Function not found for account" (dead routing, not EOL-announced).
@@ -177,12 +232,7 @@ for (const modelId of ["deepseek-ai/deepseek-v4-flash-0731"]) {
   const model = STATIC_MODEL_MAP.get(modelId);
   assert.deepEqual(model?.thinkingLevelMap, deepseekV4Levels, modelId);
 }
-assert.equal(classifyThinkingFormat("minimaxai/minimax-m3"), "minimax-inline");
-assert.equal(
-  classifyThinkingFormat("openai/gpt-oss-120b"),
-  "none"
-);
-assert.equal(STATIC_MODEL_MAP.get("stepfun-ai/step-3.7-flash")?.reasoning, true);
+assert.equal(classifyThinkingFormat("openai/gpt-oss-20b"), "none");
 assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.reasoning, true);
 assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.compat?.thinkingFormat, "qwen-chat-template");
 assert.equal(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.reasoning, true);
@@ -248,17 +298,15 @@ assert.equal(getReasoningCapability("poolside/laguna-xs-2.1"), LAGUNA_XS_21_REAS
 assert.equal(LAGUNA_XS_21_REASONING_CAPABILITY.nimTransport.requestEncoding, "chat-template-kwargs");
 assert.equal(LAGUNA_XS_21_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
 assert.equal(LAGUNA_XS_21_REASONING_CAPABILITY.verification.streaming, "probe-passed");
-assert.equal(getReasoningCapability("minimaxai/minimax-m3"), MINIMAX_M3_REASONING_CAPABILITY);
-assert.equal(MINIMAX_M3_REASONING_CAPABILITY.nimTransport.requestEncoding, "chat-template-kwargs");
-assert.equal(MINIMAX_M3_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
-assert.equal(MINIMAX_M3_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
-assert.equal(MINIMAX_M3_REASONING_CAPABILITY.verification.streaming, "probe-passed");
 assert.equal(getReasoningCapability("meta/muse-glimmer-30b"), MUSE_GLIMMER_30B_REASONING_CAPABILITY);
 assert.equal(MUSE_GLIMMER_30B_REASONING_CAPABILITY.nimTransport.requestEncoding, "reasoning-effort");
 assert.equal(MUSE_GLIMMER_30B_REASONING_CAPABILITY.verification.streaming, "probe-passed");
-assert.equal(getReasoningCapability("stepfun-ai/step-3.7-flash"), STEP_37_REASONING_CAPABILITY);
-assert.equal(STEP_37_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
-assert.equal(STEP_37_REASONING_CAPABILITY.semantics.canDisable, false);
+assert.equal(getReasoningCapability("z-ai/glm-5.3"), GLM_53_REASONING_CAPABILITY);
+assert.equal(GLM_53_REASONING_CAPABILITY.nimTransport.requestEncoding, "reasoning-effort");
+assert.equal(GLM_53_REASONING_CAPABILITY.semantics.canDisable, false);
+assert.deepEqual(GLM_53_REASONING_CAPABILITY.semantics.acceptedEfforts, ["low", "high", "max"]);
+assert.equal(GLM_53_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
+assert.equal(GLM_53_REASONING_CAPABILITY.verification.tools, "probe-passed");
 
 
 // 6) before_provider_request should skip models not in the NIM registry.

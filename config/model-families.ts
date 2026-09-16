@@ -61,29 +61,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
     },
   },
 
-  // MiniMax M3 uses chat_template_kwargs.thinking_mode (enabled/disabled).
-  // It sends reasoning_content in the response — NOT inline <antha> tags.
-  {
-    name: "minimax-m3",
-    pattern: /^minimaxai\/minimax-m3/,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: false,
-      supportsStore: false,
-      supportsUsageInStreaming: false,
-      thinkingFormat: "deepseek",
-      maxTokensField: "max_tokens",
-    },
-    thinkingLevelMap: {
-      off: "disabled",
-      minimal: "adaptive",
-      low: "adaptive",
-      medium: "adaptive",
-      high: "adaptive",
-      xhigh: "enabled",
-    },
-  },
-
   // Laguna XS 2.1 uses chat_template_kwargs.enable_thinking. Pi's native
   // qwen-chat-template path handles the boolean toggle and preservation flag.
   {
@@ -242,24 +219,6 @@ export const MODEL_FAMILIES: ModelFamily[] = [
   },
 
   {
-    name: "stepfun",
-    pattern: /^stepfun-ai\//,
-    compat: {
-      supportsDeveloperRole: false,
-      supportsReasoningEffort: true,
-      maxTokensField: "max_tokens",
-    },
-    thinkingLevelMap: {
-      off: null, // Cannot disable thinking
-      minimal: "low",
-      low: "low",
-      medium: "medium",
-      high: "high",
-      xhigh: "high",
-    },
-  },
-
-  {
     name: "nvidia-base",
     pattern: /^nvidia\//,
     compat: {
@@ -295,7 +254,6 @@ export function findFamily(modelId: string): ModelFamily | undefined {
 const FAMILY_HANDLER_FORMATS: Partial<Record<string, NimThinkingFormat>> = {
   "deepseek-v4": "deepseek-v4",
   "kimi": "kimi",
-  "minimax-m3": "minimax-inline",
   "nemotron-3-super-effort": "nemotron-3-super-effort",
   "nemotron-3-ultra-effort": "nemotron-3-super-effort",
   "nemotron-3.5-lightning": "nemotron-3-super-effort",
@@ -334,6 +292,8 @@ export function applyFamilyCompat(
       // an explicit model-level override if one is ever added.
       providerModel.compat = {
         supportsStore: false,
+        supportsStrictMode: false,
+        supportsLongCacheRetention: false,
         ...family.compat,
         ...model.compat,
       };

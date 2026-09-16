@@ -143,48 +143,6 @@ export const LAGUNA_XS_21_REASONING_CAPABILITY: ReasoningCapability = {
 };
 
 /**
- * MiniMax-M3 NIM model-card capability. The model page's OpenAPI schema
- * explicitly documents chat_template_kwargs.thinking_mode and the separate
- * reasoning_content response field. Live probes confirmed disabled
- * content-only responses and adaptive/enabled reasoning_content streaming.
- *
- * Reference:
- * - https://build.nvidia.com/minimaxai/minimax-m3.md
- */
-export const MINIMAX_M3_REASONING_CAPABILITY: ReasoningCapability = {
-  modelId: "minimaxai/minimax-m3",
-  semantics: {
-    defaultEnabled: false,
-    canDisable: true,
-    supportsEffort: false,
-    acceptedEfforts: [],
-    effectiveEffortMapping: {
-      off: "disabled",
-      minimal: "adaptive",
-      low: "adaptive",
-      medium: "adaptive",
-      high: "adaptive",
-      xhigh: "enabled",
-    },
-    supportsInterleavedThinking: "unknown",
-    supportsPreservedThinking: "unknown",
-    responseField: "reasoning_content",
-  },
-  nimTransport: {
-    requestEncoding: "chat-template-kwargs",
-    responseEncoding: "reasoning_content",
-  },
-  verification: {
-    semantics: "documented",
-    requestTransport: "probe-passed",
-    responseTransport: "probe-passed",
-    streaming: "probe-passed",
-    tools: "documented",
-    preservedThinking: "unknown",
-  },
-};
-
-/**
  * Muse Glimmer hosted-NIM observation. NVIDIA documents text/image input,
  * a 131,072-token context, top-level reasoning_effort, tool requests, and
  * separate reasoning_content. Live probes confirmed streaming, usage, and
@@ -226,47 +184,6 @@ export const MUSE_GLIMMER_30B_REASONING_CAPABILITY: ReasoningCapability = {
     responseTransport: "probe-passed",
     streaming: "probe-passed",
     tools: "documented",
-    preservedThinking: "unknown",
-  },
-};
-
-/**
- * Step-3.7 Flash hosted-NIM observation. NVIDIA's model page documents
- * low/medium/high effort and the live endpoint returned reasoning_content for
- * top-level and nested reasoning_effort requests. The hosted endpoint did not
- * honor the standard enable_thinking=false switch in this probe.
- *
- * References:
- * - https://build.nvidia.com/stepfun-ai/step-3.7-flash.md
- * - https://platform.stepfun.ai/docs/en/guides/models/step-3.7-flash
- * - https://huggingface.co/stepfun-ai/Step-3.7-Flash/discussions/14
- */
-export const STEP_37_REASONING_CAPABILITY: ReasoningCapability = {
-  modelId: "stepfun-ai/step-3.7-flash",
-  semantics: {
-    defaultEnabled: true,
-    canDisable: false,
-    supportsEffort: true,
-    acceptedEfforts: ["low", "medium", "high"],
-    effectiveEffortMapping: {
-      low: "low",
-      medium: "medium",
-      high: "high",
-    },
-    supportsInterleavedThinking: "unknown",
-    supportsPreservedThinking: "unknown",
-    responseField: "reasoning_content",
-  },
-  nimTransport: {
-    requestEncoding: "reasoning-effort",
-    responseEncoding: "reasoning_content",
-  },
-  verification: {
-    semantics: "documented",
-    requestTransport: "probe-passed",
-    responseTransport: "probe-passed",
-    streaming: "probe-passed",
-    tools: "claimed",
     preservedThinking: "unknown",
   },
 };
@@ -323,13 +240,60 @@ export const KIMI_K3_REASONING_CAPABILITY: ReasoningCapability = {
   },
 };
 
+/**
+ * GLM 5.3 hosted-NIM observation.
+ *
+ * Thinking is always on: NVIDIA's card states that the generation prompt opens
+ * a think block unconditionally, and live requests with `enable_thinking: false`
+ * or `thinking: {type: "disabled"}` still produced separate reasoning_content.
+ * The effort ladder is documented as low/high/max (default max; any other value
+ * falls back to max) and live probes on the hosted endpoint confirmed the depth
+ * ordering (low 11 / max 477 reasoning chars on the same prompt). `clear_thinking`
+ * defaults to false in the chat template, so chat scenarios pass true explicitly
+ * through chat_template_kwargs. The build-page slug is `z-ai/glm-5-3`, not the
+ * dotted API ID.
+ *
+ * References:
+ * - https://build.nvidia.com/z-ai/glm-5-3 (card)
+ * - https://recipes.vllm.ai/zai-org/GLM-5.3
+ * - https://huggingface.co/zai-org/GLM-5.3
+ */
+export const GLM_53_REASONING_CAPABILITY: ReasoningCapability = {
+  modelId: "z-ai/glm-5.3",
+  semantics: {
+    defaultEnabled: true,
+    canDisable: false,
+    supportsEffort: true,
+    acceptedEfforts: ["low", "high", "max"],
+    effectiveEffortMapping: {
+      low: "low",
+      high: "high",
+      max: "max",
+    },
+    supportsInterleavedThinking: "unknown",
+    supportsPreservedThinking: false,
+    responseField: "reasoning_content",
+  },
+  nimTransport: {
+    requestEncoding: "reasoning-effort",
+    responseEncoding: "reasoning_content",
+  },
+  verification: {
+    semantics: "documented",
+    requestTransport: "probe-passed",
+    responseTransport: "probe-passed",
+    streaming: "probe-passed",
+    tools: "probe-passed",
+    preservedThinking: "documented",
+  },
+};
+
 const CAPABILITIES = new Map<string, ReasoningCapability>([
   [DEEPSEEK_V4_FLASH_REASONING_CAPABILITY.modelId, DEEPSEEK_V4_FLASH_REASONING_CAPABILITY],
+  [GLM_53_REASONING_CAPABILITY.modelId, GLM_53_REASONING_CAPABILITY],
   [KIMI_K3_REASONING_CAPABILITY.modelId, KIMI_K3_REASONING_CAPABILITY],
   [LAGUNA_XS_21_REASONING_CAPABILITY.modelId, LAGUNA_XS_21_REASONING_CAPABILITY],
-  [MINIMAX_M3_REASONING_CAPABILITY.modelId, MINIMAX_M3_REASONING_CAPABILITY],
   [MUSE_GLIMMER_30B_REASONING_CAPABILITY.modelId, MUSE_GLIMMER_30B_REASONING_CAPABILITY],
-  [STEP_37_REASONING_CAPABILITY.modelId, STEP_37_REASONING_CAPABILITY],
 ]);
 
 export function getReasoningCapability(modelId: string): ReasoningCapability | undefined {

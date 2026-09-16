@@ -122,35 +122,6 @@ export function applyCustomThinkingFormat(
       // branch that used to live here was dropped with the retired GLM-5.2.)
       return { modified: false };
     }
-    case "minimax-inline": {
-      if (!hasThinkingParams) return { modified: false };
-      // MiniMax M3: thinking_mode in chat_template_kwargs.
-      // Maps pi thinking levels to 3 NIM modes:
-      //   "disabled" — no thinking
-      //   "adaptive" — model decides when to think (native MiniMax default)
-      //   "enabled"  — always think at full strength (NIM-specific override)
-      const thinkingOn = hasEnabledThinking(payload);
-      const effort = getReasoningEffort(payload);
-      const kwargs = payload.chat_template_kwargs as Record<string, unknown> | undefined;
-
-      delete payload.thinking;
-      delete payload.reasoning_effort;
-
-      let thinkingMode: string;
-      if (!thinkingOn) {
-        thinkingMode = "disabled";
-      } else if (effort && ["xhigh", "max"].includes(effort)) {
-        thinkingMode = "enabled";
-      } else {
-        thinkingMode = "adaptive";
-      }
-
-      payload.chat_template_kwargs = {
-        ...(kwargs ?? {}),
-        thinking_mode: thinkingMode,
-      };
-      return { modified: true, thinkingEnabled: thinkingMode !== "disabled" };
-    }
     case "reasoning-effort": case "none": default: return { modified: false };
   }
 }

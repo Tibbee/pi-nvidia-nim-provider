@@ -2,7 +2,8 @@ import { writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 
 const BASE_URL = "https://integrate.api.nvidia.com/v1";
-const DEFAULT_MODEL = "z-ai/glm-5.2";
+// Defaults to the newest hosted GLM endpoint; GLM-5.2 was retired 2026-08-27.
+const DEFAULT_MODEL = "z-ai/glm-5.3";
 const DEFAULT_TIMEOUT_MS = 60000;
 const PROMPT = "Compute 17 times 19. Give the final answer and a short explanation.";
 
@@ -543,7 +544,7 @@ async function main(): Promise<void> {
 }
 
 if (hasFlag("--help")) {
-  console.log("Usage: npm run probe -- --model=z-ai/glm-5.2 [--cases=baseline-stream,current-extension-on] [--timeout-ms=30000] [--output=report.json]");
+  console.log("Usage: npm run probe -- --model=z-ai/glm-5.3 [--cases=baseline-stream,current-extension-on] [--timeout-ms=30000] [--output=report.json]");
   console.log("Credential: --api-key=... or NVIDIA_NIM_API_KEY/NVIDIA_API_KEY");
 } else {
   main().catch((error: unknown) => {

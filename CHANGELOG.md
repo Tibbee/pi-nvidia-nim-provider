@@ -2,6 +2,31 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.8.0] - 2026-09-16
+
+### Added
+
+- Added NVIDIA GLM-5.3 (`z-ai/glm-5.3`, text input) and GLM-5.3 Flash (`z-ai/glm-5.3-flash`, text/image input). Both carry a 1,048,576-token context and a 131,072-token output budget, and route through metadata alone: `thinkingFormat: reasoning-effort` with `reasoningEffortValues: low, high, max` produces `supportsReasoningEffort` with no `off` level, and `exampleRequestExtra` injects `chat_template_kwargs.clear_thinking: true`.
+- Added a reproducible comparison against Pi's built-in `nvidia` provider. `npm run compare:pi` now reports shared, official-only, and extension-only models plus all parameter and compatibility differences.
+
+### Fixed
+
+- Applied Pi's official NVIDIA compatibility baseline (`supportsStrictMode: false` and `supportsLongCacheRetention: false`) to every model family, including specific families that bypass the default catch-all.
+- Aligned both Llama 3.2 vision entries with Pi's official hosted catalog: text/image input, 128K context, and 4K/8K output limits.
+
+### Changed
+
+- Documented the HTTP 404 `Function '<uuid>': Not found for account` response in Troubleshooting. It comes from NVIDIA's NVCF routing layer when a model's function is not entitled for the caller's account, it is distinguishable from a retired model (`410 Gone`), and the fix is an NVIDIA-side access request rather than a client change.
+- Generalized build-page slug resolution in the metadata scraper: dotted model IDs now resolve through a dashed slug (`z-ai/glm-5.3` → `z-ai/glm-5-3`) using the markdown card as the existence check, so future `x.y` IDs work without a per-model special case.
+- Taught the scraper the GLM 5.3+ pattern (version-aware `/^z-ai\/glm-5\.[3-9]/`), including version-aware context/output fallbacks (1,048,576 / 131,072), the `low|high|max` effort ladder, `clear_thinking`, tool calling, and Flash's image input.
+- Stopped treating `max_tokens.default` as a maximum. It is the playground prefill (usually 1024); only a published `maximum` is now recorded, so a model with a 128K output budget can no longer be written down as 1024.
+- Added a retired/ghost ID guard to the scraper so a full refresh cannot resurrect models that are gone or unentitled, and refused single-model regeneration for those IDs.
+
+### Removed
+
+- Removed five end-of-life models that answer `410 Gone` on every request: `stepfun-ai/step-3.7-flash`, `nvidia/nemotron-3-nano-30b-a3b`, `openai/gpt-oss-120b`, `minimaxai/minimax-m3`, and `deepseek-ai/deepseek-v4-pro-0813`. The extension now ships 16 models, and the compatibility matrix no longer lists MiniMax M3, StepFun, or DeepSeek V4 Pro 0813.
+- Removed the orphaned `minimax-m3` and `stepfun` families, the unreachable `minimax-inline` handler branch and thinking format, and the MiniMax M3 / Step-3.7 Flash capability records.
+
 ## [1.7.1] - 2026-08-28
 
 ### Added

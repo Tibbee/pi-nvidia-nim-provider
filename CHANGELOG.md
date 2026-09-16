@@ -2,6 +2,12 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.8.1] - 2026-09-16
+
+### Fixed
+
+- GLM-5.3 and GLM-5.3 Flash now expose exactly the three efforts the hosted endpoint accepts — `low`, `high` and `max`. The derived effort map used to alias pi's `minimal`, `medium` and `xhigh` levels onto the nearest supported value, so the picker showed six levels for a model that supports three. Metadata can now carry an explicit `thinkingLevelMap`, and the scraper emits the verbatim ladder for GLM 5.3+; other `reasoning-effort` models are unchanged, so gpt-oss keeps its intentional `minimal` → `low` alias.
+
 ## [1.8.0] - 2026-09-16
 
 ### Added

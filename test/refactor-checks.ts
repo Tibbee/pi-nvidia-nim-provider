@@ -139,15 +139,24 @@ for (const id of RETIRED_2026_09) {
 }
 
 // GLM 5.3 and 5.3 Flash: thinking is always on (pi must hide the off level),
-// the effort ladder is low/high/max, and clear_thinking is injected from
-// metadata. Flash is multimodal upstream; GLM 5.3 itself is text-only.
+// the effort ladder is exactly low/high/max, and clear_thinking is injected
+// from metadata. Flash is multimodal upstream; GLM 5.3 itself is text-only.
+const GLM_53_LEVELS = {
+  off: null,
+  minimal: null,
+  low: "low",
+  medium: null,
+  high: "high",
+  xhigh: null,
+  max: "max",
+};
 for (const id of ["z-ai/glm-5.3", "z-ai/glm-5.3-flash"]) {
   const glm = STATIC_MODEL_MAP.get(id);
   assert.equal(glm?.reasoning, true, id);
   assert.equal(glm?.contextWindow, 1048576, id);
   assert.equal(glm?.maxTokens, 131072, id);
   assert.equal(glm?.compat?.supportsReasoningEffort, true, id);
-  assert.equal(glm?.thinkingLevelMap?.off, null, id);
+  assert.deepEqual(glm?.thinkingLevelMap, GLM_53_LEVELS, id);
   assert.deepEqual(
     glm?.exampleRequestExtra,
     { chat_template_kwargs: { clear_thinking: true } },
@@ -157,6 +166,10 @@ for (const id of ["z-ai/glm-5.3", "z-ai/glm-5.3-flash"]) {
 assert.deepEqual(STATIC_MODEL_MAP.get("z-ai/glm-5.3")?.input, ["text"]);
 assert.deepEqual(STATIC_MODEL_MAP.get("z-ai/glm-5.3-flash")?.input, ["text", "image"]);
 assert.equal(classifyThinkingFormat("z-ai/glm-5.3"), "none");
+
+// A metadata-provided ladder must not change how other reasoning-effort models
+// are presented: gpt-oss keeps its intentional minimal -> low alias.
+assert.equal(STATIC_MODEL_MAP.get("openai/gpt-oss-20b")?.thinkingLevelMap?.minimal, "low");
 
 // Ghost 2026-08: listed in the catalog but chat requests 404
 // "Function not found for account" (dead routing, not EOL-announced).

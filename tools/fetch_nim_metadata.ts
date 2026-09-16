@@ -76,6 +76,7 @@ interface ModelMetadata {
   supportsVision?: boolean;
   supportsReasoning?: boolean;
   thinkingFormat?: string;
+  thinkingLevelMap?: Record<string, string | null>;
   reasoningEffortValues?: string[];
   reasoningEffortDefault?: string;
   reasoningBudget?: number;
@@ -626,6 +627,21 @@ function parseMetadataFromSpec(meta: ModelMetadata, spec: any): void {
 // Model-ID-based heuristics (unchanged fallbacks)
 // ─────────────────────────────────────────────────────────────
 
+// Exact pi thinking-level map for a model that accepts a fixed effort ladder:
+// a level is offered only when the endpoint accepts that effort verbatim, so
+// unsupported pi levels are hidden rather than aliased onto a neighbour.
+function buildExactThinkingLevelMap(
+  values: string[],
+): Record<string, string | null> {
+  const accepted = new Set(values.map((value) => value.toLowerCase()));
+  const map: Record<string, string | null> = {};
+  for (const level of ["off", "minimal", "low", "medium", "high", "xhigh", "max"]) {
+    const providerValue = level === "off" ? "none" : level;
+    map[level] = accepted.has(providerValue) ? providerValue : null;
+  }
+  return map;
+}
+
 function detectThinkingFormat(modelId: string, _text?: string): string | undefined {
   if (/^meta\/muse-glimmer/.test(modelId)) return "reasoning-effort";
   if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
@@ -860,6 +876,13 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   if (/^z-ai\/glm-5\.[3-9]/.test(modelId)) {
     if (!meta.reasoningEffortValues?.length) {
       meta.reasoningEffortValues = ["low", "high", "max"];
+    }
+    // Hosted GLM accepts exactly three efforts and cannot disable thinking.
+    // Emit the verbatim ladder so pi offers low/high/max instead of aliasing
+    // minimal/medium/xhigh onto the nearest supported value. Scoped to GLM:
+    // other sparse families (gpt-oss) intentionally alias minimal -> low.
+    if (!meta.thinkingLevelMap) {
+      meta.thinkingLevelMap = buildExactThinkingLevelMap(meta.reasoningEffortValues);
     }
     const kwargs = meta.exampleRequestExtra?.chat_template_kwargs as Record<string, unknown> | undefined;
     if (!kwargs?.clear_thinking) {

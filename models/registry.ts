@@ -13,6 +13,7 @@ interface MetadataEntry {
   reasoningBudget?: number;
   reasoningEffortValues?: string[];
   thinkingFormat?: string;
+  thinkingLevelMap?: Partial<Record<"off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max", string | null>>;
   exampleRequestExtra?: Record<string, unknown>;
 }
 
@@ -80,10 +81,14 @@ export function buildReasoningEffortThinkingLevelMap(
 // One metadata row → one provider model.
 function metadataToModelConfig(entry: MetadataEntry): NimModelConfig {
   const compat = mapThinkingFormatToCompat(entry.thinkingFormat, entry.id);
+  // An explicit ladder wins over the derived one: hosted endpoints with a
+  // sparse effort set (GLM 5.3 accepts only low/high/max) publish the exact
+  // levels so pi hides the rest instead of aliasing them onto a neighbour.
   const thinkingLevelMap =
-    entry.thinkingFormat === "reasoning-effort"
+    entry.thinkingLevelMap ??
+    (entry.thinkingFormat === "reasoning-effort"
       ? buildReasoningEffortThinkingLevelMap(entry.reasoningEffortValues)
-      : undefined;
+      : undefined);
 
   return {
     id: entry.id,

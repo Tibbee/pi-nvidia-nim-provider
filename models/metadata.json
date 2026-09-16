@@ -430,6 +430,15 @@
       "high",
       "max"
     ],
+    "thinkingLevelMap": {
+      "off": null,
+      "minimal": null,
+      "low": "low",
+      "medium": null,
+      "high": "high",
+      "xhigh": null,
+      "max": "max"
+    },
     "exampleRequestExtra": {
       "chat_template_kwargs": {
         "clear_thinking": true
@@ -447,6 +456,15 @@
       "high",
       "max"
     ],
+    "thinkingLevelMap": {
+      "off": null,
+      "minimal": null,
+      "low": "low",
+      "medium": null,
+      "high": "high",
+      "xhigh": null,
+      "max": "max"
+    },
     "exampleRequestExtra": {
       "chat_template_kwargs": {
         "clear_thinking": true

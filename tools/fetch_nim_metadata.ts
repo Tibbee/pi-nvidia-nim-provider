@@ -131,7 +131,11 @@ function getYardstickFallback(modelId: string): { contextWindow?: number; maxOut
     { re: /deepseek-v4/i, ctx: 1000000, out: 16384 },
     // Inkling's upstream config declares a 1M-token context window.
     { re: /thinkingmachines\/inkling/i, ctx: 1048576, out: 16384 },
-    { re: /glm-5/i, ctx: 200000, out: 32768 },
+    // GLM 5.3+ carries a 1,048,576-token context and a 128K upstream generation
+    // cap; the build card omits max_tokens.maximum, so these fallbacks hold the
+    // version-aware values. Legacy GLM-5.x (retired) keeps the 1M/128K shape.
+    { re: /^z-ai\/glm-5\.[3-9]/, ctx: 1048576, out: 131072 },
+    { re: /^z-ai\/glm-5(?:\.[0-2])?$/, ctx: 1000000, out: 131072 },
     { re: /nemotron-3-super/i, ctx: 1000000, out: 32768 },
     { re: /nemotron-mini/i, ctx: 4096, out: 4096 },
     { re: /nemotron-nano/i, ctx: 4096, out: 4096 },
@@ -149,6 +153,14 @@ function getYardstickFallback(modelId: string): { contextWindow?: number; maxOut
 
 const FALLBACK_LIMITS_MAP: Record<string, { contextWindow?: number; maxOutputTokens?: number }> = {
   "deepseek-ai/deepseek-v4-flash-0731": { contextWindow: 1000000, maxOutputTokens: 16384 },
+  // GLM-5.3-Flash has no build page at all (only the Flash-free GLM-5.3 card
+  // exists), so the slug resolver cannot find a spec for it. Upstream documents
+  // image/video input and the same 1M context / 128K generation cap.
+  "z-ai/glm-5.3-flash": { contextWindow: 1048576, maxOutputTokens: 131072 },
+  // Pi's built-in NVIDIA catalog reports the hosted Llama 3.2 vision
+  // endpoints as 128K context with 4K/8K output limits.
+  "meta/llama-3.2-11b-vision-instruct": { contextWindow: 128000, maxOutputTokens: 4096 },
+  "meta/llama-3.2-90b-vision-instruct": { contextWindow: 128000, maxOutputTokens: 8192 },
   // Kimi K3 is officially listed since 2026-08-28 and the card reports
   // contextWindow 1048576 / maxOutputTokens 65536 / reasoningEffort low,
   // high, max — these fallback values now mirror that card and are only
@@ -160,6 +172,46 @@ const FALLBACK_LIMITS_MAP: Record<string, { contextWindow?: number; maxOutputTok
   "nvidia/nemotron-4-340b-reward": { contextWindow: 4096, maxOutputTokens: 4096 },
   "nvidia/nv-embedqa-mistral-7b-v2": { contextWindow: 32768, maxOutputTokens: 8192 },
 };
+
+const RETIRED_MODEL_IDS = new Set<string>([
+  // Retired 2026-08/09 (HTTP 410 Gone) — the catalog drops these, but the
+  // /modelcard page keeps answering 200, so filter them by ID as well.
+  "stepfun-ai/step-3.7-flash",
+  "nvidia/nemotron-3-nano-30b-a3b",
+  "openai/gpt-oss-120b",
+  "minimaxai/minimax-m3",
+  "deepseek-ai/deepseek-v4-pro-0813",
+  "meta/llama-3.1-70b-instruct",
+  "meta/llama-3.1-8b-instruct",
+  "meta/llama-3.2-1b-instruct",
+  "meta/llama-3.2-3b-instruct",
+  "meta/llama-3.3-70b-instruct",
+  "nvidia/llama-3.1-nemotron-nano-8b-v1",
+  "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
+  "nvidia/llama-3.3-nemotron-super-49b-v1",
+  "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+  "nvidia/nemotron-mini-4b-instruct",
+  "nvidia/nemotron-nano-12b-v2-vl",
+  "nvidia/nvidia-nemotron-nano-9b-v2",
+  "microsoft/phi-4-mini-instruct",
+  "microsoft/phi-4-multimodal-instruct",
+  "nvidia/nemotron-3-content-safety",
+  "nvidia/nemotron-content-safety-reasoning-4b",
+  "thinkingmachines/inkling",
+  "z-ai/glm-5.2",
+  // Listed in /v1/models but every chat request answers 404 "Function ...:
+  // Not found for account" (dead routing, not an announced EOL).
+  "moonshotai/kimi-k2.6",
+  "nvidia/nemotron-nano-3-30b-a3b",
+  "google/gemma-3-4b-it",
+  "google/gemma-3-12b-it",
+  "mistralai/mistral-7b-instruct-v0.3",
+  "nvidia/llama-3.1-nemotron-70b-instruct",
+  "nvidia/llama-3.1-nemotron-51b-instruct",
+  "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+  "nvidia/nemotron-4-340b-instruct",
+  "nvidia/vila",
+]);
 
 // ─────────────────────────────────────────────────────────────
 // Fetch utilities
@@ -450,12 +502,16 @@ function parseMetadataFromSpec(meta: ModelMetadata, spec: any): void {
   // ── max output tokens ──
   const mtProp = chatReqProps.max_tokens ?? chatReqProps.max_completion_tokens;
   if (mtProp) {
+    // Only `maximum` is a published ceiling. `default` is the playground's
+    // prefill (usually 1024) and must never be recorded as a cap, or a model
+    // with a 128K output budget would be written down as 1024 tokens.
     const limit: number =
       mtProp.maximum ??
-      (mtProp.anyOf as any[])?.find((s: any) => s.maximum != null)?.maximum ??
-      mtProp.default;
+      (mtProp.anyOf as any[])?.find((s: any) => s.maximum != null)?.maximum;
     if (limit != null && isFinite(limit) && limit >= MIN_REASONABLE_MAX_OUTPUT) {
       meta.maxOutputTokens = limit;
+    } else if (verbose) {
+      console.log("  ⚠ no max_tokens.maximum published; using fallback limits");
     }
   }
 
@@ -577,6 +633,11 @@ function detectThinkingFormat(modelId: string, _text?: string): string | undefin
   if (/^openai\/gpt-oss/.test(modelId)) return "reasoning-effort";
   if (/^poolside\/laguna-xs-2\.1$/.test(modelId)) return "qwen-chat-template";
 
+  // GLM 5.3+ exposes top-level reasoning_effort (low/high/max) and keeps
+  // thinking permanently on, so pi must offer the ladder without an off level.
+  // Version-aware: GLM 5.4/5.5 will match without a code change.
+  if (/^z-ai\/glm-5\.[3-9]/.test(modelId)) return "reasoning-effort";
+
   if (/^nvidia\/nemotron-3-super-120b-a12b/.test(modelId)) return "nemotron-3-super-effort";
   if (/^nvidia\/nemotron-3-ultra-550b/.test(modelId)) return "nemotron-3-super-effort";
   if (/^nvidia\/nemotron-3\.5-lightning/.test(modelId)) return "nemotron-3-super-effort";
@@ -592,6 +653,7 @@ function detectThinkingFormat(modelId: string, _text?: string): string | undefin
 function detectToolCalling(_html: string, modelId: string): boolean {
   if (/^meta\/muse-glimmer/i.test(modelId)) return true;
   if (/^moonshotai\/kimi-k3/i.test(modelId)) return true;
+  if (/^z-ai\/glm-5\.[3-9]/i.test(modelId)) return true;
   if (/llama-3\.[1-9]/i.test(modelId)) return true;
   if (/mistral(?!-7b)/i.test(modelId)) return true;
   if (/gemma-4/i.test(modelId)) return true;
@@ -638,6 +700,43 @@ function detectModelCategory(modelId: string, supportsReasoning: boolean): Model
 }
 
 // ─────────────────────────────────────────────────────────────
+// Build-page slug resolution
+// ─────────────────────────────────────────────────────────────
+
+// NVIDIA's build-page slugs do not always match the API model ID: version dots
+// are written as dashes (z-ai/glm-5.3 → z-ai/glm-5-3). Generate the candidates
+// in preference order so dotted and future x.y IDs resolve without a per-model
+// special case.
+export function buildSlugCandidates(modelId: string): string[] {
+  const dashed = modelId.replace(/\./g, "-");
+  return Array.from(new Set([modelId, dashed]));
+}
+
+// build.nvidia.com serves a 200 SPA shell for unknown slugs, so HTTP status
+// alone proves nothing. The markdown twin ("<slug>.md") returns a real 404 for
+// unknown slugs and real markdown for known ones, which makes it the reliable
+// existence check. Returns the first slug whose .md page exists.
+async function resolveBuildSlug(modelId: string): Promise<{ slug: string; markdown: string } | undefined> {
+  for (const slug of buildSlugCandidates(modelId)) {
+    try {
+      const res = await fetchWithRetry(
+        `${BUILD_BASE_URL}/${slug}.md`,
+        { signal: AbortSignal.timeout(15000) },
+        1,
+        800,
+      );
+      if (!res.ok) continue;
+      const markdown = await res.text();
+      if (markdown.trim() === "Not Found" || markdown.trim().length < 100) continue;
+      return { slug, markdown };
+    } catch {
+      // Try the next candidate.
+    }
+  }
+  return undefined;
+}
+
+// ─────────────────────────────────────────────────────────────
 // Per-model data fetching
 // ─────────────────────────────────────────────────────────────
 
@@ -649,9 +748,11 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     modelCategory: "chat",
   };
 
-  // ── 1. Fetch the modelcard page for OpenAPI spec data ──
+  // ── 1. Resolve the build-page slug, then fetch its modelcard for spec data ──
+  const resolved = await resolveBuildSlug(modelId);
   try {
-    const cardUrl = `${BUILD_BASE_URL}/${modelId}/modelcard`;
+    const cardSlug = resolved?.slug ?? modelId;
+    const cardUrl = `${BUILD_BASE_URL}/${cardSlug}/modelcard`;
     const res = await fetchWithRetry(cardUrl, { signal: AbortSignal.timeout(15000) });
     if (res.ok) {
       const html = await res.text();
@@ -681,11 +782,29 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     // Modelcard fetch failed — try the API reference below.
   }
 
+  // The markdown card often states values the HTML page renders client-side
+  // (context window, reasoning controls, tool calling).
+  if (resolved?.markdown) {
+    if (!meta.contextWindow) {
+      const mdContext = extractContextFromPageText(resolved.markdown);
+      if (mdContext != null) {
+        meta.contextWindow = mdContext;
+        if (verbose) console.log(`  ✓ context from markdown card: ${mdContext}`);
+      }
+    }
+    if (!meta.supportsReasoning && detectReasoningSupport(resolved.markdown)) {
+      meta.supportsReasoning = true;
+    }
+    if (!meta.supportsToolCalling && /Function Calling:\*\*\s*Supported/i.test(resolved.markdown)) {
+      meta.supportsToolCalling = true;
+    }
+  }
+
   // New model pages can appear in NVIDIA's ReadMe-powered API reference before
   // build.nvidia.com exposes a /modelcard payload. Its endpoint page embeds the
   // complete OpenAPI schema, so use it as a generated-metadata fallback.
   if (!meta.contextWindow || meta.maxOutputTokens == null) {
-    const docsSlug = modelId.replace(/\//g, "-");
+    const docsSlug = (resolved?.slug ?? modelId).replace(/\//g, "-");
     try {
       const inferUrl = `${DOCS_REFERENCE_BASE_URL}/${docsSlug}-infer`;
       const inferResponse = await fetchWithRetry(inferUrl, { signal: AbortSignal.timeout(20000) });
@@ -724,6 +843,36 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   // Inkling's hosted model card describes text/image/audio input, while its
   // OpenAPI schema currently exposes only the text request shape.
   if (/^thinkingmachines\/inkling$/.test(modelId) && !meta.supportsVision) {
+    meta.supportsVision = true;
+    meta.inputModalities = ["text", "image"];
+  }
+
+  // Pi's built-in NVIDIA catalog identifies the Llama 3.2 vision endpoints as
+  // text/image models even when their hosted OpenAPI schema is text-only.
+  if (/^meta\/llama-3\.2-(?:11b|90b)-vision-instruct$/.test(modelId)) {
+    meta.supportsVision = true;
+    meta.inputModalities = ["text", "image"];
+  }
+
+  // GLM 5.3+ publishes its effort ladder and chat-template flags in the model
+  // description rather than the request schema, and the schema carries no
+  // chat_template_kwargs default, so set both explicitly.
+  if (/^z-ai\/glm-5\.[3-9]/.test(modelId)) {
+    if (!meta.reasoningEffortValues?.length) {
+      meta.reasoningEffortValues = ["low", "high", "max"];
+    }
+    const kwargs = meta.exampleRequestExtra?.chat_template_kwargs as Record<string, unknown> | undefined;
+    if (!kwargs?.clear_thinking) {
+      meta.exampleRequestExtra = {
+        ...(meta.exampleRequestExtra ?? {}),
+        chat_template_kwargs: { ...(kwargs ?? {}), clear_thinking: true },
+      };
+    }
+  }
+
+  // Models whose build card is missing or omits modalities, but whose upstream
+  // config documents image input. GLM-5.3 itself is text-only per its card.
+  if (/^z-ai\/glm-5\.3-flash$/.test(modelId)) {
     meta.supportsVision = true;
     meta.inputModalities = ["text", "image"];
   }
@@ -794,6 +943,13 @@ async function main() {
     let models: { id: string; owned_by: string }[];
 
     if (singleModel) {
+      if (RETIRED_MODEL_IDS.has(singleModel)) {
+        console.error(
+          `Refusing to regenerate retired/ghost model '${singleModel}'. ` +
+          `Remove it from RETIRED_MODEL_IDS if NVIDIA re-enables it.`,
+        );
+        process.exit(1);
+      }
       console.log(`${updateMode ? "Updating" : "Testing"} single model: ${singleModel}`);
       const org = singleModel.split("/")[0];
       models = [{ id: singleModel, owned_by: org }];
@@ -858,6 +1014,16 @@ async function main() {
     const rawModels = await fetchModelIds(NVIDIA_API_KEY!);
     const modelMap = new Map<string, { id: string; owned_by: string }>();
     for (const m of rawModels) modelMap.set(m.id, m);
+
+    // Retired and ghost IDs still appear in the catalog (and their /modelcard
+    // pages keep answering 200), so a full refresh would silently resurrect
+    // them. test/refactor-checks.ts asserts the same exclusions.
+    const skipped = Array.from(modelMap.keys()).filter((id) => RETIRED_MODEL_IDS.has(id));
+    for (const id of skipped) modelMap.delete(id);
+    if (skipped.length > 0) {
+      console.log(`Skipping ${skipped.length} retired/ghost model(s): ${skipped.join(", ")}`);
+    }
+
     const allModels = Array.from(modelMap.values());
 
     console.log(`Fetching ${allModels.length} models (batchSize=${BATCH_SIZE}, delay=${DELAY_MS}ms)...`);

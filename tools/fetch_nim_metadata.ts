@@ -688,7 +688,10 @@ function detectToolCallFormat(modelId: string): ToolCallFormat | undefined {
   return undefined;
 }
 
-function detectStructuredOutput(modelId: string): boolean {
+function detectStructuredOutput(modelId: string, cardText?: string): boolean {
+  // Model cards state it in a Capabilities list ("**Structured Output:** Supported"),
+  // which is stronger evidence than the ID heuristics below.
+  if (cardText && /structured\s+output[^.\n]{0,20}supported/i.test(cardText)) return true;
   if (/response_format/i.test(modelId)) return true;
   if (/llama-3\.[1-9]/i.test(modelId)) return true;
   if (/mistral/i.test(modelId)) return true;
@@ -915,7 +918,7 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   }
 
   if (meta.supportsStructuredOutput == null) {
-    meta.supportsStructuredOutput = detectStructuredOutput(modelId);
+    meta.supportsStructuredOutput = detectStructuredOutput(modelId, resolved?.markdown);
   }
 
   // ── 3. Apply yardstick / manual fallbacks for numeric limits ──

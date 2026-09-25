@@ -20,23 +20,12 @@
     "supportsVision": false
   },
   {
-    "id": "deepseek-ai/deepseek-v4-flash-0731",
-    "maxOutputTokens": 16384,
-    "reasoningEffortValues": [
-      "none",
-      "high",
-      "max"
-    ],
-    "exampleRequestExtra": {
-      "chat_template_kwargs": {
-        "thinking": true,
-        "reasoning_effort": "max"
-      }
-    },
+    "id": "deepseek-ai/deepseek-v4.1-flash",
+    "maxOutputTokens": 262144,
+    "supportsVision": true,
     "supportsReasoning": true,
-    "thinkingFormat": "deepseek-v4",
-    "contextWindow": 1000000,
-    "supportsVision": false
+    "contextWindow": 1048576,
+    "thinkingFormat": "deepseek-v4"
   },
   {
     "id": "google/codegemma-1.1-7b",

@@ -6,7 +6,7 @@ const MODELS = [
   "google/gemma-4-31b-it",
   "meta/llama-3.2-90b-vision-instruct",
   "poolside/laguna-xs-2.1",
-  "deepseek-ai/deepseek-v4-flash-0731",
+  "deepseek-ai/deepseek-v4.1-flash",
 ];
 for (const id of MODELS) {
   const t0 = Date.now();

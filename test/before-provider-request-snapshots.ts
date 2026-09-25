@@ -15,25 +15,6 @@ function run(provider: string, payload: Record<string, unknown>) {
 
 const cases = [
   {
-    name: "deepseek-v4-flash rewrites to chat_template_kwargs",
-    provider: "nvidia-nim",
-    payload: {
-      model: "deepseek-ai/deepseek-v4-flash-0731",
-      thinking: { type: "enabled" },
-      reasoning_effort: "high",
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "deepseek-ai/deepseek-v4-flash-0731",
-      messages: [{ role: "user", content: "hello" }],
-      chat_template_kwargs: {
-        thinking: true,
-        reasoning_effort: "high",
-      },
-      max_tokens: 16384,
-    },
-  },
-  {
     name: "kimi-k3 passes reasoning_effort through when enabled",
     provider: "nvidia-nim",
     payload: {
@@ -183,6 +164,72 @@ const cases = [
       chat_template_kwargs: { enable_thinking: true, preserve_thinking: true },
       messages: [{ role: "user", content: "hello" }],
       max_tokens: 16384,
+    },
+  },
+  {
+    name: "deepseek-v4.1-flash rewrites thinking + effort into chat_template_kwargs",
+    provider: "nvidia-nim",
+    payload: {
+      model: "deepseek-ai/deepseek-v4.1-flash",
+      thinking: { type: "enabled" },
+      reasoning_effort: "high",
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "deepseek-ai/deepseek-v4.1-flash",
+      messages: [{ role: "user", content: "hello" }],
+      chat_template_kwargs: {
+        thinking: true,
+        reasoning_effort: "high",
+      },
+      max_tokens: 262144,
+    },
+  },
+  {
+    name: "deepseek-v4.1-flash disables thinking boolean-only",
+    provider: "nvidia-nim",
+    payload: {
+      model: "deepseek-ai/deepseek-v4.1-flash",
+      thinking: { type: "disabled" },
+      reasoning_effort: "none",
+      messages: [{ role: "user", content: "hello" }],
+    },
+    expected: {
+      model: "deepseek-ai/deepseek-v4.1-flash",
+      messages: [{ role: "user", content: "hello" }],
+      chat_template_kwargs: {
+        thinking: false,
+      },
+      max_tokens: 262144,
+    },
+  },
+  {
+    name: "deepseek-v4.1-flash keeps image content parts intact",
+    provider: "nvidia-nim",
+    payload: {
+      model: "deepseek-ai/deepseek-v4.1-flash",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "describe this" },
+            { type: "image_url", image_url: { url: "data:image/png;base64,AAAA" } },
+          ],
+        },
+      ],
+    },
+    expected: {
+      model: "deepseek-ai/deepseek-v4.1-flash",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "describe this" },
+            { type: "image_url", image_url: { url: "data:image/png;base64,AAAA" } },
+          ],
+        },
+      ],
+      max_tokens: 262144,
     },
   },
   {

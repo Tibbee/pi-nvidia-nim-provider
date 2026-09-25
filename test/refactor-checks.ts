@@ -10,7 +10,7 @@ import {
 import { applyFamilyCompat } from "../config/model-families";
 import type { NimModelConfig } from "../models/types";
 import {
-  DEEPSEEK_V4_FLASH_REASONING_CAPABILITY,
+  DEEPSEEK_V41_FLASH_REASONING_CAPABILITY,
   GLM_53_REASONING_CAPABILITY,
   KIMI_K3_REASONING_CAPABILITY,
   LAGUNA_XS_21_REASONING_CAPABILITY,
@@ -70,7 +70,7 @@ assert.equal(genericNim.compat?.supportsStrictMode, false);
 assert.equal(genericNim.compat?.supportsLongCacheRetention, false);
 
 const deepSeekNim = applyFamilyCompat([
-  baseModel("deepseek-ai/deepseek-v4-flash-0731"),
+  baseModel("deepseek-ai/deepseek-v4.1-flash"),
 ])[0];
 assert.equal(deepSeekNim.compat?.supportsStrictMode, false);
 assert.equal(deepSeekNim.compat?.supportsLongCacheRetention, false);
@@ -87,9 +87,11 @@ assert.equal(
 assert.equal(STATIC_MODELS.some((model) => model.id === "baai/bge-m3"), false);
 
 // Retired DeepSeek V4 endpoints must not resurface in the static list.
-assert.equal(STATIC_MODELS.some((model) => model.id === "deepseek-ai/deepseek-v4-flash"), false);
-assert.equal(STATIC_MODELS.some((model) => model.id === "deepseek-ai/deepseek-v4-pro"), false);
-assert.equal(STATIC_MODEL_MAP.has("deepseek-ai/deepseek-v4-flash-0731"), true);
+assert.equal(STATIC_MODEL_MAP.has("deepseek-ai/deepseek-v4-flash"), false);
+assert.equal(STATIC_MODEL_MAP.has("deepseek-ai/deepseek-v4-pro"), false);
+// End of life 2026-09-21 (HTTP 410 Gone) — removed from the catalog.
+assert.equal(STATIC_MODEL_MAP.has("deepseek-ai/deepseek-v4-flash-0731"), false);
+assert.equal(STATIC_MODEL_MAP.has("deepseek-ai/deepseek-v4.1-flash"), true);
 
 // Retired 2026-07/08 (HTTP 410 Gone). Must not be re-added by future scraper runs.
 const RETIRED_2026 = [
@@ -123,7 +125,7 @@ for (const id of RETIRED_2026) {
   assert.equal(STATIC_MODEL_MAP.has(id), false, id);
 }
 
-// Retired 2026-08-28 → 2026-09-14 (HTTP 410 Gone). Each ID answers with an
+// Retired 2026-08-28 → 2026-09-21 (HTTP 410 Gone). Each ID answers with an
 // explicit "reached its end of life on <date>" body on every attempt and is
 // absent from /v1/models; the /modelcard pages still return 200, so the
 // aliveness sweep — not the build page — is the liveness signal.
@@ -133,6 +135,7 @@ const RETIRED_2026_09 = [
   "openai/gpt-oss-120b",
   "minimaxai/minimax-m3",
   "deepseek-ai/deepseek-v4-pro-0813",
+  "deepseek-ai/deepseek-v4-flash-0731",
 ];
 for (const id of RETIRED_2026_09) {
   assert.equal(STATIC_MODEL_MAP.has(id), false, id);
@@ -229,7 +232,7 @@ for (const id of GHOST_2026_08) {
 
 // 4) Known models should still classify as expected.
 assert.equal(
-  classifyThinkingFormat("deepseek-ai/deepseek-v4-flash-0731"),
+  classifyThinkingFormat("deepseek-ai/deepseek-v4.1-flash"),
   "deepseek-v4"
 );
 const deepseekV4Levels = {
@@ -241,10 +244,29 @@ const deepseekV4Levels = {
   xhigh: null,
   max: "max",
 };
-for (const modelId of ["deepseek-ai/deepseek-v4-flash-0731"]) {
+for (const modelId of ["deepseek-ai/deepseek-v4.1-flash"]) {
   const model = STATIC_MODEL_MAP.get(modelId);
   assert.deepEqual(model?.thinkingLevelMap, deepseekV4Levels, modelId);
 }
+
+// DeepSeek V4.1-Flash: multimodal, a 1,048,576-token combined window, and the
+// same chat_template_kwargs thinking transport as the V4 Flash line — probed on
+// 2026-09-25 (thinking:false suppressed reasoning, reasoning_effort "max"
+// deepened it), so it inherits the deepseek-v4 family ladder and hidden
+// intermediate levels. Its output cap is the card's 262,144-token default
+// rather than the 1,048,576-token parameter maximum (which equals the whole
+// context window).
+const deepseekV41 = STATIC_MODEL_MAP.get("deepseek-ai/deepseek-v4.1-flash");
+assert.ok(deepseekV41);
+assert.equal(deepseekV41.reasoning, true);
+assert.deepEqual(deepseekV41.input, ["text", "image"]);
+assert.equal(deepseekV41.contextWindow, 1048576);
+assert.equal(deepseekV41.maxTokens, 262144);
+assert.equal(classifyThinkingFormat("deepseek-ai/deepseek-v4.1-flash"), "deepseek-v4");
+assert.equal(deepseekV41.compat?.supportsReasoningEffort, true);
+assert.equal(deepseekV41.compat?.requiresReasoningContentOnAssistantMessages, true);
+assert.equal(deepseekV41.compat?.maxTokensField, "max_tokens");
+assert.deepEqual(deepseekV41.thinkingLevelMap, deepseekV4Levels);
 assert.equal(classifyThinkingFormat("openai/gpt-oss-20b"), "none");
 assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.reasoning, true);
 assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.compat?.thinkingFormat, "qwen-chat-template");
@@ -305,8 +327,15 @@ assert.deepEqual(KIMI_K3_REASONING_CAPABILITY.semantics.acceptedEfforts, ["low",
 assert.equal(KIMI_K3_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
 assert.equal(KIMI_K3_REASONING_CAPABILITY.verification.tools, "probe-passed");
 assert.equal(KIMI_K3_REASONING_CAPABILITY.verification.streaming, "probe-passed");
-assert.equal(getReasoningCapability("deepseek-ai/deepseek-v4-flash-0731"), DEEPSEEK_V4_FLASH_REASONING_CAPABILITY);
-assert.equal(DEEPSEEK_V4_FLASH_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
+// The dotted V4.1 release declares no Jinja template but implements the same
+// kwargs protocol on the hosted endpoint (probed 2026-09-25), so its transport
+// claims mirror what the probes observed.
+assert.equal(getReasoningCapability("deepseek-ai/deepseek-v4.1-flash"), DEEPSEEK_V41_FLASH_REASONING_CAPABILITY);
+assert.equal(DEEPSEEK_V41_FLASH_REASONING_CAPABILITY.semantics.canDisable, true);
+assert.deepEqual(DEEPSEEK_V41_FLASH_REASONING_CAPABILITY.semantics.acceptedEfforts, ["none", "high", "max"]);
+assert.equal(DEEPSEEK_V41_FLASH_REASONING_CAPABILITY.nimTransport.requestEncoding, "chat-template-kwargs");
+assert.equal(DEEPSEEK_V41_FLASH_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
+assert.equal(DEEPSEEK_V41_FLASH_REASONING_CAPABILITY.verification.responseTransport, "probe-passed");
 assert.equal(getReasoningCapability("poolside/laguna-xs-2.1"), LAGUNA_XS_21_REASONING_CAPABILITY);
 assert.equal(LAGUNA_XS_21_REASONING_CAPABILITY.nimTransport.requestEncoding, "chat-template-kwargs");
 assert.equal(LAGUNA_XS_21_REASONING_CAPABILITY.verification.requestTransport, "probe-passed");
@@ -366,7 +395,7 @@ handleAfterProviderResponse({ status: 429, headers: {} }, undefined as any);
 
 // 8) DeepSeek V4 rewrite should move thinking fields into chat_template_kwargs.
 const deepseekPayload = {
-  model: "deepseek-ai/deepseek-v4-flash-0731",
+  model: "deepseek-ai/deepseek-v4.1-flash",
   thinking: { type: "enabled" },
   reasoning_effort: "high",
   messages: [],

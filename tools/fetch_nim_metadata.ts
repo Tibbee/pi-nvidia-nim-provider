@@ -153,7 +153,6 @@ function getYardstickFallback(modelId: string): { contextWindow?: number; maxOut
 }
 
 const FALLBACK_LIMITS_MAP: Record<string, { contextWindow?: number; maxOutputTokens?: number }> = {
-  "deepseek-ai/deepseek-v4-flash-0731": { contextWindow: 1000000, maxOutputTokens: 16384 },
   // GLM-5.3-Flash has no build page at all (only the Flash-free GLM-5.3 card
   // exists), so the slug resolver cannot find a spec for it. Upstream documents
   // image/video input and the same 1M context / 128K generation cap.
@@ -172,6 +171,23 @@ const FALLBACK_LIMITS_MAP: Record<string, { contextWindow?: number; maxOutputTok
   "ibm/granite-8b-code-instruct": { contextWindow: 131072, maxOutputTokens: 8192 },
   "nvidia/nemotron-4-340b-reward": { contextWindow: 4096, maxOutputTokens: 4096 },
   "nvidia/nv-embedqa-mistral-7b-v2": { contextWindow: 32768, maxOutputTokens: 8192 },
+  // DeepSeek V4.1-Flash's card publishes the full 1,048,576-token combined
+  // window (matching the API reference) and a 262,144-token max_tokens default.
+  "deepseek-ai/deepseek-v4.1-flash": { contextWindow: 1048576, maxOutputTokens: 262144 },
+};
+
+// Some cards publish max_tokens.maximum as the whole combined input+output
+// window. That bounds the parameter, not an achievable output budget: prompt
+// and completion share the window, so a cap equal to it leaves no room for the
+// prompt it must accompany (nothing stops a client from asking for more output
+// than the remaining context can hold). Pi sizes requests with its own
+// `contextWindow - prompt - safety` clamp, so the shipped cap should describe
+// the endpoint's real operating point instead. The card's own default is that
+// operating point — the value the endpoint uses when the caller does not
+// choose — and for DeepSeek V4.1-Flash it is 262,144, matching NVIDIA's
+// "max_tokens of at least 256K" recommendation.
+const MAX_OUTPUT_TOKEN_OVERRIDES: Record<string, number> = {
+  "deepseek-ai/deepseek-v4.1-flash": 262144,
 };
 
 const RETIRED_MODEL_IDS = new Set<string>([
@@ -182,6 +198,10 @@ const RETIRED_MODEL_IDS = new Set<string>([
   "openai/gpt-oss-120b",
   "minimaxai/minimax-m3",
   "deepseek-ai/deepseek-v4-pro-0813",
+  // End of life 2026-09-21T08:00:00Z — answers 410 Gone with that date, and
+  // dropped from /v1/models. Its build card still answers 200, so the ID filter
+  // (not the card) keeps a refresh from resurrecting it.
+  "deepseek-ai/deepseek-v4-flash-0731",
   "meta/llama-3.1-70b-instruct",
   "meta/llama-3.1-8b-instruct",
   "meta/llama-3.2-1b-instruct",
@@ -528,7 +548,9 @@ function parseMetadataFromSpec(meta: ModelMetadata, spec: any): void {
   if (chatReqProps.response_format) meta.supportsStructuredOutput = true;
 
   // ── vision support from schema names (VLM content types) ──
-  if (Object.keys(schemas).some(n => /ContentPartImage|ContentPartVideo/i.test(n))) {
+  // NVIDIA names the image part inconsistently across cards: ContentPartImage
+  // on most, ImageContentPart on DeepSeek V4.1-Flash.
+  if (Object.keys(schemas).some(n => /ContentPart(?:Image|Video)|(?:Image|Video)ContentPart/i.test(n))) {
     meta.supportsVision = true;
     meta.inputModalities = ["text", "image"];
   }
@@ -644,6 +666,8 @@ function buildExactThinkingLevelMap(
 
 function detectThinkingFormat(modelId: string, _text?: string): string | undefined {
   if (/^meta\/muse-glimmer/.test(modelId)) return "reasoning-effort";
+  // Both the dash-suffixed releases and the dotted V4.1+ line accept thinking
+  // controls through chat_template_kwargs (V4.1 probe-verified 2026-09-25).
   if (/^deepseek-ai\/deepseek-v4/.test(modelId)) return "deepseek-v4";
   if (/^moonshotai\/kimi-k3/.test(modelId)) return "kimi";
   if (/^openai\/gpt-oss/.test(modelId)) return "reasoning-effort";
@@ -932,6 +956,11 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
     const fb = manualFallback?.maxOutputTokens ?? familyFallback.maxOutputTokens;
     if (fb != null) meta.maxOutputTokens = fb;
   }
+
+  // A published maximum that spans the whole context window describes the
+  // parameter bound, not an output budget; documented overrides win over it.
+  const maxOutputOverride = MAX_OUTPUT_TOKEN_OVERRIDES[modelId];
+  if (maxOutputOverride != null) meta.maxOutputTokens = maxOutputOverride;
 
   // ── 4. Model category ──
   if (meta.modelCategory === "chat") {

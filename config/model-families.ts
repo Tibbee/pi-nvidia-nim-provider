@@ -11,7 +11,12 @@ export interface ModelFamily {
 
 // Ordered specific → general; first match wins.
 export const MODEL_FAMILIES: ModelFamily[] = [
-  // DeepSeek V4 needs thinking + effort in chat_template_kwargs.
+  // DeepSeek V4 needs thinking + effort in chat_template_kwargs. The dotted
+  // V4.1 release declares no Jinja chat template of its own, but the hosted
+  // endpoint implements the same protocol: probes on 2026-09-25 showed
+  // `thinking: false` suppressing reasoning entirely (0 reasoning chars vs 74
+  // baseline), `reasoning_effort: "max"` deepening it (122 chars), and "high"
+  // matching the default. Top-level `reasoning_effort` did not complete.
   {
     name: "deepseek-v4",
     pattern: /^deepseek-ai\/deepseek-v4/,

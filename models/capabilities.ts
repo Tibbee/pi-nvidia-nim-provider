@@ -57,23 +57,33 @@ export interface ReasoningCapability {
 }
 
 /**
- * DeepSeek V4 Flash hosted-NIM observation. The NVIDIA model page documents
- * non-think, high, and max modes. Live requests using the production handler's
- * chat_template_kwargs shape returned content-only non-think responses and
- * separate reasoning_content for high/max.
+ * DeepSeek V4.1-Flash hosted-NIM observation.
  *
- * The unsuffixed deepseek-v4-flash and deepseek-v4-pro endpoints reached end
- * of life on 2026-08-07; NVIDIA replaced them with deepseek-v4-flash-0731.
- * The same transport was re-verified against the new endpoint.
+ * The dotted V4.1 release declares no Jinja chat template of its own, but the
+ * hosted endpoint implements the same protocol as the V4 Flash line: probes on
+ * 2026-09-25 confirmed chat_template_kwargs control. On one prompt (temperature
+ * 0, seed 42) the unparameterised baseline streamed separate reasoning_content
+ * (74 reasoning chars), `thinking: false` with `reasoning_effort: "none"`
+ * suppressed it entirely (0 chars, content only), `"high"` matched the
+ * baseline, and `"max"` deepened it to 122 chars — the off/high/max ladder the
+ * V4 Flash family exposes. `"low"` also completed (67 chars) but stays hidden:
+ * the delta is within single-sample noise. Top-level `reasoning_effort` (string
+ * `"none"` and numeric `100`) returned HTTP 504 with no usable body, so the
+ * kwargs transport is the only verified one, and DeepSeek's numeric 1-100
+ * reference-encoding effort remains unreachable through the hosted API.
+ *
+ * The endpoint is capacity-constrained rather than broken: `/v1/models` answers
+ * in ~200 ms, while accepted completions queued ~198 s before the first byte
+ * and earlier sessions saw no response headers at all.
  *
  * References:
- * - https://build.nvidia.com/deepseek-ai/deepseek-v4-flash-0731
- * - https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash
+ * - https://build.nvidia.com/deepseek-ai/deepseek-v4.1-flash
+ * - https://docs.api.nvidia.com/nim/reference/nvidia-deepseek-v4_1-flash
  */
-export const DEEPSEEK_V4_FLASH_REASONING_CAPABILITY: ReasoningCapability = {
-  modelId: "deepseek-ai/deepseek-v4-flash-0731",
+export const DEEPSEEK_V41_FLASH_REASONING_CAPABILITY: ReasoningCapability = {
+  modelId: "deepseek-ai/deepseek-v4.1-flash",
   semantics: {
-    defaultEnabled: false,
+    defaultEnabled: true,
     canDisable: true,
     supportsEffort: true,
     acceptedEfforts: ["none", "high", "max"],
@@ -91,7 +101,7 @@ export const DEEPSEEK_V4_FLASH_REASONING_CAPABILITY: ReasoningCapability = {
     responseEncoding: "reasoning_content",
   },
   verification: {
-    semantics: "documented",
+    semantics: "probe-passed",
     requestTransport: "probe-passed",
     responseTransport: "probe-passed",
     streaming: "probe-passed",
@@ -289,7 +299,7 @@ export const GLM_53_REASONING_CAPABILITY: ReasoningCapability = {
 };
 
 const CAPABILITIES = new Map<string, ReasoningCapability>([
-  [DEEPSEEK_V4_FLASH_REASONING_CAPABILITY.modelId, DEEPSEEK_V4_FLASH_REASONING_CAPABILITY],
+  [DEEPSEEK_V41_FLASH_REASONING_CAPABILITY.modelId, DEEPSEEK_V41_FLASH_REASONING_CAPABILITY],
   [GLM_53_REASONING_CAPABILITY.modelId, GLM_53_REASONING_CAPABILITY],
   [KIMI_K3_REASONING_CAPABILITY.modelId, KIMI_K3_REASONING_CAPABILITY],
   [LAGUNA_XS_21_REASONING_CAPABILITY.modelId, LAGUNA_XS_21_REASONING_CAPABILITY],

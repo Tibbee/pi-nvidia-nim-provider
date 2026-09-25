@@ -6,7 +6,7 @@ const RETRIES = [
   "nvidia/nemotron-3.5-lightning-30b-a3b",
   "openai/gpt-oss-120b",
   "poolside/laguna-xs-2.1",
-  "deepseek-ai/deepseek-v4-flash-0731",
+  "deepseek-ai/deepseek-v4.1-flash",
 ];
 const ATTEMPTS = 3;
 for (const id of RETRIES) {

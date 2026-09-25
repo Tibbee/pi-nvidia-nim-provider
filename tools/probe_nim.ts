@@ -309,6 +309,15 @@ function buildCases(model: string): ProbeCase[] {
     make("reasoning-effort-none-only", true, {
       reasoning_effort: "none",
     }),
+    make("reasoning-effort-numeric-100", true, {
+      // DeepSeek V4.1+ documents numeric reasoning effort (1-100) in the
+      // model's reference prompt encoding. This checks whether the hosted
+      // endpoint forwards the field even though its request schema omits it.
+      reasoning_effort: 100,
+    }),
+    make("reasoning-effort-numeric-50", true, {
+      reasoning_effort: 50,
+    }),
     make("top-level-thinking-none", true, {
       thinking: { type: "enabled" },
       reasoning_effort: "none",

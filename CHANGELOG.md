@@ -2,6 +2,33 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.9.0] - 2026-09-25
+
+### Added
+
+- Added DeepSeek V4.1 Flash (`deepseek-ai/deepseek-v4.1-flash`, build-listed 2026-09-18): text/image input, a 1,048,576-token **combined** input+output window, OpenAI-format tool calls, and a 262,144-token output cap — the card's own `max_tokens` default.
+- Routed it through the existing `deepseek-v4` family. The dotted release declares no Jinja chat template of its own and its documented request schema lists no thinking parameter, but NVIDIA's serving stack implements the same protocol: a controlled probe set on 2026-09-25 (temperature 0, seed 42) measured `thinking: false` + `reasoning_effort: "none"` suppressing reasoning entirely (0 reasoning chars vs 74 for the unparameterised baseline), `"high"` matching the default, and `"max"` deepening it to 122 chars — so pi offers the same off/high/max ladder, and `reasoning_effort` travels inside `chat_template_kwargs`. `"low"` also completed (67 chars) but stays hidden: the delta is within single-sample noise.
+
+### Fixed
+
+- The metadata scraper now recognizes `ImageContentPart` schema names as image input. DeepSeek V4.1 Flash uses that spelling where other cards use `ContentPartImage`, which had left the multimodal release marked text-only.
+
+### Changed
+
+- Added a documented `max_tokens` override to the scraper: when a card's `max_tokens.maximum` spans the whole context window (V4.1 Flash publishes 1,048,576), the card's own default is recorded instead. Prompt and completion share that window, so a cap equal to it bounds the parameter rather than describing an output budget — a client asking for it leaves no room for the prompt it must accompany. Pi sizes each request with its own `contextWindow - prompt - safety` clamp, and the 1M value would also advertise `max-out: 1M` in `pi --list-models`.
+- Extended the probe matrix with numeric `reasoning_effort` cases (100 and 50). Both answered `504` on V4.1 Flash, as did the string-valued top-level effort, so DeepSeek's documented 1–100 reference-encoding effort is not reachable through the hosted API.
+
+### Removed
+
+- Removed `deepseek-ai/deepseek-v4-flash-0731`, which NVIDIA retired on **2026-09-21**: it answers `410 Gone` with that end-of-life date on every attempt (confirmed three times, ~120–440 ms), has dropped from `/v1/models`, and its build card still answers 200 — exactly the pattern the triage table says to trust the sweep for. It was the extension's last Dash-suffixed V4 endpoint; `deepseek-ai/deepseek-v4.1-flash` now carries the `deepseek-v4` family. The ID was added to `RETIRED_MODEL_IDS`, so a full metadata refresh cannot resurrect it, and the request-snapshot and registry tests now assert it stays out of the catalog while the family itself is still covered through V4.1.
+- The extension ships 16 models again; `npm run compare:pi` reports `deepseek-ai/deepseek-v4.1-flash` as extension-only.
+
+### Verification
+
+- `npm test` (refactor checks, request snapshots, Pi-provider comparison)
+- `npx tsx tools/probe_nim.ts --model=deepseek-ai/deepseek-v4.1-flash --cases=baseline-stream,reasoning-effort-numeric-100,reasoning-effort-none-only,deepseek-v4-nonthink` and a follow-up run with `deepseek-v4-high,deepseek-v4-max,nested-effort-low`
+- Expect heavy queueing on this endpoint: `/v1/models` answers in ~200 ms, while an accepted completion waited ~198 s for its first byte. When the queue saturates, the gateway answers `504` after ~300 s with an empty body — an end-to-end request with the shipped 262,144-token cap hit that once, and a 1,024-token request hit it at the same moment minutes later, so the cap is not the cause (262,144 is the card's own default, i.e. the value the endpoint uses when the client omits `max_tokens`). The cap A/B therefore stays unresolved until the endpoint admits requests consistently again.
+
 ## [1.8.1] - 2026-09-17
 
 ### Fixed

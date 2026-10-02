@@ -2,6 +2,14 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.14.2] - 2026-10-02
+
+### Removed
+
+- Remove public preset editing from the image tool, native metadata, capability records, request translation, and probe CLI. Predefined NVIDIA examples do not meet the goal of editing users\' own images. Keep historical diagnostic evidence without advertising it as a feature.
+- Reject legacy preset selectors before dispatch, including direct tool calls that bypass Pi schema validation. No silent generation fallback or quota consumption.
+- Replace preset-success regressions with removal/no-dispatch tests; retain the generation grid, ratio aliases, authentication, artifact validation, and exclusive saves unchanged. Arbitrary uploads remain disabled.
+
 ## [1.14.1] - 2026-10-02
 
 ### Fixed

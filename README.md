@@ -192,21 +192,9 @@ Klein-only for now, deliberately: other catalog listings (Qwen Image, Stable Dif
 
 Separate live hosted validation responses confirmed both width and height as 512–1568 inclusive in steps of 16. Generation now accepts these grids instead of a fixed pair whitelist. For example, `width: 1536, height: 864` is locally valid; `1000×750` is rejected without a request. Omitted (`undefined`) dimensions default independently to 1024; explicit `null` settings, including `aspect_ratio`, fail locally instead of silently requesting defaults. There is no silent rounding, cropping, or client resizing. Existing aspect-ratio aliases keep their dimension mappings and reject conflicting explicit dimensions. Representative outputs have been decoded, but not every grid combination has been generated; additional server restrictions are returned as structured errors, not hidden or automatically retried.
 
-### Editing NVIDIA's preset image
+### Editing availability
 
-`preset_example: 0` edits NVIDIA's predefined green frog, not a user-supplied file. Only ID 0 at 1024×1024 is live-verified; other IDs and non-square preset edits fail locally. Omit the selector for normal text-to-image generation. Preset editing does not advertise arbitrary image-block support: the catalog remains text-input only.
-
-```js
-await tools.nim_generate_image({
-  prompt: "Make the frog red.",
-  preset_example: 0,
-  seed: 42,
-  saveDir: "out",
-  fileName: "red-frog.jpg",
-});
-```
-
-The source is NVIDIA's [green frog](https://assets.ngc.nvidia.com/products/api-catalog/flux_2-klein-4b/input0.jpg). No local file is read or uploaded for presets. `preset_example` conflicts with `inputImage`, translates to `image: ["data:image/png;example_id,0"]`, and is not itself sent. Results report `operation: "edit"` and the selected ID in `settings`. The live output fully decoded and turned the frog red with pose/scene visually preserved; this is generative editing, not a guarantee of pixel-exact preservation.
+The hosted Klein preview accepts predefined NVIDIA examples, not users\' own images. Preset editing was removed in 1.14.2 because it does not meet that goal. The tool and native adapter now expose generation only for Klein; legacy `preset_example` values fail locally instead of silently generating a new image. Historical preset-probe findings remain in `IMAGE_GENERATION.md`.
 
 Request translation: text becomes `prompt`; the URL identifies the model (no `model` body field). `aspect_ratio` resolves locally to width/height and is not sent. Conflicting explicit dimensions are rejected. `16:9` is landscape (`1344×768`), unlike the playground's reversed label. Model-card presets are not a generation whitelist; explicit dimensions are validated against the live hosted grid. Raster format descriptions do not establish a hosted output-format selector.
 
@@ -251,7 +239,7 @@ return result.savedPaths;
 
 Codemode receives the tool’s structured result, including `isError`: generation failures provide `errorMessage`, while save failures provide `saveError` and preserve the generated images. Input validation throws and can be handled with `try`/`catch`; runtime authentication failures return structured error results.
 
-Parameters: `prompt` (required), `model`, `width`, `height`, `aspect_ratio`, `preset_example`, `inputImage` (gated; no currently registered model supports arbitrary-image editing), `seed`, `steps`, `cfg_scale`, `saveDir`, `fileName`. The structured result reports the operation and resolved settings, including actual requested dimensions. Saving rules:
+Parameters: `prompt` (required), `model`, `width`, `height`, `aspect_ratio`, `inputImage` (gated; no currently registered model supports arbitrary-image editing), `seed`, `steps`, `cfg_scale`, `saveDir`, `fileName`. The structured result reports the operation and resolved settings, including actual requested dimensions. Saving rules:
 
 - Nothing is written to disk unless `saveDir` is given. Relative directories resolve against pi’s session workspace (`ctx.cwd`); saved paths are absolute.
 - Files keep the **original encoded bytes** (no re-encoding); the extension corrects a mismatched filename extension to the detected format (`.jpg` / `.png` / `.webp`, with matching `.jpeg` preserved). Multi-image suffixes precede the extension: `shot-1.jpg`, `shot-2.jpg`.

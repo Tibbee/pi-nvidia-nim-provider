@@ -35,7 +35,7 @@ export function parseImageProbeArgs(args: string[]): ImageProbeOptions {
     const match = /^--([a-z_-]+)=(.*)$/s.exec(arg);
     if (!match) throw new Error("Use --live, --candidate-dimensions, or --name=value options.");
     const [, name, value] = match;
-    if (["width", "height", "steps", "samples", "cfg_scale", "seed", "preset_example"].includes(name)) {
+    if (["width", "height", "steps", "samples", "cfg_scale", "seed"].includes(name)) {
       if (!value.trim()) throw new Error("Numeric probe options require a value.");
       options.settings[name] = Number(value);
     } else if (name === "aspect_ratio") options.settings.aspect_ratio = value;
@@ -51,7 +51,6 @@ export function parseImageProbeArgs(args: string[]): ImageProbeOptions {
   }
   if (args.includes("--live") && args.includes("--dry-run")) throw new Error("Choose either --live or --dry-run.");
   if (!options.prompt.trim()) throw new Error("A non-empty prompt is required.");
-  if (options.settings.preset_example !== undefined && options.inputImage !== undefined) throw new Error("preset_example conflicts with --input-image.");
   if (options.imageTransport && !options.inputImage) throw new Error("--image-transport requires --input-image.");
   if (options.inputImage !== undefined && !options.inputImage.trim()) throw new Error("A reference-image file path is required.");
   if (!Number.isSafeInteger(options.timeoutMs) || options.timeoutMs < 1 || options.timeoutMs > 2_147_483_647) {
@@ -94,7 +93,6 @@ export async function probeNimImage(
   options: ImageProbeOptions,
   dependencies: { apiKey?: string; fetch?: typeof fetch; decode?: ImageProbeDecoder; signal?: AbortSignal } = {},
 ) {
-  if (options.settings.preset_example !== undefined && options.inputImage !== undefined) throw new Error("preset_example conflicts with --input-image.");
   const capability = getImageProbeCapability(options.model, options);
   const settings = resolveImageSettings(capability, options.settings);
   if (!settings.ok) throw new Error(settings.error);
@@ -106,7 +104,7 @@ export async function probeNimImage(
   const resolution = resolveImageInputs(capability, input, true);
   if (!resolution.ok) throw new Error(resolution.error);
   const base = {
-    operation: reference || settings.value.preset_example !== undefined ? "edit" : "generate",
+    operation: reference ? "edit" : "generate",
     ...(reference ? { referenceInput: { mimeType: reference.mimeType, bytes: Buffer.from(reference.data, "base64").length } } : {}),
     model: capability.modelId, endpoint: capability.endpoint,
     evidence: { ...capability.evidence, scope: "NVIDIA hosted preview", containerSchemaUsed: false },

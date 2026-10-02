@@ -52,11 +52,6 @@ export interface NimImageModelCapability {
   /** Required for implemented image transports; limits are validated before upload. */
   imageInputLimits?: { maxImages: number; maxBytes: number; mimeTypes: readonly string[] };
   promptMaxLength?: number;
-  /** Preset references are separate from arbitrary image input. Only verified examples are exposed. */
-  presetEditing?: {
-    transport: "example-id-array";
-    examples: readonly { id: number; name: string; sourceUrl: string; verifiedAt: string; dimensionPairs: readonly (readonly [number, number])[] }[];
-  };
   /** Request body fields this model accepts (NVIDIA's schema is extra_forbidden). */
   allowedRequestFields: readonly string[];
   /** Fields that must never be sent, with the reason (verified rejections). */
@@ -99,8 +94,8 @@ export interface NimImageModelCapability {
  *   returned. Uploaded JPEG data-URL arrays and PNG data-URL strings both
  *   received HTTP 422; the PNG rejection mentions example_id and base64.
  *   Preset 0 array editing succeeded and visually turned the source frog red,
- *   with its pose/scene largely preserved. Generic image input stays text-only;
- *   preset references are an explicit local setting, not uploaded image blocks.
+ *   with its pose/scene largely preserved. This is historical diagnostic evidence;
+ *   preset editing is not a supported feature. Generic image input stays text-only.
  *   Arbitrary-image editing remains disabled. Negative prompts, output-format
  *   selection, compression controls, and seamless generation are unverified.
  *
@@ -122,19 +117,16 @@ export const FLUX_2_KLEIN_4B_CAPABILITY: NimImageModelCapability = {
       "2026-10-02: JPEG data-URL array and PNG data-URL string reference uploads received HTTP 422; the latter contains a preset example_id hint. No successful arbitrary-image editing established.",
       "2026-10-02: decoded 1024x768 and 1008x752 outputs matched requests; existing aspect-ratio aliases retain their mappings.",
       "2026-10-02: separate hosted width and height validation responses each enumerated 512..1568 inclusive in steps of 16. Generation accepts that grid without rounding; additional combined-size restrictions are unknown.",
-      "2026-10-02: preset 0 array reference edited NVIDIA's green frog to red, preserving pose/scene visually; no mode field. Other presets and arbitrary uploads are not enabled.",
+      "Historical diagnostic: preset 0 array reference edited NVIDIA's green frog to red; no mode field. Preset editing was removed in 1.14.2 because it does not support users' own images.",
       "Seed uint32 bound is hosted-schema evidence; only seed 42 was tested live.",
     ],
   },
   endpoint: "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.2-klein-4b",
   inputTransport: "none",
   promptMaxLength: 10_000,
-  presetEditing: {
-    transport: "example-id-array",
-    examples: [{ id: 0, name: "NVIDIA green frog", sourceUrl: "https://assets.ngc.nvidia.com/products/api-catalog/flux_2-klein-4b/input0.jpg", verifiedAt: "2026-10-02", dimensionPairs: [[1024, 1024]] }],
-  },
+
   requiredRequestFields: ["prompt"],
-  allowedRequestFields: ["prompt", "width", "height", "seed", "steps", "samples", "cfg_scale", "image"],
+  allowedRequestFields: ["prompt", "width", "height", "seed", "steps", "samples", "cfg_scale"],
   rejectedRequestFields: {
     mode: "the live endpoint rejects `mode` as an extra field (HTTP 422, extra_forbidden); omit it",
   },
@@ -196,14 +188,6 @@ export function getNimImageEditingError(capability: NimImageModelCapability, all
 export function capabilityToModelConfig(capability: NimImageModelCapability): NimImageModelConfig {
   if (!capability.evidence.generationVerifiedAt) {
     throw new Error(`No verified hosted generation for ${capability.modelId}; keep it in probe candidates.`);
-  }
-  if (capability.presetEditing) {
-    const preset = capability.presetEditing;
-    if (preset.transport !== "example-id-array" || !capability.allowedRequestFields.includes("image") ||
-        !preset.examples.length || preset.examples.some((e) => !Number.isSafeInteger(e.id) || e.id < 0 || !e.verifiedAt || !e.dimensionPairs?.length) ||
-        new Set(preset.examples.map((e) => e.id)).size !== preset.examples.length) {
-      throw new Error(`Preset editing is not verified or configured for ${capability.modelId}.`);
-    }
   }
   if (capability.inputTransport !== "none") {
     const error = getNimImageEditingError(capability);

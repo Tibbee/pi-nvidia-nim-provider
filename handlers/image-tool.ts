@@ -40,7 +40,6 @@ export type NimImageToolParams = {
   height?: number;
   aspect_ratio?: string;
   inputImage?: string;
-  preset_example?: number;
   seed?: number;
   steps?: number;
   cfg_scale?: number;
@@ -96,15 +95,11 @@ const PARAMETERS = {
     },
     height: {
       type: "integer",
-      description: "Image height in pixels. Klein generation: 512-1568 inclusive, multiples of 16. Defaults to 1024; preset 0 remains restricted to 1024x1024.",
+      description: "Image height in pixels. Klein generation: 512-1568 inclusive, multiples of 16. Defaults to 1024; omit when using aspect_ratio.",
     },
     aspect_ratio: {
       type: "string",
       description: "Width:height ratio mapped locally to verified resolutions. Klein: 1:1 (1024x1024), 4:3 (1024x768), 16:9 landscape (1344x768), 9:16 portrait (768x1344), 21:9 (1568x672). Some ratios are approximate. Conflicting explicit dimensions are rejected.",
-    },
-    preset_example: {
-      type: "integer",
-      description: "Edit a verified NVIDIA predefined image instead of generating from text alone. Klein: only ID 0 (green frog), at 1024x1024, is verified. Not a file upload; conflicts with inputImage. Omit for generation.",
     },
     inputImage: {
       type: "string",
@@ -137,7 +132,7 @@ const PARAMETERS = {
   },
   required: ["prompt"],
   additionalProperties: false,
-} as unknown as TSchema;
+};
 
 const OUTPUT_SCHEMA = {
   type: "object",
@@ -220,8 +215,9 @@ export async function runNimImageTool(
   ctx: NimImageToolContextLike,
   signal?: AbortSignal,
 ): Promise<AgentToolResult<NimImageToolDetails | undefined>> {
-  if (params.preset_example !== undefined && params.inputImage !== undefined) {
-    throw new Error("preset_example conflicts with inputImage; presets are not file uploads.");
+  // Direct callers must fail closed too, rather than silently ignoring removed settings.
+  for (const key of Object.keys(params)) {
+    if (!Object.hasOwn(PARAMETERS.properties, key)) throw new Error(`Unsupported parameter \`${key}\`.`);
   }
   const modelId = params.model ?? DEFAULT_NIM_IMAGE_MODEL_ID;
   if (!NIM_IMAGE_MODEL_IDS.has(modelId)) {
@@ -237,7 +233,6 @@ export async function runNimImageTool(
     width: params.width,
     height: params.height,
     aspect_ratio: params.aspect_ratio,
-    preset_example: params.preset_example,
     seed: params.seed,
     steps: params.steps,
     cfg_scale: params.cfg_scale,
@@ -255,7 +250,7 @@ export async function runNimImageTool(
   }
 
   const input: ImagesContext["input"] = [{ type: "text", text: promptResolution.value }];
-  const operation = params.inputImage === undefined && params.preset_example === undefined ? "generate" : "edit";
+  const operation = params.inputImage === undefined ? "generate" : "edit";
   if (params.inputImage !== undefined) {
     input.push(await readNimReferenceImage(params.inputImage, ctx.cwd, capability, signal));
   }
@@ -381,15 +376,14 @@ export const NIM_IMAGE_TOOL: ToolDefinition = {
   name: NIM_IMAGE_TOOL_NAME,
   label: "NVIDIA NIM images",
   description:
-    "Generate images or edit a verified NVIDIA preset with NVIDIA NIM (FLUX.2 Klein 4B). " +
+    "Generate images with NVIDIA NIM (FLUX.2 Klein 4B). " +
     "Verified aspect_ratio values: 1:1 (1024x1024), 4:3 (1024x768), 16:9 landscape (1344x768), 9:16 portrait (768x1344), " +
     "21:9 (1568x672). Generation width and height independently accept 512-1568 inclusive in multiples of 16; no silent rounding/resizing. Not every combination has been generated; additional server constraints may apply. Steps 1-4 (default 4), cfg_scale >= 1 (default 1), " +
-    "seed 0-4294967295 (0 or omitted = random), one image per call. preset_example: 0 edits NVIDIA's predefined green frog at 1024x1024; " +
-    "omit for generation. Other preset IDs are unverified. inputImage uploads remain disabled for Klein and fail locally. Negative prompts and " +
+    "seed 0-4294967295 (0 or omitted = random), one image per call. inputImage uploads remain disabled for Klein and fail locally. Negative prompts and " +
     "output-format selection are not supported. Nothing is written to disk unless saveDir is given; " +
     "saving never overwrites existing files. Requires an NVIDIA API key for the nvidia-nim provider. " +
     "NVIDIA returns no usage or cost information for image generation.",
-  parameters: PARAMETERS,
+  parameters: PARAMETERS as unknown as TSchema,
   outputSchema: OUTPUT_SCHEMA,
   exposure: "codemode",
   annotations: {

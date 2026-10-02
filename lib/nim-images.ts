@@ -38,8 +38,6 @@ const MAX_ERROR_DETAIL_CHARS = 400;
 
 /** Validated request settings. Provider field names, since the body is extra_forbidden. */
 export type NimImageSettings = {
-  /** Local selector, never sent as a NVIDIA field. */
-  preset_example?: number;
   width?: number;
   height?: number;
   steps?: number;
@@ -174,25 +172,11 @@ export function validateImageNumber(
   return undefined;
 }
 
-/** A preset ID never substitutes for arbitrary uploaded image bytes. */
-export function resolveNimPresetExample(capability: NimImageModelCapability, id: unknown): NimImageResolution<string | undefined> {
-  if (id === undefined) return { ok: true, value: undefined };
-  const preset = capability.presetEditing;
-  const example = typeof id === "number" && Number.isSafeInteger(id) && id >= 0
-    ? preset?.examples.find((e) => e.id === id && !!e.verifiedAt) : undefined;
-  if (!example || preset?.transport !== "example-id-array" || !capability.allowedRequestFields.includes("image")) {
-    return { ok: false, error: `Unsupported preset_example for ${capability.modelId}: verified IDs are ${preset?.examples.filter((e) => e.verifiedAt).map((e) => e.id).join(", ") || "none"}.` };
-  }
-  return { ok: true, value: `data:image/png;example_id,${example.id}` };
-}
-
 /** Validate both defaults and overrides; never silently forward unknown fields. */
 export function resolveImageSettings(
   capability: NimImageModelCapability,
   raw: Record<string, unknown> | undefined,
 ): NimImageResolution<NimImageSettings> {
-  const preset = resolveNimPresetExample(capability, raw?.preset_example);
-  if (!preset.ok) return preset;
   let resolvedRaw = raw;
   if (raw?.aspect_ratio !== undefined) {
     const ratio = raw.aspect_ratio;
@@ -206,7 +190,7 @@ export function resolveImageSettings(
     resolvedRaw = { ...raw, width: pair[0], height: pair[1] };
   }
   for (const [key, value] of Object.entries(resolvedRaw ?? {})) {
-    if (value === undefined || key === "aspect_ratio" || key === "preset_example") continue;
+    if (value === undefined || key === "aspect_ratio") continue;
     const reason = Object.hasOwn(capability.rejectedRequestFields, key) ? capability.rejectedRequestFields[key] : undefined;
     if (reason) return { ok: false, error: `\`${key}\` is not accepted: ${reason}.` };
     if (key === "prompt") return { ok: false, error: "`prompt` is not a request setting; pass it as text input." };
@@ -214,7 +198,7 @@ export function resolveImageSettings(
       return { ok: false, error: `Unsupported parameter \`${key}\` for ${capability.modelId}.` };
     }
   }
-  const settings: NimImageSettings = preset.value === undefined ? {} : { preset_example: raw!.preset_example as number };
+  const settings: NimImageSettings = {};
   for (const key of Object.keys(SETTING_BOUNDS) as Array<keyof typeof SETTING_BOUNDS>) {
     if (!capability.allowedRequestFields.includes(key)) continue;
     const bounds = capability[SETTING_BOUNDS[key]];
@@ -229,12 +213,6 @@ export function resolveImageSettings(
     ([width, height]) => width === settings.width && height === settings.height,
   )) {
     return { ok: false, error: `Unsupported dimension combination for ${capability.modelId}: allowed pairs are ${capability.dimensionPairs.map(([w, h]) => `${w}x${h}`).join(", ")}.` };
-  }
-  if (settings.preset_example !== undefined) {
-    const pairs = capability.presetEditing?.examples.find((e) => e.id === settings.preset_example)?.dimensionPairs;
-    if (!pairs?.some(([w, h]) => settings.width === w && settings.height === h)) {
-      return { ok: false, error: "preset_example requires its verified dimensions (Klein preset 0: 1024x1024)." };
-    }
   }
   for (const key of capability.requiredRequestFields ?? []) {
     if (!capability.allowedRequestFields.includes(key)) {
@@ -254,13 +232,9 @@ export function buildImageRequest(
   settings: NimImageSettings,
   images: readonly string[] = [],
 ): Record<string, unknown> {
-  const preset = resolveNimPresetExample(capability, settings.preset_example);
-  if (!preset.ok) throw new Error(preset.error);
-  if (preset.value !== undefined && images.length) throw new Error("preset_example conflicts with reference-image input.");
-  const image = preset.value !== undefined ? [preset.value] : images.length && ["data-url-array", "data-url-string"].includes(capability.inputTransport)
+  const image = images.length && ["data-url-array", "data-url-string"].includes(capability.inputTransport)
     ? (capability.inputTransport === "data-url-array" ? images : images[0]) : undefined;
-  const { preset_example: _preset, ...numericSettings } = settings;
-  return Object.fromEntries(Object.entries({ prompt, ...numericSettings, image }).filter(
+  return Object.fromEntries(Object.entries({ prompt, ...settings, image }).filter(
     ([key, value]) => value !== undefined && (key === "prompt" || key === "image" || Object.hasOwn(SETTING_BOUNDS, key)) &&
       capability.allowedRequestFields.includes(key),
   ));
@@ -428,9 +402,6 @@ export async function runNimImageGeneration(
     return fail(`No image capability record for model ${model.id}.`);
   }
 
-  if (options?.metadata?.preset_example !== undefined && context.input?.some((b) => b.type === "image")) {
-    return fail("preset_example conflicts with reference-image input.");
-  }
   const inputResolution = resolveImageInputs(capability, context.input ?? [], capabilityOverride !== undefined);
   if (!inputResolution.ok) return fail(inputResolution.error);
 

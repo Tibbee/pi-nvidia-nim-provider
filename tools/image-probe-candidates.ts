@@ -15,7 +15,7 @@ export const KLEIN_PLAYGROUND_DIMENSION_PAIRS = [
 // Do not inherit newly verified Klein dimensions/editing into unrelated models.
 const textOnly1024: NimImageModelCapability = {
   ...klein, inputTransport: "none", imageInputLimits: undefined, promptMaxLength: undefined,
-  presetEditing: undefined, allowedRequestFields: klein.allowedRequestFields.filter((field) => field !== "image"),
+  allowedRequestFields: klein.allowedRequestFields.filter((field) => field !== "image"),
   width: { allowed: [1024], default: 1024 }, height: { allowed: [1024], default: 1024 },
   dimensionPairs: [[1024, 1024]], aspectRatios: { "1:1": [1024, 1024] },
 };

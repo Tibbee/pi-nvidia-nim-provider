@@ -9,7 +9,28 @@ import {
 } from "./config/defaults";
 import { applyCustomThinkingFormat, hasEnabledThinking } from "./handlers/thinking";
 import type { TransformResult } from "./handlers/thinking";
+import { NIM_IMAGE_TOOL } from "./handlers/image-tool";
+import { generateNimImages } from "./lib/nim-images";
+import {
+  NIM_IMAGES_API,
+  NIM_IMAGE_MODELS,
+  NIM_IMAGE_MODEL_IDS,
+  type NimImageModelConfig,
+} from "./models/image-models";
 import { STATIC_MODELS, STATIC_MODEL_MAP, classifyThinkingFormat } from "./models/registry";
+
+// Mixed-operation catalog: chat models (implicit type "chat") plus explicit
+// image models. Anything that replaces the provider's live model list (a
+// future refreshModels path included) must rebuild this combined list — an
+// image-only or chat-only list would drop the other operation.
+export type ProviderModelEntry =
+  | (typeof STATIC_MODELS)[number]
+  | NimImageModelConfig;
+
+export const PROVIDER_MODEL_CONFIGS: ProviderModelEntry[] = [
+  ...STATIC_MODELS,
+  ...NIM_IMAGE_MODELS,
+];
 
 const NIM_DEBUG_LOG = join(homedir(), ".pi", "nim-debug.log");
 
@@ -25,6 +46,10 @@ export function handleBeforeProviderRequest(
   // payload.model is the raw NIM model ID, not a provider-prefixed ID.
   const modelId = payload.model as string | undefined;
   if (!modelId || !STATIC_MODEL_MAP.has(modelId)) return;
+  // Image models run through the nvidia-nim-images adapter, never through
+  // chat/completions. Chat payload transforms must not touch them even if a
+  // future payload carries their ID.
+  if (NIM_IMAGE_MODEL_IDS.has(modelId)) return;
   // Some NIM models reject [{type:"text", text:"..."}] content arrays and
   // require a plain string. Normalize here so all models receive a
   // universally-accepted payload without needing a custom streamSimple.
@@ -139,8 +164,16 @@ export default async function (pi: ExtensionAPI) {
     baseUrl: NIM_BASE_URL,
     apiKey: NIM_API_KEY_REF,
     api: "openai-completions",
-    models: STATIC_MODELS,
+    models: PROVIDER_MODEL_CONFIGS,
+    // Image-generation implementations keyed by the image API identifier.
+    // Chat models keep the provider-level `api: "openai-completions"`; image
+    // models override it per model with `api: NIM_IMAGES_API`.
+    images: {
+      [NIM_IMAGES_API]: { generateImages: generateNimImages },
+    },
   });
+
+  pi.registerTool(NIM_IMAGE_TOOL);
 
   pi.on("before_provider_request", (event, ctx) =>
     handleBeforeProviderRequest(event as { payload: unknown }, ctx),

@@ -1,13 +1,14 @@
 {
     "name": "pi-extension-nvidia-nim",
     "private": false,
-    "version": "1.9.0",
+    "version": "1.14.0",
     "main": "index.ts",
     "types": "index.ts",
     "type": "module",
     "files": [
         "README.md",
         "CHANGELOG.md",
+        "IMAGE_GENERATION.md",
         "LICENSE",
         "config/",
         "handlers/",
@@ -17,6 +18,8 @@
         "tools/fetch_modelsdev_nvidia.ts",
         "tools/compare_pi_nvidia.ts",
         "tools/probe_nim.ts",
+        "tools/probe_nim_images.ts",
+        "tools/image-probe-candidates.ts",
         "index.ts",
         "package.json"
     ],
@@ -50,7 +53,9 @@
     },
     "homepage": "https://github.com/Tibbee/pi-nvidia-nim-provider#readme",
     "scripts": {
-        "test": "npx --yes tsx test/refactor-checks.ts && npx --yes tsx test/before-provider-request-snapshots.ts && npx --yes tsx test/pi-provider-comparison.ts",
+        "test": "npx --yes tsx test/refactor-checks.ts && npx --yes tsx test/before-provider-request-snapshots.ts && npx --yes tsx test/pi-provider-comparison.ts && npx --yes tsx test/image-generation-tests.ts && npx --yes tsx test/image-hardening-tests.ts && npx --yes tsx test/image-probe-tests.ts && npx --yes tsx test/image-aspect-edit-tests.ts && npx --yes tsx test/image-preset-tests.ts && npx --yes tsx test/image-grid-tests.ts",
+        "test:pi-images": "npx --yes tsx test/pi-image-runtime-tests.ts",
+        "probe:images": "npx --yes tsx tools/probe_nim_images.ts",
         "probe": "npx --yes tsx tools/probe_nim.ts",
         "compare:pi": "npx --yes tsx tools/compare_pi_nvidia.ts"
     },

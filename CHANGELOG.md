@@ -2,6 +2,89 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.14.0] - 2026-10-02
+
+### Added
+
+- Grid-based Klein generation: width and height independently accept 512–1568 inclusive in increments of 16, with 1024 defaults. Replace the six-pair whitelist using both live hosted validator enums; do not round, crop, or resize requests. Existing aspect-ratio mappings and conflict checks are unchanged.
+- One approved height-validation request returned 422 and the full 67-value enum, matching the previously captured width enum. Axis admission does not guarantee every combination or exclude additional server constraints; errors remain structured, without retries.
+- Offline validation of all 4,489 grid combinations, boundary/alignment/type rejection, exact payload dimensions, and native installed-Pi dispatch regressions. Preserve unrelated model pair restrictions and preset-0's 1024×1024-only gate.
+
+## [1.13.0] - 2026-10-02
+
+### Added
+
+- Verified non-preset generation resolutions: 1024×768 and 1008×752, plus the exact `4:3` alias for 1024×768. Six tested generation pairs are enabled. Record the hosted width validator's 512–1568 / 16-pixel grid without claiming every combination or promoting container-only height bounds.
+- Explicit `preset_example: 0` editing of NVIDIA's predefined green frog, verified at 1024×1024. Shared adapter sends an example-ID array with no `mode`, `model`, or selector body field. Tool/native metadata dispatch retain full Pi auth, cancellation, artifact validation, and non-overwriting saves.
+- Separate per-preset evidence and dimension gates. Unknown/unverified IDs, non-square preset edits, and conflicts with file/image-block input fail locally. Arbitrary `inputImage` uploads stay disabled; preset editing does not advertise generic image input or reuse arbitrary-upload evidence.
+- Dry-run-first preset probe option, offline regressions, and installed-Pi integration checks for preset dispatch, header-only authentication, endpoint overrides, 4:3 resolution, and quota-free validation failures.
+
+### Evidence
+
+- Approved probes returned the hosted width enum and successfully changed the source frog from green to red with its pose/scene visually preserved. Full decoding and comparison against NVIDIA's public source/output were performed. Scalar fallback was not needed or run. No further inference was performed during implementation; existing texture files were left unchanged.
+
+## [1.12.0] - 2026-10-02
+
+### Added
+
+- Aspect-ratio awareness: `aspect_ratio` maps locally to verified Klein resolutions — 1:1 (1024×1024), landscape 16:9 (1344×768), portrait 9:16 (768×1344), and 21:9 (1568×672). Reject contradictory explicit dimensions and unsupported combinations; never send ratio fields to NVIDIA. Preserve square defaults and report resolved dimensions.
+- Evidence-gated reference-image plumbing for future editing models: native Pi image blocks, data-URL array/string transports, bounded local-file reads, strict MIME/base64/container checks, and a local 10 MiB safety ceiling. `inputImage` is available only when model records establish successful editing; current Klein remains text-only and rejects this option before reading/uploading.
+- Probe-only model-card/playground resolution sets and explicit reference-image transport probes. No automatic registration or inference retries; source files and private image data stay out of evidence reports. Successful decoding does not automatically establish semantic editing.
+- Aspect/edit regressions and installed-Pi checks, including orientation, conflict detection, input validation, source preservation, editing-evidence gates, and candidate isolation. Enforce the hosted 10,000-character prompt limit.
+
+### Verification and limitations
+
+- Five approved hosted requests: 1344×768, 768×1344, and 1568×672 generations succeeded and fully decoded at requested dimensions. Both reference-upload encodings returned HTTP 422; the PNG rejection contained a preset `example_id` hint. Arbitrary-image editing is therefore not enabled or claimed functional.
+- Correct stale 1024-only guidance and reversed playground ratio labels. Other upstream model-card resolutions remain probe-only, and raster output descriptions do not establish an API output-format selector.
+
+## [1.11.0] - 2026-10-02
+
+### Fixed
+
+- Normalize artifacts independently: malformed/null siblings no longer discard valid images. Require `SUCCESS`, canonical base64, allowed MIME types, and structurally complete JPEG/PNG/static WebP containers; do not claim these checks fully decode pixels.
+- Enforce the hosted uint32 seed bound. Guidance's unknown upper bound is no longer represented by an invented limit.
+- Merge headers case-insensitively, including null suppression of authorization defaults and differently cased overrides.
+- Timeout/cancellation races now settle stalled payload/response hooks, custom fetch, and body reading, while handling late rejections safely. Validate timeout values before scheduling timers.
+- Advanced image tools dispatch through Pi's authenticated runtime, preserving complete auth headers, header-only credentials, and auth-provided endpoint overrides. Runtime authentication failures retain structured errors.
+- Correct saved filename extensions and place multi-image suffixes before extensions, without weakening exclusive-create overwrite protection or save-failure image retention. Expose dropped-artifact warnings in tool text.
+- Correct README retry claims: global chat retries do not automatically retry image operations. Document the hosted Kontext preset-only restriction and distinguish hosted schemas from container schemas.
+
+### Added
+
+- Evidence-aware per-model settings: names, numeric enums/ranges, exclusive bounds, multiples, required/optional fields, dimension pairs, and explicit input transports. Tool schemas no longer enforce Klein constraints globally; model validation remains authoritative. Unimplemented transports fail locally rather than dropping inputs.
+- Maintained dry-run-first `probe:images` tooling, with explicit single-request live opt-in, mandatory pixel decoding for qualification, sanitized exclusive-create reports, and no automatic registration. Dev/Schnell are probe-only candidates; the registered catalog remains 16 chat models plus Klein.
+- Genuine encoded image fixtures, hardening/probe regressions, and optional installed-Pi runtime/argument-validator tests using dummy credentials and fail-closed network stubs.
+
+### Verification
+
+- No live inference requests for this release. Candidate availability and new-model generation remain unverified.
+
+## [1.10.1] - 2026-10-02
+
+### Fixed
+
+- Cancellation during asynchronous payload hooks now prevents image requests; hook exceptions become image error results, and cancellation is checked again before accepting response output.
+- Image requests honor pi’s resolved model `baseUrl` instead of hard-coding the capability endpoint, preserving endpoint/proxy overrides.
+- Relative image save directories resolve against the session workspace; reported saved paths are absolute. Directory-creation failures now return `saveError` while preserving generated images, just like write failures.
+- Advanced tool structured results explicitly expose `isError`, so codemode’s documented error check handles generation and save failures correctly.
+- Diagnostic logs no longer include caller/provider error messages that may echo prompts, image data, or credentials. HTTP failures retain only safe model/status information in logs.
+- Added regression tests for all six review findings, including hook failures and cancellation during response handling.
+
+## [1.10.0] - 2026-10-02
+
+### Added
+
+- Native image generation under the existing `nvidia-nim` provider. `black-forest-labs/flux.2-klein-4b` registers as a `type: "image"` model on a dedicated `nvidia-nim-images` API identifier with its own adapter (`lib/nim-images.ts`), so image requests go straight to `POST https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.2-klein-4b` and never through chat/completions or the `before_provider_request` thinking transforms. The provider now registers the mixed chat + image catalog (`PROVIDER_MODEL_CONFIGS`); all 16 chat models and their hooks are unchanged.
+- Per-model image capability records (`models/image-models.ts`): verified bounds only — 1024×1024, `steps` 1–4 (default 4), `samples` 1, `seed` ≥ 0 (0/omitted = random), `cfg_scale` ≥ 1 (default 1). Text input becomes the `prompt` field; the model is identified by the endpoint URL; `mode` is never sent (the live schema is `extra_forbidden` and rejects the documented `mode: "Image Generation"` with HTTP 422). Image input/editing, negative prompts, output-format selection, compression controls, and seamless-texture generation are unverified and rejected locally.
+- Response normalization to pi base64 image blocks with the format **sniffed from magic bytes** (JPEG/PNG/WebP) instead of assumed. Per-artifact `finishReason`/`seed` are honored: non-`SUCCESS` artifacts (e.g. content-filtered) and artifacts without decodable image data are dropped and reported with NVIDIA's own `finishReason` quoted verbatim; a run without a usable image is an error. Artifacts also report their seeds as text blocks so runs are reproducible.
+- Explicit error handling: HTTP 401/403 authentication, 422 with the server's field detail (the Pydantic `detail[]` shape), 429 with `retry-after`, 5xx with the request ID, malformed JSON, missing `artifacts`, cancellation (`stopReason: "aborted"`), and a distinct client-side timeout (default 5 min, `ImagesOptions.timeoutMs` honored). `onPayload`/`onResponse` instrumentation hooks are honored per the image API contract. No automatic retries.
+- Advanced `nim-generate-image` tool (codemode exposure) that reuses the same shared client with pi's credential resolution (`ctx.modelRegistry`). It exposes `width`/`height`/`seed`/`steps`/`cfg_scale` plus optional `saveDir`/`fileName` saving: original encoded bytes preserved (no re-encoding), extension follows the detected format, existing files are never overwritten (exclusive create), and every saved path is reported. Without `saveDir` nothing touches disk — native generation never saves silently.
+- Mocked test suite (`test/image-generation-tests.ts`) covering image-model registration and catalog visibility, chat models/hooks staying functional, exact endpoint/auth/request translation, `mode` omission, input/capability validation, JPEG/PNG/WebP sniffing, successful/missing/malformed/filtered/partial artifacts, HTTP 401/403/422/429/5xx, abort/timeout behavior, unknown usage handling, and explicit saving with overwrite protection.
+
+### Notes
+
+- NVIDIA returns **no usage or cost information** for image generation and none is fabricated. The zeroed cost metadata means **unreported pricing, not free inference** — images consume NVIDIA trial credits/plan quota. `cfg_scale: 1` is verified; the live endpoint rejects `0` (published schema says "0 to 0") and the upper limit is unverified. Only 1024×1024 is established despite the wider published dimension enum. The initial implementation was not deployed separately; it is included in the 1.10.1 live deployment.
+
 ## [1.9.0] - 2026-09-25
 
 ### Added

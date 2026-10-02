@@ -7,6 +7,7 @@ NVIDIA NIM exposes a lot of reasoning models through an OpenAI-compatible API, b
 ## Features
 
 - 16 curated models for chat, reasoning, code, and vision — every one verified live against hosted NIM as of 2026-09-16
+- Native image generation through a separate `nvidia-nim-images` adapter (FLUX.2 Klein 4B, verified 2026-10-02) plus an advanced `nim-generate-image` tool with explicit file saving
 - 55 scraped entries, filtered, deduplicated, and family-mapped
 - 5 handler-based thinking formats: DeepSeek V4, Kimi, MiniMax inline, Nemotron 3 effort, Qwen chat-template, plus native pi handling for reasoning-effort
 - Per-model `chat_template_kwargs` injection (thinking effort, budgets, system-message toggles) and request content-array normalization for older models
@@ -22,6 +23,8 @@ NVIDIA NIM exposes a lot of reasoning models through an OpenAI-compatible API, b
 Install the npm package `pi-extension-nvidia-nim`. It registers a separate Pi provider named `nvidia-nim`; it does not replace Pi's built-in `nvidia` provider. Both can be installed and used side by side.
 
 ## Install
+
+**Requires Pi 1.0.0 or later**, including `@earendil-works/pi-ai` and `@earendil-works/pi-coding-agent` 1.0.0+. The mixed chat/image provider registration and authenticated image runtime are not supported on Pi 0.x.
 
 ```bash
 pi install npm:pi-extension-nvidia-nim
@@ -83,12 +86,12 @@ This smoke test should show Pi's structured reasoning indicator and a separate f
 - Uses pi's built-in `openai-completions` streaming. No custom `streamSimple`.
 - Model-specific quirks (thinking formats, extra body kwargs, compat flags) are handled via `before_provider_request` and pi's `compat` system.
 - Family-based config in `config/model-families.ts` (15 families, first-match-wins) drives thinking format routing and model metadata.
-- All cost fields are `$0` because NVIDIA NIM is free tier.
+- Catalog cost fields are `$0` placeholders because pricing is not reported here; they do not promise free inference. NVIDIA may offer free-tier credits, but hosted requests consume quota/credits and actual pricing depends on the endpoint and account.
 - Works alongside pi's built-in `nvidia` provider. Use `nvidia-nim/...` for NIM-family-specific thinking transforms and the full catalog, `nvidia/...` for pi's native handling.
 
 ## Comparison with Pi's built-in `nvidia` provider
 
-The installed Pi 0.85.1 provider currently exposes 20 NVIDIA models in the bundled catalog used by the comparison (21 at runtime, which additionally lists `z-ai/glm-5.3-flash`). This extension exposes 16. The comparison is reproducible with:
+**Historical comparison snapshot (Pi 0.85.1), not the supported runtime baseline.** That bundled provider exposed 20 NVIDIA models in the comparison (21 at runtime, which additionally listed `z-ai/glm-5.3-flash`), versus this extension's 16. Counts below describe that snapshot. Generate an updated comparison against your installed Pi with:
 
 ```bash
 npm run compare:pi -- \
@@ -96,7 +99,7 @@ npm run compare:pi -- \
   --markdown-output=tools/output/pi-nvidia-compare.md
 ```
 
-At this revision the report contains:
+That historical report contains:
 
 - 11 shared model IDs
 - 9 official-only models
@@ -160,6 +163,100 @@ The remaining models work through their family rules, but don't call them live-v
 - 15-family regex routing: assigns thinking formats and compat settings across all 16 models.
 - Per-model reasoning effort mapping: non-standard values like off or minimal are mapped automatically to what the model expects.
 - No custom `streamSimple`: uses `before_provider_request` event hook, avoiding provider conflicts.
+
+## Image generation
+
+The `nvidia-nim` provider also registers **image** models (`type: "image"`) on a dedicated `nvidia-nim-images` API adapter. Image requests go straight to NVIDIA's per-model `genai` endpoints — never through chat/completions and never through the chat thinking transforms. The chat catalog is untouched: the provider registers the mixed chat + image catalog at once, so a refresh that replaces models must rebuild the combined list (`PROVIDER_MODEL_CONFIGS` in `index.ts`).
+
+### Supported image models
+
+| Model | ID | Input | Output | Verified |
+|-------|----|-------|--------|----------|
+| FLUX.2 Klein 4B | `black-forest-labs/flux.2-klein-4b` | text | image | live requests 2026-10-02: square, landscape, portrait, and ultrawide RGB JPEGs |
+
+`output: ["image"]` describes Klein\'s generative modality. The adapter can also append deterministic seed notes and dropped-artifact warnings as text blocks in the result; these are diagnostics, not model-generated text. Native callers should process those diagnostic blocks rather than assume every result block is an image.
+
+Klein-only for now, deliberately: other catalog listings (Qwen Image, Stable Diffusion) carry examples pointing at FLUX.1 Dev and their hosted endpoints are not established, so no misleading model IDs are registered. Additional models require a capability record backed by successful hosted generation; timeout-only evidence cannot qualify registration. FLUX.1 Dev and Schnell are probe-only candidates, not registered models. Kontext's hosted preview supports only predefined `example_id` images, not arbitrary image uploads. Container documentation describes a different API contract. See [image evidence and probing](IMAGE_GENERATION.md).
+
+### Verified parameters
+
+| Parameter | Accepted | Default | Evidence |
+|-----------|----------|---------|----------|
+| `prompt` | non-empty text, maximum 10,000 characters | — | hosted-schema length limit |
+| `width`, `height` | each 512–1568 inclusive, multiples of 16 | `1024×1024` | both hosted validator enums confirmed; no rounding or resizing; additional server combination constraints may apply |
+| `aspect_ratio` | `1:1`, `4:3`, `16:9`, `9:16`, `21:9` | omitted (square) | fixed convenience mappings, not a NVIDIA field; 16:9 / 9:16 are approximate |
+| `steps` | `1`–`4` | `4` | documented range; `4` tested |
+| `samples` | `1` | `1` | documented `1` only; `1` tested |
+| `seed` | integer `0`–`4294967295` (`0` = random) | omitted (random) | uint32 bound from hosted schema; `42` tested and echoed per artifact |
+| `cfg_scale` | ≥ `1` | `1` | the live endpoint rejects `0` with HTTP 422 although the published schema says "0 to 0"; `1` tested; **upper limit unverified** |
+
+Separate live hosted validation responses confirmed both width and height as 512–1568 inclusive in steps of 16. Generation now accepts these grids instead of a fixed pair whitelist. For example, `width: 1536, height: 864` is locally valid; `1000×750` is rejected without a request. Omitted (`undefined`) dimensions default independently to 1024; explicit `null` settings, including `aspect_ratio`, fail locally instead of silently requesting defaults. There is no silent rounding, cropping, or client resizing. Existing aspect-ratio aliases keep their dimension mappings and reject conflicting explicit dimensions. Representative outputs have been decoded, but not every grid combination has been generated; additional server restrictions are returned as structured errors, not hidden or automatically retried.
+
+### Editing availability
+
+The hosted Klein preview accepts predefined NVIDIA examples, not users\' own images. Preset editing was removed in 1.14.2 because it does not meet that goal. The tool and native adapter now expose generation only for Klein; legacy `preset_example` values fail locally instead of silently generating a new image. Historical preset-probe findings remain in `IMAGE_GENERATION.md`.
+
+Request translation: text becomes `prompt`; the URL identifies the model (no `model` body field). `aspect_ratio` resolves locally to width/height and is not sent. Conflicting explicit dimensions are rejected. `16:9` is landscape (`1344×768`), unlike the playground's reversed label. Model-card presets are not a generation whitelist; explicit dimensions are validated against the live hosted grid. Raster format descriptions do not establish a hosted output-format selector.
+
+`mode` is **never** sent: it previously received HTTP 422. The playground's editing template adds an `image` array to the same endpoint instead. Our actual JPEG data-URL array and PNG data-URL string uploads both received 422; the PNG response contained a preset `example_id` hint. Arbitrary-image editing remains disabled. The `inputImage` option fails locally before reading/uploading a source for Klein. Shared data-URL transport plumbing is implemented for future verified models, but enabling it requires separate editing evidence. Negative-prompt, output-format, compression, and dedicated seamless-generation controls remain unsupported.
+
+### Native usage (codemode)
+
+```js
+// @options: {"timeout_ms": 300000}
+const painter = await models.getModelOfType("image", "nvidia-nim", "black-forest-labs/flux.2-klein-4b");
+const result = await models.generateImages(painter, {
+  input: [{ type: "text", text: "A studio product photograph of a red fox in the snow, watercolor" }],
+});
+if (result.stopReason !== "stop") return result.errorMessage;
+for (const block of result.output) {
+  if (block.type === "image") image(block);
+  else text(block.text);
+}
+```
+
+The catalog endpoint is the default; requests honor the resolved model `baseUrl` and authentication-provided endpoint overrides. The advanced tool uses the same Pi runtime authentication path, including configured headers and header-only credentials. Pi's current `models.json` `modelOverrides` apply to chat models only, not image models.
+
+Native generation returns images and **never saves them to disk**. Output blocks are base64 image blocks with the actual detected MIME type — the format is sniffed from magic bytes (JPEG, PNG, WebP) instead of assumed. Small text blocks report per-artifact seeds (`artifact 1: seed=42`) so a run can be reproduced.
+
+### Advanced tool: `nim-generate-image`
+
+Pi's `models.generateImages()` interface only accepts text/image input blocks, so the extension registers a `nim-generate-image` tool that exposes the verified settings and explicit file saving. It calls the same shared client as the native adapter with pi's credential resolution. It has `codemode` exposure: it is listed for `codemode` scripts (`tools.nim_generate_image(...)`) and is not declared to the model unless activated (`--tools nim-generate-image` or `"defaultTools"` in settings).
+
+```js
+// @options: {"timeout_ms": 300000}
+const result = await tools.nim_generate_image({
+  prompt: "A studio product photograph of a red fox in the snow, watercolor",
+  aspect_ratio: "16:9", // landscape 1344x768; omit for square
+  seed: 42,
+  steps: 4,
+  cfg_scale: 1,
+  saveDir: "out",
+});
+if (result.isError) return result.errorMessage ?? result.saveError;
+return result.savedPaths;
+```
+
+Codemode receives the tool’s structured result, including `isError`: generation failures provide `errorMessage`, while save failures provide `saveError` and preserve the generated images. Input validation throws and can be handled with `try`/`catch`; runtime authentication failures return structured error results.
+
+Parameters: `prompt` (required), `model`, `width`, `height`, `aspect_ratio`, `inputImage` (gated; no currently registered model supports arbitrary-image editing), `seed`, `steps`, `cfg_scale`, `saveDir`, `fileName`. The structured result reports the operation and resolved settings, including actual requested dimensions. Saving rules:
+
+- Nothing is written to disk unless `saveDir` is given. Relative directories resolve against pi’s session workspace (`ctx.cwd`); saved paths are absolute.
+- Files keep the **original encoded bytes** (no re-encoding); the extension corrects a mismatched filename extension to the detected format (`.jpg` / `.png` / `.webp`, with matching `.jpeg` preserved). Multi-image suffixes precede the extension: `shot-1.jpg`, `shot-2.jpg`.
+- Existing files are **never overwritten**: an existing target is refused and reported, and the generated images are still returned. Directory-creation and write failures likewise return `saveError` without discarding images.
+- Every saved path is reported in the result (`savedPaths`, `structuredContent.images[].savedPath`).
+
+### Output, errors, and cost
+
+- Each artifact must be an object with `finishReason: "SUCCESS"`, canonical base64, an allowed detected MIME type, and a structurally complete JPEG/PNG/static WebP container. Malformed, filtered, unsupported, and obviously truncated artifacts are dropped independently; valid siblings remain available. These lightweight checks are **not full pixel decoding**. A run with no usable image is an error result listing why; the advanced tool also reports dropped-artifact warnings.
+- HTTP errors are mapped explicitly: 401/403 authentication, 422 validation (with the server's field detail), 429 rate limit (with `retry-after` when present), 5xx server errors (with the request ID). Cancellation returns `stopReason: "aborted"`; a client-side timeout (default 5 minutes) is a distinct error. Both settle promptly even if instrumentation hooks or a custom fetch ignore cancellation; hooks themselves cannot be forcibly terminated. There are **no automatic retries**.
+- NVIDIA returns **no usage or cost information** for image generation, and none is fabricated. The catalog cost fields are `$0` because pricing is **unreported — this does not mean free inference**: generated images consume NVIDIA trial credits / plan quota like any other hosted NIM call.
+
+Diagnostic logs include only safe model/status/count information, never provider error details that might echo prompts or credentials.
+
+### Trial / quota caveats
+
+Image generation uses the same build.nvidia.com account and key as chat (40 requests/min free tier, 1,000 inference credits on signup). The per-image credit cost is not published and was not measured; the verified request completed in 3.62 s. Expect 429s under the free tier — the extension surfaces them with the retry-after value. Image operations make no automatic retries; Pi's global chat-turn retry settings do not automatically retry image-tool calls. Retry an image operation explicitly, accounting for quota and possible duplicate work.
 
 ## Troubleshooting
 

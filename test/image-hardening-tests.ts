@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join } from "node:path";
 import type { ImageModel, ImagesContext, ImagesOptions } from "@earendil-works/pi-ai";
 import { JPEG_BYTES, PNG_BYTES, WEBP_BYTES } from "./fixtures/image-bytes";
 import {
@@ -44,6 +47,33 @@ const restricted = await runNimImageGeneration(model, input, { apiKey: "test-key
   ...klein, sniffableMimeTypes: ["image/png"],
 });
 assert.equal(restricted.artifacts.length, 0, "per-model MIME allowlist is enforced");
+
+// Explicit null never means omitted, including native untyped metadata and ratios.
+let nullRequests = 0;
+for (const key of ["width", "height", "seed", "steps", "samples", "cfg_scale", "aspect_ratio", "preset_example", "mode", "unknown"]) {
+  assert.equal(resolveImageSettings(klein, { [key]: null }).ok, false, `${key}: null rejected locally`);
+  const rejected = await run({ artifacts: [good] }, { metadata: { [key]: null }, fetch: (async () => {
+    nullRequests++;
+    return new Response(JSON.stringify({ artifacts: [good] }));
+  }) as typeof fetch });
+  assert.equal(rejected.result.stopReason, "error", `${key}: native request fails`);
+}
+assert.equal(nullRequests, 0, "null settings never consume quota");
+for (const field of ["width", "height"]) {
+  assert.equal(resolveImageSettings(klein, { aspect_ratio: "16:9", [field]: null }).ok, false);
+}
+assert.equal(resolveImageSettings(klein, { width: undefined, aspect_ratio: undefined }).ok, true);
+
+// Declared runtime baseline and docs must agree; comparison counts are historical.
+const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+for (const name of ["@earendil-works/pi-ai", "@earendil-works/pi-coding-agent"]) {
+  assert.equal(pkg.peerDependencies[name], ">=1.0.0");
+}
+const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
+assert.match(readme, /Requires Pi 1\.0\.0 or later/);
+assert.match(readme, /historical comparison snapshot/i);
+assert.doesNotMatch(readme, /All cost fields are.*because NVIDIA NIM is free tier/);
+assert.deepEqual(capabilityToModelConfig(klein).output, ["image"], "Klein is not a text-generating model");
 
 // All capability defaults and bounds are model-specific, including exclusive limits.
 assert.equal(resolveImageSettings(klein, { seed: 4_294_967_295 }).ok, true);
@@ -160,4 +190,23 @@ try {
     assert.ok(result.content.some((b) => b.type === "text" && b.text.includes("Dropped 1")));
   }
 } finally { globalThis.fetch = originalFetch; }
+
+// Number saved successes contiguously, but retain the original artifact indices.
+const saveDir = mkdtempSync(join(tmpdir(), "nim-sibling-save-"));
+try {
+  const ctx = { cwd: saveDir, modelRegistry: {
+    getModelOfType: () => model,
+    generateImages: (m: ImageModel<string>, c: ImagesContext, options?: ImagesOptions) => generateNimImages(m, c, {
+      ...options, apiKey: "dummy", fetch: respond({ artifacts: [good, null, { ...good, seed: 84 }] }) as typeof fetch,
+    }),
+  } };
+  const tool = await runNimImageTool({ prompt: "p", saveDir, fileName: "shot.jpg" }, ctx);
+  const details = tool.structuredContent as any;
+  assert.equal(tool.isError, false);
+  assert.deepEqual(details.savedPaths.map((p: string) => basename(p)), ["shot-1.jpg", "shot-2.jpg"]);
+  assert.deepEqual(details.images.map((i: any) => i.index), [0, 2]);
+  assert.deepEqual(details.images.map((i: any) => i.seed), [42, 84]);
+  assert.equal(details.droppedArtifacts.length, 1);
+  for (const path of details.savedPaths) assert.deepEqual(readFileSync(path), JPEG_BYTES);
+} finally { rmSync(saveDir, { recursive: true, force: true }); }
 console.log("image hardening tests passed");

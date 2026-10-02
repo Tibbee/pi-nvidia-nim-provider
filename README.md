@@ -24,6 +24,8 @@ Install the npm package `pi-extension-nvidia-nim`. It registers a separate Pi pr
 
 ## Install
 
+**Requires Pi 1.0.0 or later**, including `@earendil-works/pi-ai` and `@earendil-works/pi-coding-agent` 1.0.0+. The mixed chat/image provider registration and authenticated image runtime are not supported on Pi 0.x.
+
 ```bash
 pi install npm:pi-extension-nvidia-nim
 ```
@@ -84,12 +86,12 @@ This smoke test should show Pi's structured reasoning indicator and a separate f
 - Uses pi's built-in `openai-completions` streaming. No custom `streamSimple`.
 - Model-specific quirks (thinking formats, extra body kwargs, compat flags) are handled via `before_provider_request` and pi's `compat` system.
 - Family-based config in `config/model-families.ts` (15 families, first-match-wins) drives thinking format routing and model metadata.
-- All cost fields are `$0` because NVIDIA NIM is free tier.
+- Catalog cost fields are `$0` placeholders because pricing is not reported here; they do not promise free inference. NVIDIA may offer free-tier credits, but hosted requests consume quota/credits and actual pricing depends on the endpoint and account.
 - Works alongside pi's built-in `nvidia` provider. Use `nvidia-nim/...` for NIM-family-specific thinking transforms and the full catalog, `nvidia/...` for pi's native handling.
 
 ## Comparison with Pi's built-in `nvidia` provider
 
-The installed Pi 0.85.1 provider currently exposes 20 NVIDIA models in the bundled catalog used by the comparison (21 at runtime, which additionally lists `z-ai/glm-5.3-flash`). This extension exposes 16. The comparison is reproducible with:
+**Historical comparison snapshot (Pi 0.85.1), not the supported runtime baseline.** That bundled provider exposed 20 NVIDIA models in the comparison (21 at runtime, which additionally listed `z-ai/glm-5.3-flash`), versus this extension's 16. Counts below describe that snapshot. Generate an updated comparison against your installed Pi with:
 
 ```bash
 npm run compare:pi -- \
@@ -97,7 +99,7 @@ npm run compare:pi -- \
   --markdown-output=tools/output/pi-nvidia-compare.md
 ```
 
-At this revision the report contains:
+That historical report contains:
 
 - 11 shared model IDs
 - 9 official-only models
@@ -172,6 +174,8 @@ The `nvidia-nim` provider also registers **image** models (`type: "image"`) on a
 |-------|----|-------|--------|----------|
 | FLUX.2 Klein 4B | `black-forest-labs/flux.2-klein-4b` | text | image | live requests 2026-10-02: square, landscape, portrait, and ultrawide RGB JPEGs |
 
+`output: ["image"]` describes Klein\'s generative modality. The adapter can also append deterministic seed notes and dropped-artifact warnings as text blocks in the result; these are diagnostics, not model-generated text. Native callers should process those diagnostic blocks rather than assume every result block is an image.
+
 Klein-only for now, deliberately: other catalog listings (Qwen Image, Stable Diffusion) carry examples pointing at FLUX.1 Dev and their hosted endpoints are not established, so no misleading model IDs are registered. Additional models require a capability record backed by successful hosted generation; timeout-only evidence cannot qualify registration. FLUX.1 Dev and Schnell are probe-only candidates, not registered models. Kontext's hosted preview supports only predefined `example_id` images, not arbitrary image uploads. Container documentation describes a different API contract. See [image evidence and probing](IMAGE_GENERATION.md).
 
 ### Verified parameters
@@ -186,7 +190,7 @@ Klein-only for now, deliberately: other catalog listings (Qwen Image, Stable Dif
 | `seed` | integer `0`–`4294967295` (`0` = random) | omitted (random) | uint32 bound from hosted schema; `42` tested and echoed per artifact |
 | `cfg_scale` | ≥ `1` | `1` | the live endpoint rejects `0` with HTTP 422 although the published schema says "0 to 0"; `1` tested; **upper limit unverified** |
 
-Separate live hosted validation responses confirmed both width and height as 512–1568 inclusive in steps of 16. Generation now accepts these grids instead of a fixed pair whitelist. For example, `width: 1536, height: 864` is locally valid; `1000×750` is rejected without a request. Omitted dimensions default independently to 1024. There is no silent rounding, cropping, or client resizing. Existing aspect-ratio aliases keep their dimension mappings and reject conflicting explicit dimensions. Representative outputs have been decoded, but not every grid combination has been generated; additional server restrictions are returned as structured errors, not hidden or automatically retried.
+Separate live hosted validation responses confirmed both width and height as 512–1568 inclusive in steps of 16. Generation now accepts these grids instead of a fixed pair whitelist. For example, `width: 1536, height: 864` is locally valid; `1000×750` is rejected without a request. Omitted (`undefined`) dimensions default independently to 1024; explicit `null` settings, including `aspect_ratio`, fail locally instead of silently requesting defaults. There is no silent rounding, cropping, or client resizing. Existing aspect-ratio aliases keep their dimension mappings and reject conflicting explicit dimensions. Representative outputs have been decoded, but not every grid combination has been generated; additional server restrictions are returned as structured errors, not hidden or automatically retried.
 
 ### Editing NVIDIA's preset image
 

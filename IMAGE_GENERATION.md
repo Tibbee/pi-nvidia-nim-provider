@@ -1,6 +1,12 @@
 # Hosted image generation: evidence and safe probing
 
-## Current resolution policy (1.14.0)
+## Runtime requirements and strict settings (1.14.1)
+
+Requires Pi 1.0.0 or later (`pi-ai` and `pi-coding-agent`), which provides mixed-operation registration and authenticated image dispatch. Explicit `null` values in image metadata are rejected locally; only omitted/undefined settings use defaults. No request is sent for invalid settings. Saved successes are numbered contiguously (`shot-1.jpg`, `shot-2.jpg`) even if provider artifact indices have gaps; original indices remain in metadata.
+
+Klein's declared output modality remains image-only. Seed notes and dropped-artifact warnings in native result text blocks are deterministic adapter diagnostics, not generated text. Catalog zero costs mean unreported pricing, not a guarantee of free inference.
+
+## Current resolution policy (introduced in 1.14.0)
 
 Generation accepts independent width and height values from **512 through 1568 inclusive**, in **16-pixel increments**, defaulting to 1024 per axis. Both lists were extracted from actual hosted validator responses; these are not inferred container bounds. The old six-pair whitelist has been removed for generation. No automatic rounding, cropping, or resizing occurs. Existing ratio aliases are unchanged, and conflicting explicit dimensions fail locally.
 

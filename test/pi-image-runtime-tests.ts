@@ -68,6 +68,11 @@ try {
   const ctx = { cwd: dir, modelRegistry: registry };
   await assert.rejects(runNimImageTool(validate({ prompt: "p", aspect_ratio: 16 }), ctx), /Unsupported aspect_ratio/);
   await assert.rejects(runNimImageTool(validate({ prompt: "p", cfg_scale: 0 }), ctx), /cfg_scale/);
+  for (const key of ["width", "height", "seed", "steps", "samples", "cfg_scale", "aspect_ratio", "preset_example"]) {
+    const invalid = await registry.generateImages(painter, { input: [{ type: "text", text: "p" }] }, { metadata: { [key]: null } });
+    assert.equal(invalid.stopReason, "error", `${key}: native runtime rejects null`);
+  }
+  assert.equal(calls.length, 0, "native null metadata fails before fetch");
   const native = await registry.generateImages(painter, { input: [{ type: "text", text: "p" }] });
   assert.equal(native.stopReason, "stop", native.errorMessage);
   assert.equal(native.output.filter((b: any) => b.type === "image").length, 1);

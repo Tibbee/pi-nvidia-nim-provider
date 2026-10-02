@@ -288,12 +288,12 @@ export async function runNimImageTool(
       // all filesystem failures as saveError instead of throwing them away.
       mkdirSync(saveDir, { recursive: true });
       const randomHex = randomBytes(4).toString("hex");
-      for (const image of images) {
+      for (const [ordinal, image] of images.entries()) {
         const name = buildSaveFileName(
           params,
           params.prompt,
           image.mimeType,
-          image.index,
+          ordinal,
           images.length,
           randomHex,
         );

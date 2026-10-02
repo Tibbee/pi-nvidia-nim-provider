@@ -194,19 +194,19 @@ export function resolveImageSettings(
   const preset = resolveNimPresetExample(capability, raw?.preset_example);
   if (!preset.ok) return preset;
   let resolvedRaw = raw;
-  if (raw?.aspect_ratio !== undefined && raw.aspect_ratio !== null) {
+  if (raw?.aspect_ratio !== undefined) {
     const ratio = raw.aspect_ratio;
     const pair = typeof ratio === "string" && Object.hasOwn(capability.aspectRatios ?? {}, ratio)
       ? capability.aspectRatios![ratio] : undefined;
     if (!pair) return { ok: false, error: `Unsupported aspect_ratio: available ratios are ${Object.keys(capability.aspectRatios ?? {}).join(", ") || "none"}.` };
-    if ((raw.width !== undefined && raw.width !== null && raw.width !== pair[0]) ||
-        (raw.height !== undefined && raw.height !== null && raw.height !== pair[1])) {
+    if ((raw.width !== undefined && raw.width !== pair[0]) ||
+        (raw.height !== undefined && raw.height !== pair[1])) {
       return { ok: false, error: "aspect_ratio conflicts with explicit width/height." };
     }
     resolvedRaw = { ...raw, width: pair[0], height: pair[1] };
   }
   for (const [key, value] of Object.entries(resolvedRaw ?? {})) {
-    if (value === undefined || value === null || key === "aspect_ratio" || key === "preset_example") continue;
+    if (value === undefined || key === "aspect_ratio" || key === "preset_example") continue;
     const reason = Object.hasOwn(capability.rejectedRequestFields, key) ? capability.rejectedRequestFields[key] : undefined;
     if (reason) return { ok: false, error: `\`${key}\` is not accepted: ${reason}.` };
     if (key === "prompt") return { ok: false, error: "`prompt` is not a request setting; pass it as text input." };
@@ -218,7 +218,8 @@ export function resolveImageSettings(
   for (const key of Object.keys(SETTING_BOUNDS) as Array<keyof typeof SETTING_BOUNDS>) {
     if (!capability.allowedRequestFields.includes(key)) continue;
     const bounds = capability[SETTING_BOUNDS[key]];
-    const value = resolvedRaw?.[key] ?? bounds.default;
+    const override = resolvedRaw?.[key];
+    const value = override === undefined ? bounds.default : override;
     if (value === undefined) continue;
     const error = validateImageNumber(key, value, bounds, key !== "cfg_scale");
     if (error) return { ok: false, error };

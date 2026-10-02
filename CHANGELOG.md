@@ -2,6 +2,16 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.14.1] - 2026-10-02
+
+### Fixed
+
+- Declare Pi 1.0.0+ peer dependencies and installation requirements; label the Pi 0.85.1 provider comparison as historical rather than a supported baseline.
+- Reject explicit null image settings in native metadata, including numeric values and aspect ratios, before dispatch. Only undefined settings receive defaults.
+- Number saved successes contiguously even when dropped provider artifacts create gaps, while preserving original indices and seeds in result metadata.
+- Clarify zero catalog costs as unreported-pricing placeholders, not free inference; distinguish adapter diagnostic text from Klein\'s image-only generative modality.
+- Add offline null/no-dispatch, baseline/documentation, dropped-sibling saving, and installed-Pi native metadata regressions. No live inference is required.
+
 ## [1.14.0] - 2026-10-02
 
 ### Added

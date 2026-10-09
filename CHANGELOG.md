@@ -2,6 +2,13 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.14.3] - 2026-10-08
+
+### Changed
+
+- Move the `nim-generate-image` tool to `deferred` exposure: it stays callable from codemode scripts (`tools.nim_generate_image(...)`) but is no longer listed in the codemode tool description, freeing roughly 820 of the 3000 estimated-token inline budget. Scripts discover it through `searchTools()`, `describeTool()`, or `ALL_TOOLS`; `tool_search` or explicit activation (`--tools nim-generate-image`, `defaultTools`) can still declare it. No capability, validation, or saving behavior changed.
+- Update tool-exposure regressions to assert the deferred contract; README documents the new discovery paths.
+
 ## [1.14.2] - 2026-10-02
 
 ### Removed

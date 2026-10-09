@@ -158,10 +158,11 @@ for (const entry of NIM_IMAGE_MODELS) {
   assert.deepEqual(entry.cost, { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 });
 }
 
-// The advanced tool is registered and stays out of the default loadout.
+// The advanced tool is registered with deferred exposure: callable from
+// codemode scripts, not listed in the codemode description, not active by default.
 assert.equal(tools.length, 1, "one tool registered");
 assert.equal(tools[0].name, NIM_IMAGE_TOOL_NAME);
-assert.equal(tools[0].exposure, "codemode");
+assert.equal(tools[0].exposure, "deferred");
 assert.ok(events.includes("before_provider_request"));
 assert.ok(events.includes("after_provider_response"));
 
@@ -906,7 +907,7 @@ try {
 
   // The tool definition exposes only verified capabilities.
   assert.equal(NIM_IMAGE_TOOL.name, NIM_IMAGE_TOOL_NAME);
-  assert.equal(NIM_IMAGE_TOOL.exposure, "codemode");
+  assert.equal(NIM_IMAGE_TOOL.exposure, "deferred");
   assert.equal((NIM_IMAGE_TOOL.outputSchema as any).properties.isError.type, "boolean");
   assert.ok((NIM_IMAGE_TOOL.outputSchema as any).required.includes("isError"));
   assert.match(NIM_IMAGE_TOOL.description, /16:9 landscape \(1344x768\)/);

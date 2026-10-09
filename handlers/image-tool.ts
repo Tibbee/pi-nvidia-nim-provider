@@ -385,7 +385,10 @@ export const NIM_IMAGE_TOOL: ToolDefinition = {
     "NVIDIA returns no usage or cost information for image generation.",
   parameters: PARAMETERS as unknown as TSchema,
   outputSchema: OUTPUT_SCHEMA,
-  exposure: "codemode",
+  // Deferred: callable from codemode scripts and discoverable via
+  // searchTools()/describeTool()/ALL_TOOLS, but not listed in the codemode
+  // description. tool_search or explicit activation can declare it.
+  exposure: "deferred",
   annotations: {
     readOnlyHint: false,
     destructiveHint: false,

@@ -1,7 +1,7 @@
 {
     "name": "pi-extension-nvidia-nim",
     "private": false,
-    "version": "1.14.2",
+    "version": "1.14.3",
     "main": "index.ts",
     "types": "index.ts",
     "type": "module",
@@ -9,6 +9,7 @@
         "README.md",
         "CHANGELOG.md",
         "IMAGE_GENERATION.md",
+        "docs/chat-model-notes.md",
         "LICENSE",
         "config/",
         "handlers/",

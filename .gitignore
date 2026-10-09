@@ -31,7 +31,8 @@ Tools/nvidia_nim_models_by_category.txt
 
 alternative/
 
-# docs/ is development material for this machine, not shipped to npm.
-# It is intentionally untracked; local archival notes live here too.
+# Most docs/ content is local development material.
+# The README's chat reference page is tracked and shipped to npm.
 docs/*
+!docs/chat-model-notes.md
 .commandcode/

@@ -1,7 +1,7 @@
 // Offline regression: exercises every client-admitted combination, not live generation.
 import assert from "node:assert/strict";
 import type { ImageModel, ImagesContext, ImagesOptions } from "@earendil-works/pi-ai";
-import { FLUX_2_KLEIN_4B_CAPABILITY as cap, capabilityToModelConfig } from "../models/image-models";
+import { FLUX_3_IMAGE_KLEIN_CAPABILITY as cap, capabilityToModelConfig } from "../models/image-models";
 import { resolveImageSettings, generateNimImages, runNimImageGeneration } from "../lib/nim-images";
 import { runNimImageTool } from "../handlers/image-tool";
 import { getImageProbeCapability } from "../tools/probe_nim_images";
@@ -13,9 +13,11 @@ assert.deepEqual(cap.height, cap.width);
 assert.equal(cap.dimensionPairs, undefined);
 for (const width of grid) for (const height of grid) {
   const resolution = resolveImageSettings(cap, { width, height });
-  assert.ok(resolution.ok);
-  assert.equal(resolution.value.width, width);
-  assert.equal(resolution.value.height, height);
+  assert.equal(resolution.ok, width * height <= 1_062_400);
+  if (resolution.ok) {
+    assert.equal(resolution.value.width, width);
+    assert.equal(resolution.value.height, height);
+  }
 }
 for (const field of ["width", "height"]) {
   for (const invalid of [0, -16, 496, 1584, 511, 513, 1000, 750, 1024.5, NaN, Infinity, "1024", true]) {
@@ -47,7 +49,7 @@ const ctx = { cwd: process.cwd(), modelRegistry: {
   getModelOfType: () => model,
   generateImages: (m: ImageModel<string>, c: ImagesContext, o?: ImagesOptions) => generateNimImages(m, c, { ...o, apiKey: "dummy", fetch }),
 } };
-for (const [width, height] of [[512, 1568], [1568, 512], [1536, 864], [688, 1504]]) {
+for (const [width, height] of [[512, 1568], [1568, 512], [1536, 672], [688, 1504]]) {
   const tool = await runNimImageTool({ prompt: "p", width, height }, ctx);
   assert.equal(tool.isError, false);
   assert.equal(calls.at(-1).width, width);
@@ -59,7 +61,7 @@ await assert.rejects(runNimImageTool({ prompt: "p", width: 1000 }, ctx), /multip
 await assert.rejects(runNimImageTool({ prompt: "p", height: 1584 }, ctx), /between/);
 assert.equal(calls.length, count, "invalid dimensions never dispatch");
 const failed = await runNimImageGeneration(model, { input: [{ type: "text", text: "p" }] }, {
-  apiKey: "dummy", metadata: { width: 1568, height: 1568 },
+  apiKey: "dummy", metadata: { width: 1024, height: 1024 },
   fetch: (async () => new Response(JSON.stringify({ detail: "Combination not supported" }), { status: 422 })) as typeof globalThis.fetch,
 });
 assert.equal(failed.result.stopReason, "error");

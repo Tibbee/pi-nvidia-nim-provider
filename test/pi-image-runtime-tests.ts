@@ -53,7 +53,7 @@ try {
   const painter = registry.getModelOfType("image", "nvidia-nim", DEFAULT_NIM_IMAGE_MODEL_ID);
   assert.ok(painter);
   assert.equal(painter.baseUrl, "https://model.example.test/images");
-  assert.equal(registry.getModelsOfType("image", "nvidia-nim").length, 1);
+  assert.equal(registry.getModelsOfType("image", "nvidia-nim").length, 2);
   assert.equal(registry.getModelsOfType("chat", "nvidia-nim").length, 16);
 
   // Exercise Pi's actual argument validator, not just the tool execute function.
@@ -82,8 +82,12 @@ try {
 
   // Real native auth resolver supplies header-only credentials and an endpoint override.
   const provider = runtime.getProvider("nvidia-nim");
+  const registeredCatalog = [
+    ...registry.getModelsOfType("chat", "nvidia-nim"),
+    ...registry.getModelsOfType("image", "nvidia-nim").map((m: any) => ({ ...m, headers: { "X-Model": "configured" } })),
+  ];
   runtime.unregisterProvider("nvidia-nim");
-  runtime.registerNativeProvider({ ...provider, getModels: () => [], getAllModels: () => [{ ...painter, headers: { "X-Model": "configured" } }], auth: { apiKey: {
+  runtime.registerNativeProvider({ ...provider, getModels: () => [], getAllModels: () => registeredCatalog, auth: { apiKey: {
     name: "Test auth", resolve: async () => ({ auth: {
       headers: { "X-Api-Key": "header-only-dummy", authorization: null }, baseUrl: "https://proxy.example.test/images",
     } }),
@@ -121,12 +125,48 @@ try {
   assert.equal(calls.at(-1)!.payload.width, 1024);
   assert.equal(calls.at(-1)!.payload.height, 768);
   assert.equal(calls.length, 3);
-  const custom = await runNimImageTool(validate({ prompt: "p", width: 1536, height: 864 }), ctx);
+  const custom = await runNimImageTool(validate({ prompt: "p", width: 1536, height: 672 }), ctx);
   assert.equal(custom.isError, false);
   assert.equal(calls.at(-1)!.payload.width, 1536);
-  assert.equal(calls.at(-1)!.payload.height, 864);
+  assert.equal(calls.at(-1)!.payload.height, 672);
   await assert.rejects(runNimImageTool(validate({ prompt: "p", height: 750 }), ctx), /multiple of 16/);
   assert.equal(calls.length, 4);
+  // Explicit FLUX.2 selection uses the same authenticated Pi runtime, with
+  // its own defaults and the currently observed 800-character prompt limit.
+  const oldId = "black-forest-labs/flux.2-klein-4b";
+  const oldPainter = registry.getModelOfType("image", "nvidia-nim", oldId);
+  assert.ok(oldPainter);
+  const oldNative = await registry.generateImages(oldPainter, { input: [{ type: "text", text: "p" }] });
+  assert.equal(oldNative.stopReason, "stop", oldNative.errorMessage);
+  assert.equal(calls.at(-1)!.payload.steps, 4);
+  assert.equal(calls.at(-1)!.payload.cfg_scale, 1);
+  const oldTool = await runNimImageTool(validate({ model: oldId, prompt: "p".repeat(800) }), ctx);
+  assert.equal(oldTool.isError, false);
+  assert.equal((oldTool.structuredContent as any).model, oldId);
+  assert.equal(calls.at(-1)!.payload.steps, 4);
+  const beforeOldRejections = calls.length;
+  await assert.rejects(runNimImageTool(validate({ model: oldId, prompt: "p".repeat(801) }), ctx), /800/);
+  await assert.rejects(runNimImageTool(validate({ model: oldId, prompt: "p", steps: 50 }), ctx), /between 1 and 4/);
+  assert.equal(calls.length, beforeOldRejections);
+  assert.throws(() => validate({ model: "unknown", prompt: "p" }));
+  const caption = "A red square <square> on white.";
+  const layout = [{ id: "square", bbox: [200, 100, 800, 400], desc: "One red square." }];
+  const layoutTool = await runNimImageTool(validate({ prompt: caption, layout }), ctx);
+  assert.equal(layoutTool.isError, false);
+  assert.equal(calls.at(-1)!.payload.prompt, `${caption} ${JSON.stringify(layout)}`);
+  assert.equal("layout" in calls.at(-1)!.payload, false, "layout compiles to prompt through installed Pi");
+  const layoutNative = await registry.generateImages(painter, { input: [{ type: "text", text: caption }] }, { metadata: { layout } });
+  assert.equal(layoutNative.stopReason, "stop", layoutNative.errorMessage);
+  assert.equal(calls.at(-1)!.payload.prompt, `${caption} ${JSON.stringify(layout)}`);
+  const beforeLayoutRejections = calls.length;
+  await assert.rejects(runNimImageTool(validate({ prompt: caption, layout: [{ ...layout[0], bbox: [900, 0, 100, 1000] }] }), ctx), /top < bottom/);
+  await assert.rejects(runNimImageTool(validate({ model: oldId, prompt: caption, layout }), ctx), /not verified/);
+  for (const selected of [painter, oldPainter]) {
+    const tooLarge = await registry.generateImages(selected, { input: [{ type: "text", text: "p" }] }, { metadata: { width: 1568, height: 1568 } });
+    assert.equal(tooLarge.stopReason, "error");
+    assert.match(tooLarge.errorMessage!, /1062400/);
+  }
+  assert.equal(calls.length, beforeLayoutRejections, "bad layouts and combined area never dispatch");
   console.log("Pi image runtime integration tests passed");
 } finally {
   globalThis.fetch = originalFetch;

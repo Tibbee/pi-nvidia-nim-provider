@@ -5,9 +5,9 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
+const NVIDIA_API_KEY = process.env.NVIDIA_NIM_API_KEY ?? process.env.NVIDIA_API_KEY;
 if (!NVIDIA_API_KEY) {
-  console.error("Error: NVIDIA_API_KEY environment variable is not set.");
+  console.error("Error: NVIDIA_NIM_API_KEY or NVIDIA_API_KEY is required.");
   process.exit(1);
 }
 
@@ -40,6 +40,7 @@ if (process.argv.includes("--cards")) {
 const _resumeMode = process.argv.includes("--resume");
 const fullMode = process.argv.includes("--full");
 const updateMode = process.argv.includes("--update");
+const pruneRetired = process.argv.includes("--prune-retired");
 
 const singleModel = process.argv
   .find(arg => arg.startsWith("--model=") || arg.startsWith("-m=") || arg.startsWith("--model-name="))
@@ -153,6 +154,10 @@ function getYardstickFallback(modelId: string): { contextWindow?: number; maxOut
 }
 
 const FALLBACK_LIMITS_MAP: Record<string, { contextWindow?: number; maxOutputTokens?: number }> = {
+  // Hosted playground configurations, 2026-10-17. Super VL's upstream 1M
+  // architecture differs from the hosted function's configured 262144 window.
+  "stepfun-ai/step-5-preview": { contextWindow: 1048576, maxOutputTokens: 4096 },
+  "nvidia/nemotron-3.5-super-vl-120b-a12b": { contextWindow: 262144, maxOutputTokens: 131072 },
   // GLM-5.3-Flash has no build page at all (only the Flash-free GLM-5.3 card
   // exists), so the slug resolver cannot find a spec for it. Upstream documents
   // image/video input and the same 1M context / 128K generation cap.
@@ -187,10 +192,16 @@ const FALLBACK_LIMITS_MAP: Record<string, { contextWindow?: number; maxOutputTok
 // choose — and for DeepSeek V4.1-Flash it is 262,144, matching NVIDIA's
 // "max_tokens of at least 256K" recommendation.
 const MAX_OUTPUT_TOKEN_OVERRIDES: Record<string, number> = {
+  // Step's maximum spans its combined window; use the hosted request default
+  // as the conservative operating budget, as for DeepSeek below.
+  "stepfun-ai/step-5-preview": 4096,
   "deepseek-ai/deepseek-v4.1-flash": 262144,
 };
 
 const RETIRED_MODEL_IDS = new Set<string>([
+  // Explicit HTTP 410 + past NVIDIA card notices, checked 2026-10-17.
+  "mistralai/mistral-nemotron",
+  "moonshotai/kimi-k3",
   // Retired 2026-08/09 (HTTP 410 Gone) — the catalog drops these, but the
   // /modelcard page keeps answering 200, so filter them by ID as well.
   "stepfun-ai/step-3.7-flash",
@@ -343,10 +354,8 @@ function extractJsonObjectAfterMarker(html: string, marker: string): any | null 
 
 /** Extract the OpenAPI schema embedded by the ReadMe-powered API docs. */
 function extractDocsOpenApiSpec(html: string): any | null {
-  return extractJsonObjectAfterMarker(
-    html,
-    '"api":{"method":"post","path":"/chat/completions","schema":',
-  );
+  const marker = html.match(/"api":\{"method":"post","path":"\/(?:v1\/)?chat\/completions","schema":/)?.[0];
+  return marker ? extractJsonObjectAfterMarker(html, marker) : null;
 }
 
 function extractOpenApiSpec(html: string): any | null {
@@ -494,7 +503,7 @@ const STANDARD_OPENAI_PARAMS = new Set([
   "model", "messages", "temperature", "top_p", "max_tokens",
   "max_completion_tokens", "seed", "stream", "stop", "n",
   "presence_penalty", "frequency_penalty", "logit_bias", "user",
-  "top_k", "repetition_penalty", "response_format", "tools", "tool_choice",
+  "top_k", "repetition_penalty", "response_format", "tools", "tool_choice", "reasoning_effort",
 ]);
 
 const MIN_REASONABLE_MAX_OUTPUT = 256;
@@ -550,13 +559,14 @@ function parseMetadataFromSpec(meta: ModelMetadata, spec: any): void {
   // ── vision support from schema names (VLM content types) ──
   // NVIDIA names the image part inconsistently across cards: ContentPartImage
   // on most, ImageContentPart on DeepSeek V4.1-Flash.
-  if (Object.keys(schemas).some(n => /ContentPart(?:Image|Video)|(?:Image|Video)ContentPart/i.test(n))) {
+  if (Object.keys(schemas).some(n => /ContentPart(?:Image|Video)|(?:Image|Video)ContentPart/i.test(n)) ||
+      /"image_url"\s*:/.test(JSON.stringify(schemas))) {
     meta.supportsVision = true;
     meta.inputModalities = ["text", "image"];
   }
 
   // ── reasoning support ──
-  const hasReasoningContent = !!(schemas.Message?.properties?.reasoning_content);
+  const hasReasoningContent = Object.values(schemas).some((schema: any) => schema?.properties?.reasoning_content);
   const ctkw = chatReqProps.chat_template_kwargs;
   const ctkwDesc = (ctkw?.description ?? "").toLowerCase();
   const hasThinkingDesc = /\b(?:thinking|reasoning)\b/.test(ctkwDesc);
@@ -665,6 +675,8 @@ function buildExactThinkingLevelMap(
 }
 
 function detectThinkingFormat(modelId: string, _text?: string): string | undefined {
+  if (modelId === "stepfun-ai/step-5-preview") return "none"; // Always on; no effort control in hosted schema.
+  if (modelId === "nvidia/nemotron-3.5-super-vl-120b-a12b") return "nemotron-3-super-effort";
   if (/^meta\/muse-glimmer/.test(modelId)) return "reasoning-effort";
   // Both the dash-suffixed releases and the dotted V4.1+ line accept thinking
   // controls through chat_template_kwargs (V4.1 probe-verified 2026-09-25).
@@ -928,6 +940,11 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
   }
 
   // ── 2. Apply model-ID-based heuristics for fields still missing ──
+  // Use the hosted configuration rather than the upstream architecture's
+  // larger window. These source fallbacks are backed by build specifications.
+  if (modelId === "nvidia/nemotron-3.5-super-vl-120b-a12b" || modelId === "stepfun-ai/step-5-preview") {
+    meta.contextWindow = FALLBACK_LIMITS_MAP[modelId].contextWindow;
+  }
   if (!meta.thinkingFormat) {
     meta.thinkingFormat = detectThinkingFormat(modelId);
   }
@@ -995,6 +1012,15 @@ async function fetchModelData(modelId: string, owned_by: string): Promise<ModelM
 
 async function main() {
   try {
+    if (pruneRetired) {
+      if (singleModel || updateMode) throw new Error("--prune-retired cannot be combined with --model or --update.");
+      const entries = JSON.parse(fs.readFileSync(outputFile, "utf8")) as ModelMetadata[];
+      if (!Array.isArray(entries)) throw new Error("Expected metadata array.");
+      const kept = entries.filter(entry => !RETIRED_MODEL_IDS.has(entry.id));
+      fs.writeFileSync(outputFile, JSON.stringify(kept, null, 2) + "\n");
+      console.log(`Pruned ${entries.length - kept.length} explicitly retired entries from ${outputFile}.`);
+      return;
+    }
     let models: { id: string; owned_by: string }[];
 
     if (singleModel) {

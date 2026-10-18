@@ -2,7 +2,7 @@
 
 Generate images and use NVIDIA NIM chat models in Pi.
 
-The extension adds image generation with FLUX.2 Klein 4B and model-specific thinking controls for NVIDIA's hosted chat models. You can use it alongside Pi's built-in NVIDIA provider.
+The extension adds image generation with FLUX 3 Image Klein (default) and FLUX.2 Klein 4B, plus model-specific thinking controls for NVIDIA's hosted chat models. You can use it alongside Pi's built-in NVIDIA provider.
 
 For image generation, you can keep your current chat model. Configure your NVIDIA key, enable codemode, and ask:
 
@@ -112,7 +112,7 @@ Look for the `nvidia-nim/` prefix when choosing a chat model. This example shoul
 
 ## Image generation
 
-The extension currently supports FLUX.2 Klein 4B for text-to-image generation. You can request dimensions, an aspect ratio, and a seed through the `nim-generate-image` tool. Files are saved only when you provide a destination, and existing files are never overwritten.
+The extension supports FLUX 3 Image Klein (default) and FLUX.2 Klein 4B for text-to-image generation. Select a model explicitly to use FLUX.2; omitted model selections keep FLUX 3. You can request dimensions, an aspect ratio, and a seed through the `nim-generate-image` tool. Files are saved only when you provide a destination, and existing files are never overwritten.
 
 Editing your own images is not currently supported. For setup and example prompts, see [Generate an image](#generate-an-image).
 
@@ -122,39 +122,89 @@ Image requests use a separate `nvidia-nim-images` adapter and go straight to NVI
 
 | Model | ID | Input | Output | Verified |
 |-------|----|-------|--------|----------|
-| FLUX.2 Klein 4B | `black-forest-labs/flux.2-klein-4b` | text | image | live requests 2026-10-02: square, landscape, portrait, and ultrawide RGB JPEGs |
+| FLUX 3 Image Klein | `black-forest-labs/flux-3-image-klein` | text | image | live request 2026-10-17: fully decoded 1024×1024 JPEG; hosted validation confirms both dimension axes |
+| FLUX.2 Klein 4B | `black-forest-labs/flux.2-klein-4b` | text | image | fresh decoded 1024×1024 JPEG on 2026-10-17; additional sizes verified 2026-10-02 |
 
 `output: ["image"]` describes Klein's generative modality. The adapter can also append deterministic seed notes and dropped-artifact warnings as text blocks in the result; these are diagnostics, not model-generated text. Native callers should process those diagnostic blocks rather than assume every result block is an image.
 
-Klein-only for now, deliberately: other catalog listings (Qwen Image, Stable Diffusion) carry examples pointing at FLUX.1 Dev and their hosted endpoints are not established, so no misleading model IDs are registered. Additional models require a capability record backed by successful hosted generation; timeout-only evidence cannot qualify registration. FLUX.1 Dev and Schnell are probe-only candidates, not registered models. Kontext's hosted preview supports only predefined `example_id` images, not arbitrary image uploads. Container documentation describes a different API contract. See [image evidence and probing](IMAGE_GENERATION.md).
+Klein-only for now, deliberately: Qwen Image/Edit listings carry examples pointing at FLUX.1 Dev and independent hosted Qwen endpoints are not established. Stable Diffusion XL and Stable Diffusion 3 Medium hosted endpoints are explicitly deprecated, so no misleading model IDs are registered. Additional models require a capability record backed by successful hosted generation; timeout-only evidence cannot qualify registration. FLUX.1 Dev and Schnell are probe-only candidates, not registered models. Kontext's hosted preview supports only predefined `example_id` images, not arbitrary image uploads. Container documentation describes a different API contract. See [image evidence and probing](IMAGE_GENERATION.md).
 
-### Verified parameters
+### Choose between the Klein models
+
+Both models use the same `nim-generate-image` tool and Pi authentication. The tool's `model` field lists both IDs. Omit `model` for FLUX 3, or set `model: "black-forest-labs/flux.2-klein-4b"` for FLUX.2. Native callers pass the desired ID to `models.getModelOfType("image", "nvidia-nim", id)`. Image models remain outside the chat `/model` picker.
+
+| Setting | FLUX 3 Image Klein | FLUX.2 Klein 4B |
+|---|---|---|
+| Selection | Default | Explicit `model` selection |
+| Prompt limit | 2000 characters | **800 characters** (current hosted validation; published 10000-character schema is stale) |
+| Steps | 1–50; default 50 | 1–4; default 4 |
+| Guidance | >1 through 20; default 3.5 | ≥1; default 1; upper bound unknown |
+| Dimensions | Each 512–1568 in increments of 16; total ≤1,062,400 pixels | Same grid and combined limit |
+| Structured layout guidance | Optional `layout` rows, approximate placement | Disabled: layout swap was unreliable |
+| Arbitrary-image editing | Disabled | Disabled |
+
+Omit `steps` and `cfg_scale` to use the selected model's defaults. Explicit values are validated for that model; they are never silently adjusted or retried against a different model.
+
+```js
+// FLUX.2: resolves steps 4 and guidance 1 independently of FLUX 3.
+const result = await tools.nim_generate_image({
+  model: "black-forest-labs/flux.2-klein-4b",
+  prompt: "A watercolor fox in the snow",
+  saveDir: "out",
+});
+```
+
+### Layout guidance with FLUX 3
+
+Use a full scene caption and name each element as `<id>`. Optional `layout` rows contain the matching `id`, a `[top,left,bottom,right]` box on a 0–1000 grid, and `desc`. The extension validates the rows and appends their JSON to the caption inside `prompt`; it sends no `layout` body field. The caption and rows together must fit the 2000-character limit. It preserves your text and row order without automatic rewriting or truncation.
+
+```js
+const result = await tools.nim_generate_image({
+  prompt: "A clean flat graphic on white with a red square <red_square> and a blue circle <blue_circle>.",
+  layout: [
+    { id: "red_square", bbox: [300, 75, 625, 400], desc: "One solid red square." },
+    { id: "blue_circle", bbox: [300, 600, 625, 925], desc: "One solid blue circle." },
+  ],
+  seed: 42,
+  saveDir: "out",
+});
+```
+
+Fixed-seed hosted probes moved the elements to opposite sides when their boxes were swapped. This is **approximate layout guidance**, not a mask or a guarantee of exact geometry: some tested shapes stretched or clipped. FLUX.2 did not follow the swap reliably and rejects the structured option locally. The 20-row maximum is a local input limit. Native adapter callers with access to `ImagesOptions` can pass the same rows through `metadata.layout`; use the tool for advanced options in codemode.
+
+Describe framing, subjects, background, lighting and style in your caption. Prompt expansion by an LLM can be done before calling the tool; the extension does not silently rewrite prompts or claim to run NVIDIA/BFL's separate prompt upsampler.
+
+### FLUX 3 parameters
+
 
 | Parameter | Accepted | Default | Evidence |
 |-----------|----------|---------|----------|
-| `prompt` | non-empty text, maximum 10,000 characters | required | hosted-schema length limit |
-| `width`, `height` | each 512–1568 inclusive, multiples of 16 | `1024×1024` | both hosted validator enums confirmed; no rounding or resizing; additional server combination constraints may apply |
+| `prompt` | non-empty text, maximum 2,000 characters | required | hosted-schema limit confirmed by live 422 |
+| `width`, `height` | each 512–1568 inclusive, multiples of 16; **width × height ≤1,062,400** | `1024×1024` | axis grids and combined ceiling confirmed; 800×1328 boundary fully decoded for both models |
+| `layout` | optional rows `{id,bbox,desc}`; caption must include every `<id>` | omitted | approximate FLUX 3 placement observed in opposite-layout probes; compiles into prompt |
 | `aspect_ratio` | `1:1`, `4:3`, `16:9`, `9:16`, `21:9` | omitted (square) | fixed convenience mappings, not a NVIDIA field; 16:9 / 9:16 are approximate |
-| `steps` | `1`–`4` | `4` | documented range; `4` tested |
+| `steps` | `1`–`50` | `50` | hosted maximum confirmed by 422; `50` tested |
 | `samples` | `1` | `1` | documented `1` only; `1` tested |
 | `seed` | integer `0`–`4294967295` (`0` = random) | omitted (random) | uint32 bound from hosted schema; `42` tested and echoed per artifact |
-| `cfg_scale` | ≥ `1` | `1` | the live endpoint rejects `0` with HTTP 422 although the published schema says "0 to 0"; `1` tested; **upper limit unverified** |
+| `cfg_scale` | > `1` and ≤ `20` | `3.5` | hosted-schema bounds; only `3.5` generation-tested |
 
-Separate live hosted validation responses confirmed both width and height as 512–1568 inclusive in steps of 16. Generation now accepts these grids instead of a fixed pair whitelist. For example, `width: 1536, height: 864` is locally valid; `1000×750` is rejected without a request. Omitted (`undefined`) dimensions default independently to 1024; explicit `null` settings, including `aspect_ratio`, fail locally instead of silently requesting defaults. There is no silent rounding, cropping, or client resizing. Existing aspect-ratio aliases keep their dimension mappings and reject conflicting explicit dimensions. Representative outputs have been decoded, but not every grid combination has been generated; additional server restrictions are returned as structured errors, not hidden or automatically retried.
+Both Klein endpoints require the per-axis grid **and** the combined pixel ceiling. For example, 1536×672 is locally valid, while 1536×864 and 1568×1568 exceed 1,062,400 pixels and fail before dispatch. Square 1024×1024 and boundary 800×1328 outputs fully decoded for both models; other FLUX.2 sizes have earlier evidence. Not every admitted combination has been generated. Omitted (`undefined`) dimensions default independently to 1024; explicit `null` settings fail locally. There is no rounding, cropping, resizing or retry at a different size. Existing aspect-ratio aliases retain their mappings and conflict checks.
 
 ### Editing availability
 
 The hosted Klein preview accepts predefined NVIDIA examples, not users' own images. Preset editing was removed in 1.14.2 because it does not meet that goal. The tool and native adapter now expose generation only for Klein; legacy `preset_example` values fail locally instead of silently generating a new image. Historical preset-probe findings remain in `IMAGE_GENERATION.md`.
 
-Request translation: text becomes `prompt`; the URL identifies the model (no `model` body field). `aspect_ratio` resolves locally to width/height and is not sent. Conflicting explicit dimensions are rejected. `16:9` is landscape (`1344×768`), unlike the playground's reversed label. Model-card presets are not a generation whitelist; explicit dimensions are validated against the live hosted grid. Raster format descriptions do not establish a hosted output-format selector.
+Request translation: text becomes `prompt`; the URL identifies the model (no `model` body field). `aspect_ratio` resolves locally to width/height and is not sent. Conflicting explicit dimensions are rejected. `16:9` is landscape (`1344×768`). Model-card presets are not a generation whitelist; explicit dimensions are validated against the live hosted grid. Raster format descriptions do not establish a hosted output-format selector.
 
-`mode` is **never** sent: it previously received HTTP 422. The playground's editing template adds an `image` array to the same endpoint instead. Our actual JPEG data-URL array and PNG data-URL string uploads both received 422; the PNG response contained a preset `example_id` hint. Arbitrary-image editing remains disabled. The `inputImage` option fails locally before reading/uploading a source for Klein. Shared data-URL transport plumbing is implemented for future verified models, but enabling it requires separate editing evidence. Negative-prompt, output-format, compression, and dedicated seamless-generation controls remain unsupported.
+`mode` is **never** sent: the verified FLUX 3 generation request follows the build playground, which omits it. The endpoint is `https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux-3-image-klein`. The reference documentation instead spells the URL `flux.3-image-klein`; that dotted URL returned HTTP 404 while the hyphenated playground URL generated successfully.
+
+Fresh hosted probes rejected both PNG data-URL arrays and strings for each Klein model. FLUX 3 explicitly answered that it expected a preset `example_id` instead of actual image data. Arbitrary-image editing stays disabled; `inputImage` fails locally before reading/uploading a source, and multi-reference input is not exposed. Preset editing is not reintroduced. Negative prompts, output-format selection, compression, and dedicated seamless-generation controls remain unsupported.
 
 ### Native usage (codemode)
 
 ```js
 // @options: {"timeout_ms": 300000}
-const painter = await models.getModelOfType("image", "nvidia-nim", "black-forest-labs/flux.2-klein-4b");
+const painter = await models.getModelOfType("image", "nvidia-nim", "black-forest-labs/flux-3-image-klein");
 const result = await models.generateImages(painter, {
   input: [{ type: "text", text: "A watercolor painting of a red fox in the snow" }],
 });
@@ -179,8 +229,8 @@ const result = await tools.nim_generate_image({
   prompt: "A watercolor painting of a red fox in the snow",
   aspect_ratio: "16:9", // landscape 1344x768; omit for square
   seed: 42,
-  steps: 4,
-  cfg_scale: 1,
+  steps: 50,
+  cfg_scale: 3.5,
   saveDir: "out",
 });
 if (result.isError) return result.errorMessage ?? result.saveError;
@@ -189,7 +239,7 @@ return result.savedPaths;
 
 Codemode receives the tool’s structured result, including `isError`: generation failures provide `errorMessage`, while save failures provide `saveError` and preserve the generated images. Input validation throws and can be handled with `try`/`catch`; runtime authentication failures return structured error results.
 
-Parameters: `prompt` (required), `model`, `width`, `height`, `aspect_ratio`, `inputImage` (gated; no currently registered model supports arbitrary-image editing), `seed`, `steps`, `cfg_scale`, `saveDir`, `fileName`. The structured result reports the operation and resolved settings, including actual requested dimensions. Saving rules:
+Parameters: `prompt` (required), `model`, `width`, `height`, `aspect_ratio`, `layout` (FLUX 3 guidance), `inputImage` (gated; no currently registered model supports arbitrary-image editing), `seed`, `steps`, `cfg_scale`, `saveDir`, `fileName`. The structured result reports the operation and resolved settings, including actual requested dimensions. Saving rules:
 
 - Nothing is written to disk unless `saveDir` is given. Relative directories resolve against pi’s session workspace (`ctx.cwd`); saved paths are absolute.
 - Files keep the **original encoded bytes** (no re-encoding); the extension corrects a mismatched filename extension to the detected format (`.jpg` / `.png` / `.webp`, with matching `.jpeg` preserved). Multi-image suffixes precede the extension: `shot-1.jpg`, `shot-2.jpg`.
@@ -206,15 +256,17 @@ Diagnostic logs include only safe model/status/count information, never provider
 
 ### Trial / quota caveats
 
-Image generation uses the same build.nvidia.com account and key as chat (40 requests/min free tier, 1,000 inference credits on signup). The per-image credit cost is not published and was not measured; the verified request completed in 3.62 s. Expect 429s under the free tier; the extension surfaces them with the retry-after value. Image operations make no automatic retries; Pi's global chat-turn retry settings do not automatically retry image-tool calls. Retry an image operation explicitly, accounting for quota and possible duplicate work.
+Image generation uses the same build.nvidia.com account and key as chat (40 requests/min free tier, 1,000 inference credits on signup). The per-image credit cost is not published and was not measured; the FLUX 3 verification request completed in 5.05 s. Expect 429s under the free tier; the extension surfaces them with the retry-after value. Image operations make no automatic retries; Pi's global chat-turn retry settings do not automatically retry image-tool calls. Retry an image operation explicitly, accounting for quota and possible duplicate work.
 
 ## Chat models and thinking support
 
 NVIDIA NIM models do not all use the same thinking controls. The extension translates Pi's thinking settings into the request format each model supports and handles compatibility fixes for older endpoints.
 
-Models with thinking support include DeepSeek V4.1 Flash, GLM-5.3 and GLM-5.3 Flash, Kimi K3, Muse Glimmer, DiffusionGemma, Nemotron (3-Nano Omni, 3-Super, 3-Ultra, 3.5 Lightning), GPT-OSS 20B, and Laguna XS 2.1.
+Models with thinking support include DeepSeek V4.1 Flash, GLM-5.3 and GLM-5.3 Flash, Step 5 Preview, Muse Glimmer, DiffusionGemma, Nemotron (3-Nano Omni, 3-Super, 3-Ultra, 3.5 Lightning, 3.5 Super VL), GPT-OSS 20B, and Laguna XS 2.1.
 
-GLM-5.3 and GLM-5.3 Flash always use thinking and offer `low`, `high`, and `max`. DeepSeek V4.1 Flash offers `off`, `high`, and `max`. Other models use their own effort levels or on/off controls.
+GLM-5.3 and GLM-5.3 Flash always use thinking and offer `low`, `high`, and `max`. DeepSeek V4.1 Flash offers `off`, `high`, and `max`. Step 5 Preview always reasons and exposes one on level, with no effort/disable control. Nemotron 3.5 Super VL offers `off`, `low`, and `high`; the extension translates them into the playground's chat-template flags. Other models use their own effort levels or on/off controls.
+
+The 2026-10-17 retirement audit removed **Mistral Nemotron** (notice: September 27/28) and **Kimi K3** (October 14/15), both confirmed by explicit HTTP 410 responses. **GLM-5.3 stays registered**: its announced October 27/28 retirement is still in the future. All timeout/503 results remain registered; availability failures do not prove deprecation. See the [full audit](docs/chat-model-notes.md#catalog-audit-2026-10-17).
 
 Hosted availability and response times vary. The dates below describe recorded tests, not a guarantee of current availability. See [chat model notes](docs/chat-model-notes.md) for detailed probe findings, endpoint retirements, and latency observations.
 
@@ -224,15 +276,16 @@ A `probe-passed` transport result means the request shape produced the expected 
 
 | Model | Reasoning control | Request | Response | Streaming | Tools |
 |-------|-------------------|---------|----------|-----------|-------|
+| Step 5 Preview | always-on; one on level, no effort controls | server defaults (probe-passed) | `reasoning_content` (probe-passed) | probe-passed 2026-10-17 | documented |
+| Nemotron 3.5 Super VL | off / low / high | `enable_thinking` / `low_effort` (probe-passed) | separate `reasoning_content`; none when off (probe-passed) | probe-passed 2026-10-17 | documented |
 | DeepSeek V4.1 Flash | off / high / max | `chat_template_kwargs` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
 | GLM-5.3 | low / high / max (exactly three levels); always-on | `reasoning_effort` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | probe-passed |
 | GLM-5.3 Flash | low / high / max (exactly three levels); always-on; image input (up to 8/request) | `reasoning_effort` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | probe-passed |
-| Kimi K3 | off / low / high / max | `chat_template_kwargs.thinking` + top-level `reasoning_effort` (card-documented; on/off probe-passed) | `reasoning_content` (probe-passed) | probe-passed | probe-passed |
 | Laguna XS 2.1 | on / off toggle | `enable_thinking` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | unknown |
 | Muse Glimmer 30B | none / minimal / low / medium / high / max | `reasoning_effort` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | documented |
 | Nemotron 3.5 Lightning 30B | enable_thinking on/off | `enable_thinking` + `reasoning_budget` (probe-passed) | `reasoning_content` (probe-passed) | probe-passed | probe-passed |
 
-Probe dates: GLM-5.3 and GLM-5.3 Flash were probed on 2026-09-16 (effort-ladder depth, tools, streaming, vision for Flash) and re-probed on 2026-09-17 for latency; the remaining rows were verified in August 2026 releases. Kimi K3 on/off thinking, tools, streaming, and vision were probed on 2026-08-27, and its effort ladder follows NVIDIA's own build-card documentation (2026-08-28) with the depth difference between levels unverified due to endpoint capacity. DeepSeek V4.1 Flash was probed on 2026-09-25; baseline, `thinking: false`, `high`, `max`, and both top-level effort shapes; its ~198 s wait for a first byte is the latency to expect at the moment.
+Probe dates: GLM-5.3 and GLM-5.3 Flash were probed on 2026-09-16 (effort-ladder depth, tools, streaming, vision for Flash) and re-probed on 2026-09-17 for latency; Step 5 Preview and Super VL were probed on 2026-10-17; the older remaining rows were verified in August 2026 releases. Kimi K3's historical findings remain in the source records, but it is no longer registered. DeepSeek V4.1 Flash was probed on 2026-09-25; baseline, `thinking: false`, `high`, `max`, and both top-level effort shapes; its ~198 s wait for a first byte is the latency to expect at the moment.
 
 The remaining models work through their family rules, but don't call them live-verified unless they appear in this matrix or have a matching compatibility report.
 
@@ -300,7 +353,7 @@ Sometimes it is transient. Newly launched models can flip between 404 and 200 ac
 - If every model fails, ask NVIDIA to enable the **Public API Endpoints** service for your organization (NVIDIA Developer Forums → NVIDIA NIM → Access/Accounts). NVIDIA does not document this entitlement publicly and forum answers are inconsistent.
 - Generating a new API key does not help: the account, not the key, lacks the entitlement.
 
-Entitlements are per account, so a model can fail for you and work for someone else; `moonshotai/kimi-k2.6` and `google/gemma-3-12b-it` are listed in `/v1/models` but were not callable on the account this catalog is verified with (2026-09-16). That is why models are only shipped here after a live probe on the hosted endpoint.
+Entitlements are per account, so a model can fail for you and work for someone else; `moonshotai/kimi-k2.6` and `google/gemma-3-12b-it` are listed in `/v1/models` but were not callable on the account this catalog is verified with (2026-09-16). New model verification records distinguish successful hosted probes from documentation and inconclusive access failures.
 
 ## Development and verification
 
@@ -312,7 +365,7 @@ The provider registers chat and image models together through `PROVIDER_MODEL_CO
 
 - Uses pi's built-in `openai-completions` streaming. No custom `streamSimple`.
 - Model-specific quirks (thinking formats, extra body kwargs, compat flags) are handled via `before_provider_request` and pi's `compat` system.
-- Family-based config in `config/model-families.ts` (15 families, first-match-wins) drives thinking format routing and model metadata.
+- Family-based config in `config/model-families.ts` (17 families, first-match-wins) drives thinking format routing and model metadata.
 - Catalog cost fields are `$0` placeholders because pricing is not reported here; they do not promise free inference. NVIDIA may offer free-tier credits, but hosted requests consume quota/credits and actual pricing depends on the endpoint and account.
 - Works alongside pi's built-in `nvidia` provider. Use `nvidia-nim/...` for NIM-family-specific thinking transforms and the full catalog, `nvidia/...` for pi's native handling.
 
@@ -335,3 +388,11 @@ npm run compare:pi -- \
   --json-output=tools/output/pi-nvidia-compare.json \
   --markdown-output=tools/output/pi-nvidia-compare.md
 ```
+
+### Audit retirements without treating outages as removal evidence
+
+```bash
+npm run audit:retirements -- --output=tools/output/retirement-audit.json
+```
+
+The audit makes one tiny request per chat model, without retries. Only an explicit retirement response qualifies a model for removal. HTTP 404/429/5xx and timeouts are inconclusive. After updating the generator's evidence-backed retired-ID list, `npx tsx tools/fetch_nim_metadata.ts --prune-retired` removes those rows from generated metadata without refreshing unrelated entries. Future-dated notices stay documented until effective retirement.

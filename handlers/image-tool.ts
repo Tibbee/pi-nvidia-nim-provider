@@ -17,6 +17,7 @@ import { basename, extname, join, resolve } from "node:path";
 import type { AssistantImages, ImageModel, ImagesContext, ImagesOptions, ImagesOutputContent } from "@earendil-works/pi-ai";
 import type { AgentToolResult, ToolDefinition } from "@earendil-works/pi-coding-agent";
 import type { TSchema } from "typebox";
+import { MAX_LAYOUT_ELEMENTS, type NimImageLayoutElement } from "../lib/image-layout";
 import {
   MIME_EXTENSIONS,
   resolveImageSettings,
@@ -40,6 +41,7 @@ export type NimImageToolParams = {
   height?: number;
   aspect_ratio?: string;
   inputImage?: string;
+  layout?: NimImageLayoutElement[];
   seed?: number;
   steps?: number;
   cfg_scale?: number;
@@ -61,6 +63,7 @@ export type NimImageToolDetails = {
   model: string;
   operation: "generate" | "edit";
   settings: NimImageSettings;
+  promptLayout?: { format: "bfl-caption-json"; elementCount: number };
   stopReason: "stop" | "error" | "aborted";
   errorMessage?: string;
   images: Array<Omit<NimImageToolImage, "data">>;
@@ -83,27 +86,40 @@ const PARAMETERS = {
   properties: {
     prompt: {
       type: "string",
-      description: "Text prompt describing the image to generate or edit. Klein: non-empty, maximum 10,000 characters.",
+      description: "Text prompt describing the image to generate. Non-empty; FLUX 3 maximum 2,000 characters, FLUX.2 maximum 800 per current hosted validation.",
     },
     model: {
       type: "string",
-      description: `Image model ID (default: ${DEFAULT_NIM_IMAGE_MODEL_ID}).`,
+      enum: Array.from(NIM_IMAGE_MODEL_IDS),
+      description: `Image model ID. Omit for ${DEFAULT_NIM_IMAGE_MODEL_ID}; select black-forest-labs/flux.2-klein-4b for FLUX.2. Each model uses its own defaults and validation; no automatic model fallback.`,
     },
     width: {
       type: "integer",
-      description: "Image width in pixels. Klein generation: 512-1568 inclusive, multiples of 16. Defaults to 1024; omit when using aspect_ratio. No rounding or resizing.",
+      description: "Image width in pixels. Both Klein models: 512-1568 inclusive, multiples of 16, and width*height <=1062400 pixels. Defaults to 1024; omit when using aspect_ratio. No rounding or resizing.",
     },
     height: {
       type: "integer",
-      description: "Image height in pixels. Klein generation: 512-1568 inclusive, multiples of 16. Defaults to 1024; omit when using aspect_ratio.",
+      description: "Image height in pixels. Both Klein models: 512-1568 inclusive, multiples of 16, and width*height <=1062400 pixels. Defaults to 1024; omit when using aspect_ratio.",
     },
     aspect_ratio: {
       type: "string",
-      description: "Width:height ratio mapped locally to verified resolutions. Klein: 1:1 (1024x1024), 4:3 (1024x768), 16:9 landscape (1344x768), 9:16 portrait (768x1344), 21:9 (1568x672). Some ratios are approximate. Conflicting explicit dimensions are rejected.",
+      description: "Width:height ratio mapped locally to the hosted dimension grid. FLUX 3: 1:1 (1024x1024), 4:3 (1024x768), 16:9 landscape (1344x768), 9:16 portrait (768x1344), 21:9 (1568x672). Some ratios are approximate. Conflicting explicit dimensions are rejected.",
     },
     inputImage: {
       type: "string",
-      description: "Local reference-image path relative to the session workspace, or absolute. Only accepted for models with verified editing transport. Current Klein hosted uploads were rejected with HTTP 422; arbitrary-file editing is disabled and fails locally without reading/uploading the file. No URLs or inline base64.",
+      description: "Local reference-image path relative to the session workspace, or absolute. Both registered Klein hosted previews have no verified arbitrary-image editing; inputImage is disabled and fails locally without reading/uploading the file. No URLs or inline base64.",
+    },
+    layout: {
+      type: "array", minItems: 1, maxItems: MAX_LAYOUT_ELEMENTS,
+      description: "FLUX 3 only: optional approximate layout guidance. Name every element in prompt as <id>. Rows compile to JSON inside prompt, never a provider body field. bbox is [top,left,bottom,right] in 0-1000 coordinates. Placement and shapes are not guaranteed; this is not a mask. Caption plus rows must fit the 2000-character prompt limit. Maximum 20 rows is a local tool limit.",
+      items: {
+        type: "object", additionalProperties: false, required: ["id", "bbox", "desc"],
+        properties: {
+          id: { type: "string", pattern: "^[a-z][a-z0-9_]{0,63}$", description: "Unique lowercase identifier also named in prompt as <id>." },
+          bbox: { type: "array", minItems: 4, maxItems: 4, items: { type: "integer", minimum: 0, maximum: 1000 }, description: "[top,left,bottom,right]; top < bottom, left < right." },
+          desc: { type: "string", minLength: 1, description: "Appearance of this element; preserved verbatim in the compiled prompt." },
+        },
+      },
     },
     seed: {
       type: "integer",
@@ -111,13 +127,12 @@ const PARAMETERS = {
     },
     steps: {
       type: "integer",
-      description: "Sampling steps, validated per model. Klein: documented range 1-4, default 4.",
+      description: "Sampling steps, validated per model. FLUX 3: 1-50, default 50. FLUX.2: 1-4, default 4. Omit to use the selected model's default.",
     },
     cfg_scale: {
       type: "number",
       description:
-        "Guidance scale. Must be >= 1: the live endpoint rejects 0 with HTTP 422 even though " +
-        "the published schema says 0. Upper limit unverified. Default 1.",
+        "Guidance scale. FLUX 3: >1 through 20, default 3.5 (schema bounds). FLUX.2: >=1, default 1, upper bound unknown. Omit to use the selected model's default. Both defaults tested live.",
     },
     saveDir: {
       type: "string",
@@ -141,6 +156,7 @@ const OUTPUT_SCHEMA = {
     operation: { type: "string", enum: ["generate", "edit"] },
     isError: { type: "boolean" },
     settings: { type: "object" },
+    promptLayout: { type: "object", properties: { format: { type: "string" }, elementCount: { type: "integer" } } },
     stopReason: { type: "string", enum: ["stop", "error", "aborted"] },
     errorMessage: { type: "string" },
     images: {
@@ -226,7 +242,7 @@ export async function runNimImageTool(
     );
   }
   const capability = getNimImageCapability(modelId)!;
-  const promptResolution = resolveImagePrompt(capability, [{ type: "text", text: params.prompt }]);
+  const promptResolution = resolveImagePrompt(capability, [{ type: "text", text: params.prompt }], params.layout);
   if (!promptResolution.ok) throw new Error(promptResolution.error);
 
   const settingsResolution = resolveImageSettings(capability, {
@@ -249,7 +265,9 @@ export async function runNimImageTool(
     throw new Error(`Image model "${modelId}" is not registered on the nvidia-nim provider.`);
   }
 
-  const input: ImagesContext["input"] = [{ type: "text", text: promptResolution.value }];
+  // Layout is validated above, then compiled exactly once by the shared adapter
+  // from metadata. Retain the original caption here for native/tool parity.
+  const input: ImagesContext["input"] = [{ type: "text", text: params.prompt.trim() }];
   const operation = params.inputImage === undefined ? "generate" : "edit";
   if (params.inputImage !== undefined) {
     input.push(await readNimReferenceImage(params.inputImage, ctx.cwd, capability, signal));
@@ -260,7 +278,7 @@ export async function runNimImageTool(
   const result = await ctx.modelRegistry.generateImages(
     model,
     { input },
-    { signal, metadata: { ...settings } },
+    { signal, metadata: { ...settings, ...(params.layout !== undefined ? { layout: params.layout } : {}) } },
   );
   const run = getNimImageRunResult(result);
 
@@ -313,6 +331,7 @@ export async function runNimImageTool(
     model: modelId,
     operation,
     settings,
+    ...(params.layout ? { promptLayout: { format: "bfl-caption-json" as const, elementCount: params.layout.length } } : {}),
     stopReason: run.result.stopReason,
     errorMessage: run.result.errorMessage,
     images: images.map(({ data: _data, ...rest }) => rest),
@@ -327,6 +346,7 @@ export async function runNimImageTool(
     operation,
     isError,
     settings: details.settings,
+    ...(details.promptLayout ? { promptLayout: details.promptLayout } : {}),
     stopReason: run.result.stopReason,
     ...(run.result.errorMessage ? { errorMessage: run.result.errorMessage } : {}),
     images,
@@ -344,6 +364,7 @@ export async function runNimImageTool(
       type: "text",
       text:
         `${operation === "edit" ? "Edited" : "Generated"} ${images.length} image(s) with ${modelId} (${settingsText}).` +
+        (params.layout ? ` Requested approximate layout guidance for ${params.layout.length} element(s).` : "") +
         (savedPaths.length > 0 ? ` Saved to ${savedPaths.join(", ")}.` : " Not saved to disk."),
     });
   } else {
@@ -376,9 +397,9 @@ export const NIM_IMAGE_TOOL: ToolDefinition = {
   name: NIM_IMAGE_TOOL_NAME,
   label: "NVIDIA NIM images",
   description:
-    "Generate images with NVIDIA NIM (FLUX.2 Klein 4B). " +
-    "Verified aspect_ratio values: 1:1 (1024x1024), 4:3 (1024x768), 16:9 landscape (1344x768), 9:16 portrait (768x1344), " +
-    "21:9 (1568x672). Generation width and height independently accept 512-1568 inclusive in multiples of 16; no silent rounding/resizing. Not every combination has been generated; additional server constraints may apply. Steps 1-4 (default 4), cfg_scale >= 1 (default 1), " +
+    "Generate images with NVIDIA NIM. FLUX 3 Image Klein is the default; optionally select black-forest-labs/flux.2-klein-4b. Settings/defaults are resolved independently for the selected model; no automatic model fallback. " +
+    "Available aspect_ratio mappings: 1:1 (1024x1024), 4:3 (1024x768), 16:9 landscape (1344x768), 9:16 portrait (768x1344), " +
+    "21:9 (1568x672). Both models: each dimension 512-1568 in multiples of 16 AND width*height <=1062400 pixels; no rounding/resizing. Square and 800x1328 boundary outputs were pixel-verified for both. Not every combination has been generated. FLUX 3 supports optional layout rows {id,bbox,desc} compiled into prompt; caption must name each <id>. This is approximate positioning, not a mask or exact shape guarantee. FLUX.2 layout swaps were unreliable and its structured layout is disabled. FLUX 3: prompt including layout maximum 2000 characters, steps 1-50/default 50, cfg_scale >1 through 20/default 3.5. FLUX.2: prompt maximum 800 characters, steps 1-4/default 4, cfg_scale >=1/default 1 (upper bound unknown). " +
     "seed 0-4294967295 (0 or omitted = random), one image per call. inputImage uploads remain disabled for Klein and fail locally. Negative prompts and " +
     "output-format selection are not supported. Nothing is written to disk unless saveDir is given; " +
     "saving never overwrites existing files. Requires an NVIDIA API key for the nvidia-nim provider. " +

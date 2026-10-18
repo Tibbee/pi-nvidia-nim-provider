@@ -1,5 +1,174 @@
 # Hosted image generation: evidence and safe probing
 
+## Hosted exploration and usable layout guidance (1.17.0, 2026-10-17)
+
+This exploration used only the public NVIDIA hosted endpoints, synthetic
+reference images and simple geometric prompts. It made 18 requests: eight
+produced images; the rest were controlled validation/upload tests. No private
+images were read or uploaded, no retry loop was used, and no BFL/self-hosted
+backend was substituted.
+
+| Question | FLUX 3 Image Klein | FLUX.2 Klein 4B |
+|---|---|---|
+| PNG data-URL array input | 422: requires preset example_id instead of actual image data | 422 |
+| PNG data-URL string input | Same explicit preset rejection | 422 |
+| Opposite layout rows at fixed seed 42 | Four decoded images across two box geometries moved red/blue centers to requested opposite sides | Left case matched, reversed case did not; no reliable layout claim |
+| Requested 1568×1568 | 422: 2,458,624 exceeds supported image size 1,062,400 | Same explicit ceiling |
+| Exact 800×1328 area boundary | 200, SUCCESS JPEG, fully decoded at requested dimensions | 200, SUCCESS JPEG, fully decoded at requested dimensions |
+| Requested 4096×4096 | 422: dimensions outside hosted axis grids | Same |
+
+Both models require width/height on their existing 512–1568/16 grids **and**
+width×height ≤1,062,400. The client now rejects combinations exceeding that
+ceiling without dispatch. Earlier axis-only validation did not establish this
+joint constraint. Successful boundary generation confirms approximately 1.06 MP;
+the current endpoints do not admit 4K dimensions. This does not prove every
+grid/area-admitted combination is otherwise accepted.
+
+FLUX 3 now exposes optional structured `layout` rows through `nim-generate-image`
+and native `ImagesOptions.metadata.layout`. Each row has `id`, `bbox` and
+`desc`; every ID must appear in the caption as `<id>`. Boxes use
+`[top,left,bottom,right]`, integer coordinates 0–1000 and positive area. Rows
+compile to JSON appended to the caption inside **prompt**, never a new provider
+body field. Caption and rows together obey the 2000-character limit. No text,
+coordinates or row order are silently changed. Up to 20 rows is a local input
+bound, not a claimed NVIDIA limit.
+
+Observed placement is approximate. The first tall-box probes stretched the
+requested square/circle and clipped one shape; square boxes produced better
+geometric fidelity. The four FLUX 3 outputs put the red center near normalized
+x=0.239/0.763 and the blue center on the opposite side. FLUX.2 retained its
+red-left/blue-right composition after the boxes were reversed. Consequently,
+FLUX.2 rejects the structured option rather than advertising unverified control.
+Arbitrary raw prompt strings remain caller-controlled for both models.
+
+Reference uploads stay disabled. Single/multiple user-image editing, exact pixel
+preservation, a server-side prompt upsampler and native 4K are not exposed by this
+release. Preset editing is not reintroduced. Full scene captions can be prepared
+by the caller/LLM before generation; that is separate from a native NIM feature.
+
+Probe reports and original generated JPEGs are local-only under
+`tools/output/klein-explore-2026-10-17/`; they are excluded from the npm package.
+The JSON reports contain settings/status/decoded dimensions and color centroids,
+not credentials or image data. The reference PNG is a programmatically created
+green square on white. See `flux3-image-array.json`, `flux3-image-string.json`,
+`flux2-image-array.json`, `flux2-image-string.json`, the `*-layout-*.json` files,
+`*-size-error.json`, `*-area-boundary.json` and `*-4096-validation.json`.
+Comparison images: `flux3-square-layout-red-left-0.jpg` and
+`flux3-square-layout-red-right-0.jpg`.
+
+For repeatable layout probes, place rows in a JSON array file and run
+`npm run probe:images -- --layout-file=layout.json --prompt="A red square <red_square>."`.
+It is dry-run by default; the caption must name all IDs in the file. Add `--live`
+only for a hosted generation. File reads are limited to 64 KiB (local policy),
+and saved reports include counts/compiled length instead of row contents or paths.
+The README has a complete two-element tool example. Older sections below are
+dated evidence snapshots; the limits and capabilities above are current.
+
+Deployment verification: version 1.17.0 was copied to the live extension after
+all 12 default suites, both installed-Pi integration suites and package checks
+passed. All 18 runtime/package/documentation files matched development hashes.
+A nineteenth request through the **deployed tool and installed Pi runtime**
+generated a 1024×1024 JPEG in 5.64 s with red-right/blue-left positions matching
+the supplied boxes (normalized centers 0.762/0.239). Its body contained only
+prompt and the existing numeric fields; layout compiled once into the prompt.
+`live-layout.json` and `live-layout.jpg` record this end-to-end check. The live
+catalog retained 16 chat models and both Klein image models. Manual TUI/codemode
+acceptance remains a separate boundary.
+
+## Two Klein models (1.16.0, 2026-10-17)
+
+Both **FLUX 3 Image Klein** (`black-forest-labs/flux-3-image-klein`) and
+**FLUX.2 Klein 4B** (`black-forest-labs/flux.2-klein-4b`) are registered.
+FLUX 3 remains the default. Select FLUX.2 explicitly through the tool's `model`
+field or Pi's native image-model lookup. There is no automatic model fallback.
+Both operations share the existing authenticated client, artifact validation,
+cancellation and explicit non-overwriting saving. Model-specific settings are
+resolved from separate capability records; image requests remain isolated from
+chat payload transformations.
+
+FLUX.2 freshly returned HTTP 200 in 1.67 s with a SUCCESS JPEG fully decoded
+at 1024×1024, using steps 4, guidance 1, samples 1 and seed 42. An invalid
+request independently reconfirmed both dimension axes at 512–1568/16, steps
+maximum 4, guidance minimum 1 and seed <4294967296. It now enforces an
+**800-character prompt maximum**, contradicting its published 10000-character
+schema and the previous record. The client enforces 800 before dispatch.
+FLUX 3 keeps its separate 2000-character limit, steps 50/default and guidance
+3.5/default. Both remain generation-only; arbitrary-image editing is disabled.
+
+### Other hosted image models checked 2026-10-17
+
+| Model | Current observation | Extension status |
+|---|---|---|
+| FLUX.1 Dev | Generation at 1024×1024, steps 5, guidance 5, seed 42 returned HTTP 500 after 81.29 s | Unverified candidate; inconclusive availability, no retirement established |
+| FLUX.1 Schnell | Generation at 1024×1024, steps 4, guidance 0, seed 42 reached the 90 s client timeout | Unverified candidate; inconclusive availability, no retirement established |
+| FLUX.1 Kontext Dev | Hosted schema explicitly restricts reference input to predefined example IDs 0–2 | Not an arbitrary-image editing feature; excluded from registration; no new inference probe |
+| Stable Diffusion XL | NVIDIA page explicitly marks endpoint deprecated as of 2025-07-24; build and reference endpoint spellings returned 404 | Deprecated hosted endpoint; not registered |
+| Stable Diffusion 3 Medium | NVIDIA page explicitly marks endpoint deprecated as of 2026-04-15; endpoint returned 404 | Deprecated hosted endpoint; not registered |
+| Qwen Image / Image Edit | Pages describe downloadable models; embedded request examples still identify FLUX.1 Dev | Independent hosted Qwen generation is not established; not registered |
+
+Sources: [Dev](https://build.nvidia.com/black-forest-labs/flux_1-dev),
+[Schnell](https://build.nvidia.com/black-forest-labs/flux_1-schnell),
+[Kontext](https://build.nvidia.com/black-forest-labs/flux_1-kontext-dev),
+[SDXL](https://build.nvidia.com/stabilityai/stable-diffusion-xl),
+[SD3 Medium](https://build.nvidia.com/stabilityai/stable-diffusion-3-medium),
+[Qwen Image](https://build.nvidia.com/qwen/qwen-image) and
+[Qwen Image Edit](https://build.nvidia.com/qwen/qwen-image-edit).
+The past retirement notices, rather than HTTP 404 alone, establish the Stable
+Diffusion classification. The FLUX.1 errors do not prove a permanent outage.
+Local report: `tools/output/coexist-2026-10-17/hosted-image-checks.json`.
+
+After deployment, installed Pi exposed both image models and all 16 chat models.
+An explicit FLUX.2 tool call through the **live extension** generated a fully
+decoded 1024×1024 JPEG in 1.73 s, with its own steps 4/guidance 1 defaults.
+Report: `tools/output/coexist-2026-10-17/live-pi-images.json`. Eleven default
+test suites, installed-Pi image coexistence/auth/validation and chat regression
+checks, package dry run and deployment file hashes passed. This does not claim
+manual TUI acceptance or complete generation coverage for the dimension grid.
+
+## FLUX 3 replacement (1.15.0, 2026-10-17)
+
+At version 1.15.0, the sole registered/default image model was **FLUX 3 Image Klein**, ID
+`black-forest-labs/flux-3-image-klein`. FLUX.2's capability record remained as
+historical/probe support, but was not registered until 1.16.0. All older sections below
+describe FLUX.2 observations unless explicitly stated otherwise.
+
+The [build playground](https://build.nvidia.com/black-forest-labs/flux-3-image-klein)
+uses `POST https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux-3-image-klein`.
+That URL returned HTTP 200 in 5.05 seconds with one SUCCESS JPEG, seed 42;
+full pixel decoding confirmed 1024×1024. The API reference instead names a
+`flux.3-image-klein` path: that dotted URL returned 404. The adapter uses the
+successfully probed hyphenated URL and sends neither `mode` nor `model`.
+
+The request used steps 50, guidance 3.5, samples 1 and seed 42. FLUX 3 has its
+own capability record: prompt maximum 2000 characters, steps 1–50/default 50,
+guidance >1 through 20/default 3.5, samples 1 and uint32 seed. Guidance bounds
+are hosted-schema evidence; only 3.5 was generation-tested. A separate invalid
+request returned HTTP 422 independently listing **both** width and height as
+512–1568 in increments of 16, and confirming the prompt/step maxima. This
+contradicts the published smaller dimension enums and 1024-only descriptions.
+The adapter admits that grid and preserves local ratio mappings; only the
+default square output was generation-tested for FLUX 3. Combined-size
+restrictions remain unknown. Validation does not promise generation for all
+4489 pairs.
+
+The hosted schema describes predefined example images, not arbitrary uploads.
+Editing remains disabled and is rejected before reading/uploading a user file.
+No FLUX.2 upload failure is presented as FLUX 3 verification. Saving, auth,
+artifact validation, cancellation, timeout and error semantics use the shared
+adapter unchanged. Usage/pricing remain unreported.
+
+Local evidence (no credentials or raw inference text):
+`tools/output/refresh-2026-10-17/flux3-generation-hosted.json` and
+`tools/output/refresh-2026-10-17/flux3-validation.json`.
+
+After deployment, the **live extension** was registered through the installed
+Pi 1.3.0 `ModelRuntime`/`ModelRegistry` with disposable state. Native authenticated
+image generation succeeded again in 6.04 seconds using the new model's default
+settings and seed 42; its JPEG fully decoded at 1024×1024. The runtime exposed
+16 chat models and one image model, and no FLUX.2 image entry. Report:
+`tools/output/refresh-2026-10-17/live-pi-images.json`. This verifies native
+dispatch from the deployed source; manual TUI/codemode acceptance remains separate.
+
 ## Preset removal (1.14.2)
 
 Klein exposes generation only. The preset selector, capability configuration, example-ID translation, and probe CLI option have been removed. Legacy `preset_example` values are rejected locally by the tool/native adapter; no quota-consuming generation fallback occurs. Arbitrary uploads remain disabled, since NVIDIA\'s hosted preview only accepts predefined images. The grid and all ratio aliases are unchanged. Preset findings below are preserved as historical diagnostic evidence, not current features.
@@ -10,9 +179,9 @@ Requires Pi 1.0.0 or later (`pi-ai` and `pi-coding-agent`), which provides mixed
 
 Klein's declared output modality remains image-only. Seed notes and dropped-artifact warnings in native result text blocks are deterministic adapter diagnostics, not generated text. Catalog zero costs mean unreported pricing, not a guarantee of free inference.
 
-## Current resolution policy (introduced in 1.14.0)
+## Current resolution policy (introduced in 1.14.0, completed in 1.17.0)
 
-Generation accepts independent width and height values from **512 through 1568 inclusive**, in **16-pixel increments**, defaulting to 1024 per axis. Both lists were extracted from actual hosted validator responses; these are not inferred container bounds. The old six-pair whitelist has been removed for generation. No automatic rounding, cropping, or resizing occurs. Existing ratio aliases are unchanged, and conflicting explicit dimensions fail locally.
+Generation accepts width and height values from **512 through 1568 inclusive**, in **16-pixel increments**, defaulting to 1024 per axis, with **width×height ≤1,062,400**. Both axis lists and the combined ceiling come from actual hosted responses; 800×1328 boundary generation succeeded for each model. No rounding, cropping or resizing occurs. Existing ratio aliases are unchanged, and conflicting explicit dimensions fail locally.
 
 The height confirmation used one approved request (`width=1024, height=1000`), which returned 422 with all 67 allowed heights. Evidence: `tools/output/images/klein-height-validator-1790976162469-94e2d682.json`. The earlier width report is linked below. This proves axis admission rules, not successful generation at every combination or absence of additional joint constraints; upstream errors remain structured, with no automatic retry.
 
@@ -85,7 +254,7 @@ npm run probe:images -- --model=black-forest-labs/flux.1-schnell
 npm run probe:images -- --model=black-forest-labs/flux.1-dev --steps=5
 npm run probe:images -- --aspect_ratio=16:9
 # Grid dimensions: offline validation by default
-npm run probe:images -- --width=1536 --height=864
+npm run probe:images -- --width=1536 --height=672
 # Optional curated model-card/playground pair filter (not needed for grid sizes):
 npm run probe:images -- --candidate-dimensions --width=688 --height=1504
 # Offline input validation for an unverified editing transport (reads local file):

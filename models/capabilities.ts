@@ -26,6 +26,7 @@ export interface ReasoningSemantics {
 
 export interface NimReasoningTransport {
   requestEncoding:
+    | "server-default"
     | "top-level-thinking"
     | "chat-template-kwargs"
     | "chat-template-kwargs+reasoning-effort"
@@ -298,7 +299,49 @@ export const GLM_53_REASONING_CAPABILITY: ReasoningCapability = {
   },
 };
 
+/** NVIDIA hosted Step 5 schema + streamed response observed 2026-10-17.
+ * https://docs.api.nvidia.com/nim/reference/stepfun-ai-step-5-preview-infer
+ * The checkpoint always reasons; no effort ladder or disable control is advertised.
+ */
+export const STEP_5_PREVIEW_REASONING_CAPABILITY: ReasoningCapability = {
+  modelId: "stepfun-ai/step-5-preview",
+  semantics: {
+    defaultEnabled: true, canDisable: false, supportsEffort: false,
+    acceptedEfforts: [], effectiveEffortMapping: {},
+    supportsInterleavedThinking: "unknown", supportsPreservedThinking: true,
+    responseField: "reasoning_content",
+  },
+  nimTransport: { requestEncoding: "server-default", responseEncoding: "reasoning_content" },
+  verification: {
+    semantics: "documented", requestTransport: "probe-passed", responseTransport: "probe-passed",
+    streaming: "probe-passed", tools: "documented", preservedThinking: "documented",
+  },
+};
+
+/** Hosted Super VL config is 262144 tokens (upstream architecture supports 1M).
+ * https://build.nvidia.com/nvidia/nemotron-3.5-super-vl-120b-a12b
+ * Playground snippets translate none/low/high to enable_thinking/low_effort.
+ * Effort depth, tool round trips, video input and preserved reasoning are not live-qualified here.
+ */
+export const NEMOTRON_35_SUPER_VL_REASONING_CAPABILITY: ReasoningCapability = {
+  modelId: "nvidia/nemotron-3.5-super-vl-120b-a12b",
+  semantics: {
+    defaultEnabled: true, canDisable: true, supportsEffort: true,
+    acceptedEfforts: ["none", "low", "high"],
+    effectiveEffortMapping: { off: "none", low: "low", high: "high" },
+    supportsInterleavedThinking: "unknown", supportsPreservedThinking: "unknown",
+    responseField: "reasoning_content",
+  },
+  nimTransport: { requestEncoding: "chat-template-kwargs", responseEncoding: "reasoning_content" },
+  verification: {
+    semantics: "documented", requestTransport: "probe-passed", responseTransport: "probe-passed",
+    streaming: "probe-passed", tools: "documented", preservedThinking: "unknown",
+  },
+};
+
 const CAPABILITIES = new Map<string, ReasoningCapability>([
+  [STEP_5_PREVIEW_REASONING_CAPABILITY.modelId, STEP_5_PREVIEW_REASONING_CAPABILITY],
+  [NEMOTRON_35_SUPER_VL_REASONING_CAPABILITY.modelId, NEMOTRON_35_SUPER_VL_REASONING_CAPABILITY],
   [DEEPSEEK_V41_FLASH_REASONING_CAPABILITY.modelId, DEEPSEEK_V41_FLASH_REASONING_CAPABILITY],
   [GLM_53_REASONING_CAPABILITY.modelId, GLM_53_REASONING_CAPABILITY],
   [KIMI_K3_REASONING_CAPABILITY.modelId, KIMI_K3_REASONING_CAPABILITY],

@@ -1,11 +1,11 @@
 // Dry-run-first, single-request image probe. No raw payload/error/credential logging.
 import { randomBytes } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { ImageModel, ImagesOptions } from "@earendil-works/pi-ai";
-import { getAllNimImageCapabilities, DEFAULT_NIM_IMAGE_MODEL_ID, type NimImageModelCapability } from "../models/image-models";
+import { getAllNimImageCapabilities, DEFAULT_NIM_IMAGE_MODEL_ID, FLUX_2_KLEIN_4B_CAPABILITY, type NimImageModelCapability } from "../models/image-models";
 import { resolveImageSettings, resolveImageInputs, runNimImageGeneration } from "../lib/nim-images";
 import { readNimReferenceImage, MAX_NIM_REFERENCE_IMAGE_BYTES } from "../lib/image-input";
 import { IMAGE_PROBE_CANDIDATES, KLEIN_MODEL_CARD_DIMENSION_PAIRS, KLEIN_PLAYGROUND_DIMENSION_PAIRS } from "./image-probe-candidates";
@@ -20,6 +20,7 @@ export type ImageProbeOptions = {
   candidateDimensions?: boolean;
   inputImage?: string;
   imageTransport?: "data-url-array" | "data-url-string";
+  layoutFile?: string;
 };
 export type ImageProbeDecoder = (bytes: Buffer) => { width: number; height: number } | undefined;
 
@@ -46,6 +47,7 @@ export function parseImageProbeArgs(args: string[]): ImageProbeOptions {
     } else if (name === "model") options.model = value;
     else if (name === "prompt") options.prompt = value;
     else if (name === "output") options.output = value;
+    else if (name === "layout-file") options.layoutFile = value;
     else if (name === "timeout-ms") options.timeoutMs = Number(value);
     else throw new Error("Unsupported probe option.");
   }
@@ -53,6 +55,7 @@ export function parseImageProbeArgs(args: string[]): ImageProbeOptions {
   if (!options.prompt.trim()) throw new Error("A non-empty prompt is required.");
   if (options.imageTransport && !options.inputImage) throw new Error("--image-transport requires --input-image.");
   if (options.inputImage !== undefined && !options.inputImage.trim()) throw new Error("A reference-image file path is required.");
+  if (options.layoutFile !== undefined && !options.layoutFile.trim()) throw new Error("A layout JSON file path is required.");
   if (!Number.isSafeInteger(options.timeoutMs) || options.timeoutMs < 1 || options.timeoutMs > 2_147_483_647) {
     throw new Error("Invalid probe timeout.");
   }
@@ -65,7 +68,8 @@ export function getImageProbeCapability(
 ): NimImageModelCapability {
   let capability = [...getAllNimImageCapabilities(), ...IMAGE_PROBE_CANDIDATES].find((c) => c.modelId === modelId);
   if (!capability) throw new Error("Model is not an approved image probe candidate (Kontext preset-only preview is excluded).");
-  if ((options?.candidateDimensions || options?.inputImage) && modelId !== DEFAULT_NIM_IMAGE_MODEL_ID) {
+  if ((options?.candidateDimensions || options?.inputImage) &&
+      ![DEFAULT_NIM_IMAGE_MODEL_ID, FLUX_2_KLEIN_4B_CAPABILITY.modelId].includes(modelId)) {
     throw new Error("Resolution/reference-image candidate probes are currently scoped to Klein only.");
   }
   if (options?.candidateDimensions) {
@@ -94,6 +98,14 @@ export async function probeNimImage(
   dependencies: { apiKey?: string; fetch?: typeof fetch; decode?: ImageProbeDecoder; signal?: AbortSignal } = {},
 ) {
   const capability = getImageProbeCapability(options.model, options);
+  let layout: unknown;
+  if (options.layoutFile !== undefined) {
+    if (!capability.promptLayout?.generationVerifiedAt) throw new Error("Structured layout is not verified for this model.");
+    const source = resolve(options.layoutFile);
+    const info = statSync(source);
+    if (!info.isFile() || info.size > 65_536) throw new Error("Layout JSON must be a regular file of at most 64 KiB (local probe limit).");
+    layout = JSON.parse(readFileSync(source, "utf8"));
+  }
   const settings = resolveImageSettings(capability, options.settings);
   if (!settings.ok) throw new Error(settings.error);
   if (options.live && !dependencies.apiKey) throw new Error("NVIDIA_NIM_API_KEY or NVIDIA_API_KEY is required for --live.");
@@ -101,7 +113,7 @@ export async function probeNimImage(
   const reference = options.inputImage
     ? await readNimReferenceImage(options.inputImage, process.cwd(), capability, dependencies.signal, true) : undefined;
   const input = [{ type: "text" as const, text: options.prompt }, ...(reference ? [reference] : [])];
-  const resolution = resolveImageInputs(capability, input, true);
+  const resolution = resolveImageInputs(capability, input, true, layout);
   if (!resolution.ok) throw new Error(resolution.error);
   const base = {
     operation: reference ? "edit" : "generate",
@@ -109,6 +121,8 @@ export async function probeNimImage(
     model: capability.modelId, endpoint: capability.endpoint,
     evidence: { ...capability.evidence, scope: "NVIDIA hosted preview", containerSchemaUsed: false },
     settings: settings.value,
+    ...(layout !== undefined ? { promptLayout: { elementCount: (layout as unknown[]).length,
+      compiledPromptCharacters: Array.from(resolution.value.prompt).length } } : {}),
   };
   if (!options.live) return { ...base, dryRun: true, requests: 0, generationVerified: false, editingSemanticsReviewed: false };
   let status: number | undefined;
@@ -118,7 +132,7 @@ export async function probeNimImage(
     apiKey: dependencies.apiKey, signal: dependencies.signal,
     fetch: (url, init) => { requests++; return fetchImpl(url, init); },
     timeoutMs: options.timeoutMs,
-    metadata: options.settings, onResponse: (response) => { status = response.status; },
+    metadata: { ...options.settings, ...(layout !== undefined ? { layout } : {}) }, onResponse: (response) => { status = response.status; },
   };
   const model = {
     type: "image", id: capability.modelId, name: capability.name, api: "nvidia-nim-images",
@@ -176,7 +190,7 @@ export function loadPixelDecoder(): ImageProbeDecoder {
 
 async function main() {
   if (process.argv.includes("--help")) {
-    console.log("Dry-run by default. Options: --live, --model=ID, --prompt=TEXT, --steps=N, --cfg_scale=N, --seed=N, --width=N, --height=N, --samples=N, --aspect_ratio=RATIO, --candidate-dimensions, --input-image=LOCAL_FILE, --image-transport=data-url-array|data-url-string, --timeout-ms=N, --output=NEW_FILE.json. Candidates never register models. Live uses one request, requires a pixel decoder, and never saves image bytes or raw errors.");
+    console.log("Dry-run by default. Options: --live, --model=ID, --prompt=TEXT, --layout-file=LOCAL_JSON (FLUX 3 rows; prompt must contain matching <id> tags), --steps=N, --cfg_scale=N, --seed=N, --width=N, --height=N, --samples=N, --aspect_ratio=RATIO, --candidate-dimensions, --input-image=LOCAL_FILE, --image-transport=data-url-array|data-url-string, --timeout-ms=N, --output=NEW_FILE.json. Candidates never register models. Live uses one request, requires a pixel decoder, and never saves image bytes or raw errors.");
     return;
   }
   const options = parseImageProbeArgs(process.argv.slice(2));

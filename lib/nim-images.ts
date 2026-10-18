@@ -22,6 +22,7 @@ import { createLogger } from "./logger";
 import { decodeImageBase64, hasCompleteImageStructure, detectImageMime, MIME_EXTENSIONS } from "./image-bytes";
 export { decodeImageBase64, hasCompleteImageStructure, detectImageMime, MIME_EXTENSIONS } from "./image-bytes";
 import { validateNimReferenceImage } from "./image-input";
+import { compileNimImageLayout } from "./image-layout";
 import {
   getNimImageCapability,
   getNimImageEditingError,
@@ -100,15 +101,19 @@ export function resolveImageInputs(
   input: readonly ImagesInputContent[],
   /** Only explicit capability overrides in opt-in probes may bypass evidence gating. */
   allowUnverifiedEditing = false,
+  layout?: unknown,
 ): NimImageResolution<NimImageInputs> {
   const blocks = input.filter((block) => block.type === "image");
   if (capability.inputTransport !== "none" || blocks.length) {
     const error = getNimImageEditingError(capability, allowUnverifiedEditing);
     if (error) return { ok: false, error };
   }
-  const prompt = input.filter((block) => block.type === "text")
+  const caption = input.filter((block) => block.type === "text")
     .map((block) => typeof block.text === "string" ? block.text : "").join("\n\n").trim();
-  if (!prompt) return { ok: false, error: "A non-empty text prompt is required." };
+  if (!caption) return { ok: false, error: "A non-empty text prompt is required." };
+  const compiled = compileNimImageLayout(capability, caption, layout);
+  if (!compiled.ok) return compiled;
+  const prompt = compiled.value;
   if (capability.promptMaxLength !== undefined) {
     let characters = 0;
     // JSON Schema maxLength counts Unicode characters, not UTF-16 code units.
@@ -131,8 +136,8 @@ export function resolveImageInputs(
 }
 
 /** Kept for callers that only need prompt validation. */
-export function resolveImagePrompt(capability: NimImageModelCapability, input: readonly ImagesInputContent[]): NimImageResolution<string> {
-  const resolution = resolveImageInputs(capability, input);
+export function resolveImagePrompt(capability: NimImageModelCapability, input: readonly ImagesInputContent[], layout?: unknown): NimImageResolution<string> {
+  const resolution = resolveImageInputs(capability, input, false, layout);
   return resolution.ok ? { ok: true, value: resolution.value.prompt } : resolution;
 }
 
@@ -213,6 +218,10 @@ export function resolveImageSettings(
     ([width, height]) => width === settings.width && height === settings.height,
   )) {
     return { ok: false, error: `Unsupported dimension combination for ${capability.modelId}: allowed pairs are ${capability.dimensionPairs.map(([w, h]) => `${w}x${h}`).join(", ")}.` };
+  }
+  if (capability.maxPixels !== undefined && settings.width !== undefined && settings.height !== undefined &&
+      settings.width * settings.height > capability.maxPixels) {
+    return { ok: false, error: `Requested image area ${settings.width * settings.height} pixels exceeds the hosted limit of ${capability.maxPixels} pixels (width * height). Choose smaller dimensions.` };
   }
   for (const key of capability.requiredRequestFields ?? []) {
     if (!capability.allowedRequestFields.includes(key)) {
@@ -402,12 +411,13 @@ export async function runNimImageGeneration(
     return fail(`No image capability record for model ${model.id}.`);
   }
 
-  const inputResolution = resolveImageInputs(capability, context.input ?? [], capabilityOverride !== undefined);
+  const { layout, ...settingsMetadata } = options?.metadata ?? {};
+  const inputResolution = resolveImageInputs(capability, context.input ?? [], capabilityOverride !== undefined, layout);
   if (!inputResolution.ok) return fail(inputResolution.error);
 
   // The metadata channel carries advanced settings (ImagesOptions.metadata),
   // which the codemode generateImages() interface cannot express.
-  const settingsResolution = resolveImageSettings(capability, options?.metadata);
+  const settingsResolution = resolveImageSettings(capability, settingsMetadata);
   if (!settingsResolution.ok) return fail(settingsResolution.error);
   const settings = settingsResolution.value;
 

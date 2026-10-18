@@ -6,7 +6,7 @@ import { join } from "node:path";
 import type { ImageModel, ImagesContext, ImagesOptions } from "@earendil-works/pi-ai";
 import { JPEG_BYTES, PNG_BYTES, WEBP_BYTES } from "./fixtures/image-bytes";
 import {
-  FLUX_2_KLEIN_4B_CAPABILITY as klein, NIM_IMAGE_MODELS, capabilityToModelConfig,
+  FLUX_3_IMAGE_KLEIN_CAPABILITY as klein, NIM_IMAGE_MODELS, capabilityToModelConfig,
   getNimImageEditingError, type NimImageModelCapability,
 } from "../models/image-models";
 import { resolveImageSettings, resolveImageInputs, buildImageRequest, runNimImageGeneration, generateNimImages } from "../lib/nim-images";
@@ -41,13 +41,13 @@ try {
   for (const ratio of ["3:4", "toString", "__proto__", "", 16, {}]) assert.equal(resolveImageSettings(klein, { aspect_ratio: ratio }).ok, false);
   assert.equal(resolveImageSettings(klein, { aspect_ratio: "16:9", width: 768 }).ok, false);
   assert.equal(resolveImageSettings(klein, { aspect_ratio: "16:9", height: 1024 }).ok, false);
-  assert.equal(resolveImageSettings(klein, { width: 1344, height: 1344 }).ok, true);
+  assert.equal(resolveImageSettings(klein, { width: 1344, height: 1344 }).ok, false);
   assert.equal(resolveImageSettings(klein, { width: 688, height: 1504 }).ok, true, "hosted grid validation admits this size independently of model-card presets");
   assert.deepEqual(resolveImageSettings(klein, {}).ok && [klein.width.default, klein.height.default], [1024, 1024]);
-  assert.equal(resolveImageInputs(klein, [{ type: "text", text: "p".repeat(10_001) }]).ok, false);
-  assert.equal(resolveImageInputs(klein, [{ type: "text", text: "p".repeat(10_000) }]).ok, true);
-  assert.equal(resolveImageInputs(klein, [{ type: "text", text: "🌲".repeat(10_000) }]).ok, true);
-  assert.equal(resolveImageInputs(klein, [{ type: "text", text: "🌲".repeat(10_001) }]).ok, false);
+  assert.equal(resolveImageInputs(klein, [{ type: "text", text: "p".repeat(2_001) }]).ok, false);
+  assert.equal(resolveImageInputs(klein, [{ type: "text", text: "p".repeat(2_000) }]).ok, true);
+  assert.equal(resolveImageInputs(klein, [{ type: "text", text: "🌲".repeat(2_000) }]).ok, true);
+  assert.equal(resolveImageInputs(klein, [{ type: "text", text: "🌲".repeat(2_001) }]).ok, false);
 
   const ctx = { cwd: dir, modelRegistry: {
     getModelOfType: () => model,
@@ -148,7 +148,7 @@ try {
   assert.ok("failureHints" in rejection);
   assert.deepEqual(rejection.failureHints, ["PRESET_REFERENCE_HINT"]);
   assert.doesNotMatch(JSON.stringify(rejection), /SECRET|base64|reference\.wrong-extension/);
-  assert.equal(NIM_IMAGE_MODELS.length, 1);
+  assert.equal(NIM_IMAGE_MODELS.length, 2);
   assert.deepEqual(klein.width, { min: 512, max: 1568, multipleOf: 16, default: 1024 }, "probe overrides do not mutate the registered record");
   console.log("image aspect/edit tests passed");
 } finally {

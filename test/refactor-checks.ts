@@ -270,17 +270,9 @@ assert.deepEqual(deepseekV41.thinkingLevelMap, deepseekV4Levels);
 assert.equal(classifyThinkingFormat("openai/gpt-oss-20b"), "none");
 assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.reasoning, true);
 assert.equal(STATIC_MODEL_MAP.get("poolside/laguna-xs-2.1")?.compat?.thinkingFormat, "qwen-chat-template");
-assert.equal(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.reasoning, true);
-assert.deepEqual(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.input, ["text", "image"]);
-assert.equal(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.contextWindow, 1048576); // official build-card value (2026-08-28)
-assert.equal(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.maxTokens, 65536);
-assert.equal(classifyThinkingFormat("moonshotai/kimi-k3"), "kimi");
-assert.deepEqual(STATIC_MODEL_MAP.get("moonshotai/kimi-k3")?.thinkingLevelMap, {
-  off: "none",
-  low: "low",
-  high: "high",
-  max: "max",
-});
+// Explicit retirement: preserve historical handler/capability evidence without registering it.
+assert.equal(STATIC_MODEL_MAP.has("moonshotai/kimi-k3"), false);
+assert.equal(STATIC_MODEL_MAP.has("mistralai/mistral-nemotron"), false);
 const museGlimmer = STATIC_MODEL_MAP.get("meta/muse-glimmer-30b");
 assert.ok(museGlimmer);
 assert.equal(museGlimmer.reasoning, true);

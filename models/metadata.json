@@ -125,29 +125,6 @@
     "supportsVision": false
   },
   {
-    "id": "mistralai/mistral-nemotron",
-    "maxOutputTokens": 4096,
-    "contextWindow": 131072,
-    "supportsReasoning": false,
-    "supportsVision": false
-  },
-  {
-    "id": "moonshotai/kimi-k3",
-    "maxOutputTokens": 65536,
-    "supportsVision": true,
-    "reasoningEffortValues": [
-      "low",
-      "high",
-      "max"
-    ],
-    "exampleRequestExtra": {
-      "reasoning_effort": "low"
-    },
-    "supportsReasoning": true,
-    "contextWindow": 1048576,
-    "thinkingFormat": "kimi"
-  },
-  {
     "id": "nvidia/ai-synthetic-video-detector",
     "supportsReasoning": false,
     "supportsVision": false
@@ -309,6 +286,19 @@
     "supportsVision": false
   },
   {
+    "id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+    "maxOutputTokens": 131072,
+    "supportsVision": true,
+    "supportsReasoning": true,
+    "reasoningEffortValues": [
+      "none",
+      "low",
+      "high"
+    ],
+    "contextWindow": 262144,
+    "thinkingFormat": "nemotron-3-super-effort"
+  },
+  {
     "id": "nvidia/nemotron-4-340b-reward",
     "contextWindow": 4096,
     "maxOutputTokens": 4096,
@@ -409,6 +399,14 @@
     "id": "snowflake/arctic-embed-l",
     "supportsReasoning": false,
     "supportsVision": false
+  },
+  {
+    "id": "stepfun-ai/step-5-preview",
+    "maxOutputTokens": 4096,
+    "supportsVision": true,
+    "supportsReasoning": true,
+    "contextWindow": 1048576,
+    "thinkingFormat": "none"
   },
   {
     "id": "z-ai/glm-5.3",

@@ -8,7 +8,7 @@ import {
   runNimImageGeneration, generateNimImages, resolveImageSettings, resolveImagePrompt,
   buildImageRequest, decodeImageBase64, hasCompleteImageStructure,
 } from "../lib/nim-images";
-import { FLUX_2_KLEIN_4B_CAPABILITY as klein, capabilityToModelConfig, NIM_IMAGE_MODELS } from "../models/image-models";
+import { FLUX_3_IMAGE_KLEIN_CAPABILITY as klein, capabilityToModelConfig, NIM_IMAGE_MODELS } from "../models/image-models";
 import { buildSaveFileName, runNimImageTool, NIM_IMAGE_TOOL } from "../handlers/image-tool";
 
 const model = { ...capabilityToModelConfig(klein), provider: "nvidia-nim" } as ImageModel<string>;
@@ -78,8 +78,8 @@ assert.deepEqual(capabilityToModelConfig(klein).output, ["image"], "Klein is not
 // All capability defaults and bounds are model-specific, including exclusive limits.
 assert.equal(resolveImageSettings(klein, { seed: 4_294_967_295 }).ok, true);
 for (const seed of [-1, 4_294_967_296, 1.1, NaN, Infinity]) assert.equal(resolveImageSettings(klein, { seed }).ok, false);
-assert.equal(klein.cfgScale.max, undefined, "unknown guidance maximum remains unknown");
-assert.equal(resolveImageSettings(klein, { cfg_scale: 100 }).ok, true);
+assert.equal(klein.cfgScale.max, 20, "FLUX 3 hosted schema publishes the guidance maximum");
+assert.equal(resolveImageSettings(klein, { cfg_scale: 100 }).ok, false);
 const schnell = { ...klein, modelId: "test/schnell", name: "Synthetic Schnell", cfgScale: { min: 0, max: 0, default: 0 } };
 assert.equal(resolveImageSettings(schnell, { cfg_scale: 0 }).ok, true);
 assert.equal(resolveImageSettings(schnell, { cfg_scale: 1 }).ok, false);
@@ -97,7 +97,7 @@ assert.equal(resolveImageSettings(rangeDimensions, { width: 1024 }).ok, false);
 const optional = { ...schnell, allowedRequestFields: ["prompt", "steps"] };
 const settings = resolveImageSettings(optional, {});
 assert.ok(settings.ok);
-assert.deepEqual(buildImageRequest(optional, "p", settings.value), { prompt: "p", steps: 4 });
+assert.deepEqual(buildImageRequest(optional, "p", settings.value), { prompt: "p", steps: 50 });
 assert.equal(resolveImageSettings({ ...optional, requiredRequestFields: ["seed"] }, {}).ok, false);
 assert.equal(resolveImageSettings({ ...dev, cfgScale: { min: 0, max: 0, default: 1 } }, {}).ok, false, "bad defaults fail locally");
 for (const inputTransport of ["base64", "asset-id", "preset-only"] as const) {
@@ -105,7 +105,7 @@ for (const inputTransport of ["base64", "asset-id", "preset-only"] as const) {
   assert.equal(resolveImagePrompt(capability, input.input).ok, false);
   assert.throws(() => capabilityToModelConfig(capability), /not implemented/);
 }
-assert.equal(NIM_IMAGE_MODELS.length, 1, "synthetic and unverified candidates are never registered");
+assert.equal(NIM_IMAGE_MODELS.length, 2, "synthetic and unverified candidates are never registered");
 const schema = NIM_IMAGE_TOOL.parameters as any;
 assert.equal(schema.properties.cfg_scale.minimum, undefined, "tool schema must not block Schnell");
 assert.equal(schema.properties.steps.maximum, undefined, "tool schema must not block Dev");

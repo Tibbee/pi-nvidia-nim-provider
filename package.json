@@ -1,7 +1,7 @@
 {
     "name": "pi-extension-nvidia-nim",
     "private": false,
-    "version": "1.14.3",
+    "version": "1.17.0",
     "main": "index.ts",
     "types": "index.ts",
     "type": "module",
@@ -19,6 +19,7 @@
         "tools/fetch_modelsdev_nvidia.ts",
         "tools/compare_pi_nvidia.ts",
         "tools/probe_nim.ts",
+        "tools/probe_shipped_alive.ts",
         "tools/probe_nim_images.ts",
         "tools/image-probe-candidates.ts",
         "index.ts",
@@ -54,10 +55,12 @@
     },
     "homepage": "https://github.com/Tibbee/pi-nvidia-nim-provider#readme",
     "scripts": {
-        "test": "npx --yes tsx test/refactor-checks.ts && npx --yes tsx test/before-provider-request-snapshots.ts && npx --yes tsx test/pi-provider-comparison.ts && npx --yes tsx test/image-generation-tests.ts && npx --yes tsx test/image-hardening-tests.ts && npx --yes tsx test/image-probe-tests.ts && npx --yes tsx test/image-aspect-edit-tests.ts && npx --yes tsx test/image-preset-tests.ts && npx --yes tsx test/image-grid-tests.ts",
+        "test": "npx --yes tsx test/refactor-checks.ts && npx --yes tsx test/before-provider-request-snapshots.ts && npx --yes tsx test/pi-provider-comparison.ts && npx --yes tsx test/image-generation-tests.ts && npx --yes tsx test/image-hardening-tests.ts && npx --yes tsx test/image-probe-tests.ts && npx --yes tsx test/image-aspect-edit-tests.ts && npx --yes tsx test/image-preset-tests.ts && npx --yes tsx test/image-grid-tests.ts && npx --yes tsx test/model-release-tests.ts && npx --yes tsx test/image-coexistence-tests.ts && npx --yes tsx test/image-layout-tests.ts",
         "test:pi-images": "npx --yes tsx test/pi-image-runtime-tests.ts",
+        "test:pi-chat": "npx --yes tsx test/pi-chat-runtime-tests.ts",
         "probe:images": "npx --yes tsx tools/probe_nim_images.ts",
         "probe": "npx --yes tsx tools/probe_nim.ts",
+        "audit:retirements": "npx --yes tsx tools/probe_shipped_alive.ts",
         "compare:pi": "npx --yes tsx tools/compare_pi_nvidia.ts"
     },
     "bugs": {

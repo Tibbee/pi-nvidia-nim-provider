@@ -13,8 +13,8 @@
 /** Image API identifier used as the ProviderConfig.images key and model.api. */
 export const NIM_IMAGES_API = "nvidia-nim-images";
 
-/** The one model whose hosted endpoint is verified (2026-10-02). */
-export const DEFAULT_NIM_IMAGE_MODEL_ID = "black-forest-labs/flux.2-klein-4b";
+/** Default image model; FLUX.2 remains explicitly selectable alongside it. */
+export const DEFAULT_NIM_IMAGE_MODEL_ID = "black-forest-labs/flux-3-image-klein";
 
 export interface NimImageNumberBounds {
   /** Omitted bounds are unknown, not invented provider limits. */
@@ -60,6 +60,14 @@ export interface NimImageModelCapability {
   requiredRequestFields?: readonly string[];
   width: NimImageRangeBounds;
   height: NimImageRangeBounds;
+  /** Hosted combined width*height ceiling, independent of the per-axis grid. */
+  maxPixels?: number;
+  /** Prompt-only layout guidance: not an editing mask or preservation promise. */
+  promptLayout?: {
+    format: "bfl-caption-json";
+    generationVerifiedAt: string;
+    notes: readonly string[];
+  };
   dimensionPairs?: readonly (readonly [number, number])[];
   /** Human-facing labels, always width:height; these are not NVIDIA body fields. */
   aspectRatios?: Readonly<Record<string, readonly [number, number]>>;
@@ -108,8 +116,12 @@ export const FLUX_2_KLEIN_4B_CAPABILITY: NimImageModelCapability = {
   name: "FLUX.2 Klein 4B",
   evidence: {
     hostedSchema: "https://build.nvidia.com/black-forest-labs/flux_2-klein-4b",
-    generationVerifiedAt: "2026-10-02",
+    generationVerifiedAt: "2026-10-17",
     notes: [
+      "2026-10-17 exploration: PNG data-URL array/string uploads returned 422. Layout swap probes did not reliably move the objects, so no structured layout capability is advertised for FLUX.2.",
+      "2026-10-17 exploration: 1568x1568 rejected with explicit supported-image-size 1062400 pixels; 800x1328 (exactly 1062400 pixels) generated and fully decoded. Enforce both the axis grid and combined ceiling.",
+      "2026-10-17: HTTP 200 generation fully pixel-decoded at 1024x1024, steps 4, cfg_scale 1, seed 42. Re-registered alongside FLUX 3, without changing the default.",
+      "2026-10-17: hosted validator now limits prompt length to 800 characters, despite the published 10000-character schema and historical record. Both axes still enumerate 512..1568/16; steps <=4, cfg_scale >=1 and uint32 seed were reconfirmed by validation.",
       "Hosted schema guidance 0 conflicts with live rejection; 1 succeeded, upper bound unknown.",
       "2026-10-02: full pixel decoding confirmed 1344x768, 768x1344, and 1568x672; 1024-only descriptions contradict live behavior.",
       "Playground ratio labels reverse width/height. Our 16:9 maps to landscape 1344x768 (approximate ratio), 9:16 to portrait 768x1344.",
@@ -123,7 +135,7 @@ export const FLUX_2_KLEIN_4B_CAPABILITY: NimImageModelCapability = {
   },
   endpoint: "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.2-klein-4b",
   inputTransport: "none",
-  promptMaxLength: 10_000,
+  promptMaxLength: 800,
 
   requiredRequestFields: ["prompt"],
   allowedRequestFields: ["prompt", "width", "height", "seed", "steps", "samples", "cfg_scale"],
@@ -132,6 +144,7 @@ export const FLUX_2_KLEIN_4B_CAPABILITY: NimImageModelCapability = {
   },
   width: { min: 512, max: 1568, multipleOf: 16, default: 1024 },
   height: { min: 512, max: 1568, multipleOf: 16, default: 1024 },
+  maxPixels: 1_062_400,
   aspectRatios: { "1:1": [1024, 1024], "16:9": [1344, 768], "9:16": [768, 1344], "21:9": [1568, 672], "4:3": [1024, 768] },
   steps: { min: 1, max: 4, default: 4 },
   samples: { min: 1, max: 1, default: 1 },
@@ -140,7 +153,57 @@ export const FLUX_2_KLEIN_4B_CAPABILITY: NimImageModelCapability = {
   sniffableMimeTypes: ["image/jpeg", "image/png", "image/webp"],
 };
 
+/**
+ * FLUX 3 hosted evidence, 2026-10-17. The build playground's hyphenated URL
+ * generated a fully decoded 1024x1024 JPEG; the API reference's dotted URL
+ * returned 404. Do not derive the endpoint from the documentation's model ID.
+ * A single 422 validation response independently enumerated both axes as
+ * 512..1568/16, capped prompt length at 2000 and steps at 50. Not every grid
+ * combination is generation-tested. Sampling bounds otherwise follow the
+ * hosted schema, not the FLUX.2 capability or downloadable container API.
+ */
+export const FLUX_3_IMAGE_KLEIN_CAPABILITY: NimImageModelCapability = {
+  modelId: DEFAULT_NIM_IMAGE_MODEL_ID,
+  name: "FLUX 3 Image Klein",
+  endpoint: "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux-3-image-klein",
+  evidence: {
+    hostedSchema: "https://build.nvidia.com/black-forest-labs/flux-3-image-klein",
+    generationVerifiedAt: "2026-10-17",
+    notes: [
+      "2026-10-17 exploration: PNG data-URL array and string uploads both returned 422; server requires preset example_id instead of actual image data. Arbitrary-image editing remains disabled for the hosted preview.",
+      "2026-10-17 exploration: swapped caption+JSON layouts moved red/blue elements to opposite sides at fixed seed 42; pixel centroids and visual review agree. Approximate guidance only: shapes distorted and one circle was clipped; this is not a hard mask.",
+      "2026-10-17 exploration: 1568x1568 rejected with explicit supported-image-size 1062400 pixels; 800x1328 (exact boundary) generated and fully decoded. Both axis admission and combined size are required.",
+      "HTTP 200: original JPEG fully pixel-decoded at 1024x1024, steps 50, cfg_scale 3.5, seed 42; no mode/model body fields.",
+      "Build playground uses flux-3-image-klein; the reference's flux.3-image-klein endpoint returned HTTP 404.",
+      "Hosted 422 independently enumerates width and height 512..1568/16, contradicting the smaller published enums and 1024-only descriptions. Axis admission also requires the separately verified combined pixel ceiling.",
+      "Hosted validation confirms prompt maximum 2000 characters and steps maximum 50. Other sampling bounds are hosted-schema evidence; only the default generation settings were tested.",
+      "Published preview image input is preset-only. Arbitrary-image editing is not verified and remains disabled; no FLUX.2 upload evidence is attributed to FLUX 3.",
+      "No usage or pricing returned. The generation-only playground omits mode; the adapter follows that request shape.",
+    ],
+  },
+  inputTransport: "none",
+  promptMaxLength: 2000,
+  requiredRequestFields: ["prompt"],
+  allowedRequestFields: ["prompt", "width", "height", "seed", "steps", "samples", "cfg_scale"],
+  rejectedRequestFields: { mode: "generation follows the verified playground request without mode" },
+  width: { min: 512, max: 1568, multipleOf: 16, default: 1024 },
+  height: { min: 512, max: 1568, multipleOf: 16, default: 1024 },
+  maxPixels: 1_062_400,
+  promptLayout: {
+    format: "bfl-caption-json",
+    generationVerifiedAt: "2026-10-17",
+    notes: ["Two fixed-seed left/right swaps were observed. Caption tags plus JSON rows are compiled into prompt; no layout body field. Placement is approximate and shape fidelity is not guaranteed."],
+  },
+  aspectRatios: { "1:1": [1024, 1024], "16:9": [1344, 768], "9:16": [768, 1344], "21:9": [1568, 672], "4:3": [1024, 768] },
+  steps: { min: 1, max: 50, default: 50 },
+  samples: { min: 1, max: 1, default: 1 },
+  cfgScale: { exclusiveMinimum: 1, max: 20, default: 3.5 },
+  seed: { min: 0, max: 4_294_967_295, randomWhenZero: true },
+  sniffableMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+};
+
 const CAPABILITIES: ReadonlyMap<string, NimImageModelCapability> = new Map([
+  [FLUX_3_IMAGE_KLEIN_CAPABILITY.modelId, FLUX_3_IMAGE_KLEIN_CAPABILITY],
   [FLUX_2_KLEIN_4B_CAPABILITY.modelId, FLUX_2_KLEIN_4B_CAPABILITY],
 ]);
 

@@ -20,7 +20,7 @@ import {
   NIM_IMAGE_MODELS,
   NIM_IMAGE_MODEL_IDS,
   DEFAULT_NIM_IMAGE_MODEL_ID,
-  FLUX_2_KLEIN_4B_CAPABILITY,
+  FLUX_3_IMAGE_KLEIN_CAPABILITY,
   getNimImageCapability,
 } from "../models/image-models";
 import { STATIC_MODELS, STATIC_MODEL_MAP } from "../models/registry";
@@ -32,7 +32,7 @@ import {
 } from "../handlers/image-tool";
 import type { ImageModel, ImagesContext, ImagesOptions } from "@earendil-works/pi-ai";
 
-const ENDPOINT = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.2-klein-4b";
+const ENDPOINT = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux-3-image-klein";
 
 import { JPEG_BYTES, PNG_BYTES, WEBP_BYTES } from "./fixtures/image-bytes";
 const JUNK_BYTES = Buffer.from("definitely-not-an-image");
@@ -40,7 +40,7 @@ const JUNK_BYTES = Buffer.from("definitely-not-an-image");
 const fakeImageModel = {
   type: "image",
   id: DEFAULT_NIM_IMAGE_MODEL_ID,
-  name: "FLUX.2 Klein 4B",
+  name: "FLUX 3 Image Klein",
   api: NIM_IMAGES_API,
   provider: "nvidia-nim",
   baseUrl: ENDPOINT,
@@ -122,7 +122,7 @@ const config = providers[0]!.config;
 assert.equal(config.api, "openai-completions");
 
 const imageEntries = (config.models as Array<any>).filter((m) => m.type === "image");
-assert.equal(imageEntries.length, 1, "one image model registered");
+assert.equal(imageEntries.length, 2, "both Klein image models registered");
 const imageEntry = imageEntries[0]!;
 assert.equal(imageEntry.id, DEFAULT_NIM_IMAGE_MODEL_ID);
 assert.equal(imageEntry.api, NIM_IMAGES_API, "image model uses the separate image API identifier");
@@ -216,9 +216,9 @@ assert.equal(
     prompt: "a red fox",
     width: 1024,
     height: 1024,
-    steps: 4,
+    steps: 50,
     samples: 1,
-    cfg_scale: 1,
+    cfg_scale: 3.5,
     seed: 42,
   });
   assert.equal(run.result.stopReason, "stop");
@@ -328,14 +328,14 @@ await expectFailure(
 );
 await expectFailure(
   { input: [{ type: "text", text: "p" }] },
-  { metadata: { steps: 5 } },
-  /between 1 and 4/,
-  "steps 5 rejected",
+  { metadata: { steps: 51 } },
+  /between 1 and 50/,
+  "steps 51 rejected",
 );
 await expectFailure(
   { input: [{ type: "text", text: "p" }] },
   { metadata: { steps: 0 } },
-  /between 1 and 4/,
+  /between 1 and 50/,
   "steps 0 rejected",
 );
 await expectFailure(
@@ -347,8 +347,8 @@ await expectFailure(
 await expectFailure(
   { input: [{ type: "text", text: "p" }] },
   { metadata: { cfg_scale: 0 } },
-  /cfg_scale.*>= 1/,
-  "cfg_scale 0 rejected like the live endpoint",
+  /cfg_scale.*> 1/,
+  "cfg_scale 0 rejected per hosted schema",
 );
 await expectFailure(
   { input: [{ type: "text", text: "p" }] },
@@ -854,8 +854,8 @@ try {
   {
     globalThis.fetch = originalFetch;
     await assert.rejects(
-      runNimImageTool({ prompt: "p", steps: 9 }, mockToolCtx()),
-      /between 1 and 4/,
+      runNimImageTool({ prompt: "p", steps: 51 }, mockToolCtx()),
+      /between 1 and 50/,
       "steps validated before any request",
     );
     await assert.rejects(
@@ -913,7 +913,7 @@ try {
   assert.match(NIM_IMAGE_TOOL.description, /16:9 landscape \(1344x768\)/);
   assert.match(NIM_IMAGE_TOOL.description, /Negative prompts and\s+output-format selection are not supported/);
   assert.match(NIM_IMAGE_TOOL.description, /no usage or cost information/);
-  assert.ok(FLUX_2_KLEIN_4B_CAPABILITY.rejectedRequestFields["mode"]);
+  assert.ok(FLUX_3_IMAGE_KLEIN_CAPABILITY.rejectedRequestFields["mode"]);
 } finally {
   globalThis.fetch = originalFetch;
   for (const dir of tempDirs) {

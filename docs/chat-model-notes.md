@@ -4,6 +4,67 @@ These notes were moved from the README to keep setup instructions easier to find
 
 [Back to the README](../README.md#chat-models-and-thinking-support)
 
+## Catalog audit 2026-10-17
+
+Version 1.15.0 keeps 16 chat models: add Step 5 Preview and Nemotron 3.5 Super
+VL, remove Mistral Nemotron and Kimi K3. An outage, timeout, missing account
+entitlement, or generic 404 is **inconclusive**, never retirement evidence.
+The existing-model sweep made one 4-token request per model with a 30-second
+timeout and no retries. Four responded, two explicitly retired, ten were
+inconclusive. These observations do not prove full conversation, tools or vision.
+
+| Existing model | Observation | Action |
+|---|---|---|
+| DeepSeek V4.1 Flash | 30 s timeout | Keep |
+| DiffusionGemma | HTTP 200 | Keep |
+| Gemma 4 31B | 30 s timeout | Keep |
+| Llama 3.2 11B Vision | HTTP 200 | Keep |
+| Llama 3.2 90B Vision | 30 s timeout | Keep |
+| Muse Glimmer | 30 s timeout | Keep |
+| Mistral Nemotron | Explicit HTTP 410; card notice September 27, unsupported after September 28 | Remove |
+| Kimi K3 | Explicit HTTP 410; card notice October 14, unsupported after October 15 | Remove |
+| Nemotron 3 Nano Omni | HTTP 503 | Keep |
+| Nemotron 3 Super | HTTP 200 | Keep |
+| Nemotron 3 Ultra | HTTP 503 | Keep |
+| Nemotron 3.5 Lightning | 30 s timeout | Keep |
+| GPT-OSS 20B | HTTP 200 | Keep |
+| Laguna XS 2.1 | 30 s timeout | Keep |
+| GLM-5.3 | 30 s timeout; future notice October 27, unsupported after October 28 | Keep until effective retirement |
+| GLM-5.3 Flash | 30 s timeout; no past retirement established | Keep |
+
+NVIDIA notice sources: [Mistral Nemotron](https://build.nvidia.com/mistralai/mistral-nemotron),
+[Kimi K3](https://build.nvidia.com/moonshotai/kimi-k3), and
+[GLM-5.3](https://build.nvidia.com/z-ai/glm-5-3). The generator's explicit
+retired-ID list prevents both removed entries from returning during a refresh.
+It does not blacklist GLM-5.3's future date or any inconclusive model.
+
+### New chat models
+
+- [Step 5 Preview](https://build.nvidia.com/stepfun-ai/step-5-preview): NVIDIA
+  hosted configuration is 1,048,576 context tokens; text/image input. Its
+  request maximum spans that combined window, so the extension uses the
+  hosted 4096-token default as a conservative output budget. The hosted
+  checkpoint always reasons; `high` is the sole visible on level, no effort
+  parameter or disable switch. Streaming returned HTTP 200 with separate
+  reasoning and final-answer deltas (8.5 s). Preserve assistant reasoning
+  during replay per the hosted schema. Tool/vision support is documented,
+  not live-tested by this probe.
+- [Nemotron 3.5 Super VL](https://build.nvidia.com/nvidia/nemotron-3.5-super-vl-120b-a12b):
+  the hosted build configuration is 262,144 context tokens, although the
+  upstream architecture card describes 1M. Hosted output maximum is 131,072.
+  Text/image input and exact off/low/high controls; playground snippets
+  translate these to `enable_thinking` and `low_effort`. All three streamed
+  HTTP 200; off yielded 0 reasoning characters, low 175 and high 276 on one
+  short prompt. Those samples verify transport/on-off behavior, not a general
+  depth ordering. Do not inherit generic Nemotron's 32768 reasoning budget.
+  Video and complete tool round trips are outside this extension's new
+  verification; Pi's catalog declares text/image input only.
+
+Local reports: `tools/output/refresh-2026-10-17/chat-retirement-audit.json`,
+`public-card-audit.json`, and `new-chat-probes.json`. They contain scoped
+status/count/settings evidence, not API keys or generated reasoning text.
+Older sections below remain dated historical snapshots.
+
 ## Comparison with Pi's built-in `nvidia` provider
 
 **Historical comparison snapshot (Pi 0.85.1), not the supported runtime baseline.** That bundled provider exposed 20 NVIDIA models in the comparison (21 at runtime, which additionally listed `z-ai/glm-5.3-flash`), versus this extension's 16. Counts below describe that snapshot. Generate an updated comparison against your installed Pi with:

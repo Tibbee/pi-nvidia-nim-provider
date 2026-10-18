@@ -11,6 +11,32 @@ export interface ModelFamily {
 
 // Ordered specific → general; first match wins.
 export const MODEL_FAMILIES: ModelFamily[] = [
+  // Step 5's hosted checkpoint always reasons. It publishes no effort control;
+  // expose one on level and preserve assistant reasoning during tool replay.
+  {
+    name: "step-5-preview",
+    pattern: /^stepfun-ai\/step-5-preview$/,
+    compat: {
+      supportsDeveloperRole: false,
+      supportsReasoningEffort: false,
+      requiresReasoningContentOnAssistantMessages: true,
+      maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: { off: null, minimal: null, low: null, medium: null, high: "high", xhigh: null, max: null },
+  },
+  // Specific to the hosted VL release: use the documented none/low/high
+  // translation, without inheriting the generic Nemotron reasoning budget.
+  {
+    name: "nemotron-3.5-super-vl",
+    pattern: /^nvidia\/nemotron-3\.5-super-vl-120b-a12b$/,
+    compat: {
+      supportsDeveloperRole: true,
+      supportsReasoningEffort: true,
+      requiresReasoningContentOnAssistantMessages: true,
+      maxTokensField: "max_tokens",
+    },
+    thinkingLevelMap: { off: "none", minimal: null, low: "low", medium: null, high: "high", xhigh: null, max: null },
+  },
   // DeepSeek V4 needs thinking + effort in chat_template_kwargs. The dotted
   // V4.1 release declares no Jinja chat template of its own, but the hosted
   // endpoint implements the same protocol: probes on 2026-09-25 showed
@@ -257,6 +283,7 @@ export function findFamily(modelId: string): ModelFamily | undefined {
 // before_provider_request transformation (e.g., new system-message-based
 // thinking, new kwarg structures).
 const FAMILY_HANDLER_FORMATS: Partial<Record<string, NimThinkingFormat>> = {
+  "nemotron-3.5-super-vl": "nemotron-3-super-effort",
   "deepseek-v4": "deepseek-v4",
   "kimi": "kimi",
   "nemotron-3-super-effort": "nemotron-3-super-effort",

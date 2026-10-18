@@ -15,6 +15,7 @@ export const KLEIN_PLAYGROUND_DIMENSION_PAIRS = [
 // Do not inherit newly verified Klein dimensions/editing into unrelated models.
 const textOnly1024: NimImageModelCapability = {
   ...klein, inputTransport: "none", imageInputLimits: undefined, promptMaxLength: undefined,
+  maxPixels: undefined, promptLayout: undefined,
   allowedRequestFields: klein.allowedRequestFields.filter((field) => field !== "image"),
   width: { allowed: [1024], default: 1024 }, height: { allowed: [1024], default: 1024 },
   dimensionPairs: [[1024, 1024]], aspectRatios: { "1:1": [1024, 1024] },
@@ -34,6 +35,7 @@ export const IMAGE_PROBE_CANDIDATES: readonly NimImageModelCapability[] = [
       notes: [
         "Hosted schema inspected 2026-10-02; descriptions restrict dimensions to 1024 despite broader enums.",
         "Prior probe: empty-body HTTP 504 after 302.05 seconds; no successful generation established.",
+        "2026-10-17: fresh 1024x1024 generation attempt (steps 5, guidance 5, seed 42) returned HTTP 500 after 81.29 s. Inconclusive availability, not retirement; no usable generation established.",
         "Preview image references are predefined examples, not general image upload.",
       ],
     },
@@ -50,6 +52,7 @@ export const IMAGE_PROBE_CANDIDATES: readonly NimImageModelCapability[] = [
       notes: [
         "Hosted schema inspected 2026-10-02; guidance is exactly 0, also supported by live 422 evidence.",
         "Prior probe: empty-body HTTP 504 after 302.20 seconds; no successful generation established.",
+        "2026-10-17: fresh 1024x1024 generation attempt (steps 4, guidance 0, seed 42) reached the 90 s client timeout. Inconclusive availability, not retirement.",
         "No general image input is supported; dimensions conservatively restricted to 1024.",
       ],
     },

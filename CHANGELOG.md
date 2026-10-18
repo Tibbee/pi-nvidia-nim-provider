@@ -2,6 +2,65 @@
 
 All notable changes to `pi-extension-nvidia-nim` are documented here.
 
+## [1.17.0] - 2026-10-17
+
+### Added
+
+- Optional FLUX 3 `layout` rows (`id`, `[top,left,bottom,right]` bbox, `desc`) in the deferred image tool and native adapter metadata. Validate matching caption tags, unique IDs, integer 0–1000 boxes, positive box area and the full serialized prompt budget; compile into the prompt exactly once, without adding provider body fields or rewriting/truncating user text. The 20-row schema limit is local policy. Result metadata reports the requested element count.
+- Dry-run-first probe CLI `--layout-file=LOCAL_JSON`, with bounded file reads and report-only counts rather than prompt/row/path contents.
+- FLUX 3 fixed-seed probes swapped red/blue elements in four outputs across two box geometries. Pixel centroids and visual review support approximate placement; shapes can distort or clip. FLUX.2 did not follow the reversed layout reliably, so its structured layout capability stays disabled.
+
+### Fixed
+
+- Both hosted Klein models enforce a **1,062,400-pixel combined area ceiling**, in addition to the 512–1568/16 per-axis grids. Each returned explicit 422 at 1568×1568 and successfully generated fully decoded 800×1328 boundary images. Reject oversized combinations locally, preserving all existing ratio mappings; no silent resizing. Keep unrelated probe candidates from inheriting this newly verified Klein limit.
+- Native and tool requests share layout compilation, validation and error handling. Invalid layouts, unsupported-model layouts, oversized compiled prompts and oversized dimensions fail before dispatch.
+
+### Hosted exploration boundary
+
+- FLUX 3 rejected PNG data-URL arrays and strings with HTTP 422, requiring preset `example_id` instead of actual image data. FLUX.2 rejected both forms too. Arbitrary-image editing and multi-reference input remain disabled; preset editing is not reintroduced. No native 4K, exact-pixel preservation or server-side upsampler feature is advertised.
+- Regression coverage adds layout/schema/metadata parity, no-dispatch validation, probe privacy and installed-Pi tool/native integration. Existing chat, saving, authentication, cancellation and image normalization paths are preserved.
+- All 12 default suites, both installed-Pi integration suites and package checks passed. Deployed 1.17.0 with 18 matching file hashes; a live tool request through installed Pi produced a decoded 1024×1024 JPEG in 5.64 s with the requested red-right/blue-left placement. Both Klein models and all 16 chat models remain registered.
+
+## [1.16.0] - 2026-10-17
+
+### Added
+
+- Register FLUX.2 Klein 4B alongside FLUX 3 Image Klein. FLUX 3 remains the default; an explicit model selection resolves that model's endpoint, defaults and bounds. Both native Pi image generation and the deferred image tool share the existing adapter, without automatic model fallback.
+- Enumerate both model IDs in the tool schema and describe their different prompt, step and guidance limits. Add coexistence/validation/no-fallback tests and installed-Pi dispatch checks for both models.
+
+### Fixed
+
+- Refresh FLUX.2's hosted prompt limit to **800 characters**, confirmed by current HTTP 422 validation, despite its stale 10,000-character published schema. Reconfirm both 512–1568/16 dimension axes, steps maximum 4, guidance minimum 1 and uint32 seed. Fresh generation succeeded as a fully decoded 1024×1024 JPEG with steps 4, guidance 1 and seed 42.
+- Keep the existing FLUX 3 capability independent (2000-character prompt, steps 50 and guidance 3.5 defaults); settings rejected by one model never silently route to the other.
+
+### Evidence
+
+- Fresh FLUX.1 Dev generation returned HTTP 500 after 81.29 s; Schnell reached a 90 s timeout. Both remain unverified candidates, with inconclusive availability rather than a retirement claim.
+- Stable Diffusion XL and Stable Diffusion 3 Medium pages explicitly mark their hosted endpoints deprecated (2025-07-24 and 2026-04-15). Their endpoints returned 404. Qwen Image/Edit embedded examples still target FLUX.1 Dev; this does not establish independent hosted Qwen support. Kontext documents preset-only references, not arbitrary-image uploads.
+- Eleven default suites and installed-Pi chat/image integration checks passed. After deployment, installed Pi registered both image models and 16 chat models; an explicit FLUX.2 tool call through the live extension produced a decoded 1024×1024 JPEG in 1.73 s using its own defaults. All 17 deployed runtime/package/documentation files matched development by SHA-256.
+
+## [1.15.0] - 2026-10-17
+
+### Added
+
+- Step 5 Preview (`stepfun-ai/step-5-preview`): text/image input, 1,048,576-token context, always-on reasoning with one visible on level. Preserve assistant reasoning on replay; do not advertise unsupported effort or disable controls. The conservative output budget is the hosted 4096-token default because its published parameter maximum spans the combined window.
+- Nemotron 3.5 Super VL (`nvidia/nemotron-3.5-super-vl-120b-a12b`): text/image input, hosted 262,144-token context and 131,072-token completion cap, exact off/low/high modes translated to `enable_thinking` / `low_effort`. No inherited generic reasoning budget or unsupported video input declaration. Both new models streamed separate reasoning/final-answer fields in hosted probes; Super VL off emitted no reasoning.
+- Retirement audit command with explicit-retirement, responding and inconclusive classifications. HTTP 404/429/5xx, account gates and timeouts never qualify removal; reports omit raw bodies and credentials. Metadata generator can prune its explicit retired-ID list without refreshing unrelated models.
+
+### Changed
+
+- Replace the registered/default FLUX.2 Klein 4B image model with FLUX 3 Image Klein (`black-forest-labs/flux-3-image-klein`). Its verified hosted endpoint uses a hyphen; the API reference's dotted endpoint returned 404. Successful HTTP 200 output fully pixel-decoded as a 1024×1024 JPEG (steps 50, guidance 3.5, seed 42).
+- FLUX 3 has its own capability record: prompt limit 2000 characters, steps 1–50/default 50, hosted-schema guidance >1 through 20/default 3.5, one sample and uint32 seed. A live 422 independently confirmed both dimension axes at 512–1568/16. Ratio mappings remain conveniences; other sizes and sampling boundaries are not generation-qualified. Arbitrary-image editing stays disabled; no `mode` or `model` body fields are sent.
+- Metadata extraction recognizes inline image content schemas, alternate reasoning-message names and both chat-completions reference path forms. Keep hosted context distinct from upstream model architecture.
+
+### Removed
+
+- Mistral Nemotron and Kimi K3 from generated metadata and the runtime catalog: both returned explicit HTTP 410 retirement responses and have past NVIDIA deprecation notices. Keep historical capabilities/routing evidence separate from registration. Preserve GLM-5.3 because its October 27/28 notice is future-dated; retain all ten models whose audit response was inconclusive.
+
+### Validation
+
+- Ten offline routing/request/image/model-release suites passed. Installed-Pi image integration and native chat serialization/stream/reasoning-replay fixtures passed. The live extension listed all 16 chat models and registered only FLUX 3 for images; a native authenticated generation through installed Pi 1.3.0 produced another fully decoded 1024×1024 JPEG in 6.04 s. Hosted checks establish these observations, not complete tool round trips, live vision acceptance or generation at every valid dimension.
+
 ## [1.14.3] - 2026-10-08
 
 ### Changed

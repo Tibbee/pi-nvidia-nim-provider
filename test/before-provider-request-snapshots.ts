@@ -15,111 +15,23 @@ function run(provider: string, payload: Record<string, unknown>) {
 
 const cases = [
   {
-    name: "kimi-k3 passes reasoning_effort through when enabled",
+    name: "retired kimi model is not transformed",
     provider: "nvidia-nim",
-    payload: {
-      model: "moonshotai/kimi-k3",
-      thinking: { type: "enabled" },
-      reasoning_effort: "high",
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "moonshotai/kimi-k3",
-      messages: [{ role: "user", content: "hello" }],
-      chat_template_kwargs: {
-        thinking: true,
-      },
-      reasoning_effort: "high",
-      max_tokens: 65536,
-    },
+    payload: { model: "moonshotai/kimi-k3", reasoning_effort: "high" },
+    expected: undefined,
   },
   {
-    name: "kimi-k3 max effort passes through top-level",
+    name: "step 5 always-on reasoning uses server defaults and preserves image content",
     provider: "nvidia-nim",
-    payload: {
-      model: "moonshotai/kimi-k3",
-      thinking: { type: "enabled" },
-      reasoning_effort: "max",
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "moonshotai/kimi-k3",
-      messages: [{ role: "user", content: "hello" }],
-      chat_template_kwargs: {
-        thinking: true,
-      },
-      reasoning_effort: "max",
-      max_tokens: 65536,
-    },
+    payload: { model: "stepfun-ai/step-5-preview", messages: [{ role: "user", content: [{ type: "text", text: "describe" }, { type: "image_url", image_url: { url: "data:image/png;base64,test" } }] }] },
+    expected: { model: "stepfun-ai/step-5-preview", messages: [{ role: "user", content: [{ type: "text", text: "describe" }, { type: "image_url", image_url: { url: "data:image/png;base64,test" } }] }], max_tokens: 4096 },
   },
-  {
-    name: "kimi-k3 low effort passes through top-level",
+  ...["none", "low", "high"].map(effort => ({
+    name: `nemotron 3.5 super VL ${effort} uses kwargs without an invented budget`,
     provider: "nvidia-nim",
-    payload: {
-      model: "moonshotai/kimi-k3",
-      thinking: { type: "enabled" },
-      reasoning_effort: "low",
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "moonshotai/kimi-k3",
-      messages: [{ role: "user", content: "hello" }],
-      chat_template_kwargs: {
-        thinking: true,
-      },
-      reasoning_effort: "low",
-      max_tokens: 65536,
-    },
-  },
-  {
-    name: "kimi-k3 enabled without effort defaults to high",
-    provider: "nvidia-nim",
-    payload: {
-      model: "moonshotai/kimi-k3",
-      thinking: { type: "enabled" },
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "moonshotai/kimi-k3",
-      messages: [{ role: "user", content: "hello" }],
-      chat_template_kwargs: {
-        thinking: true,
-      },
-      reasoning_effort: "high",
-      max_tokens: 65536,
-    },
-  },
-  {
-    name: "kimi-k3 disables thinking boolean-only",
-    provider: "nvidia-nim",
-    payload: {
-      model: "moonshotai/kimi-k3",
-      thinking: { type: "disabled" },
-      reasoning_effort: "none",
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "moonshotai/kimi-k3",
-      messages: [{ role: "user", content: "hello" }],
-      chat_template_kwargs: {
-        thinking: false,
-      },
-      max_tokens: 65536,
-    },
-  },
-  {
-    name: "kimi-k3 without thinking params only gets max_tokens default",
-    provider: "nvidia-nim",
-    payload: {
-      model: "moonshotai/kimi-k3",
-      messages: [{ role: "user", content: "hello" }],
-    },
-    expected: {
-      model: "moonshotai/kimi-k3",
-      messages: [{ role: "user", content: "hello" }],
-      max_tokens: 65536,
-    },
-  },
+    payload: { model: "nvidia/nemotron-3.5-super-vl-120b-a12b", reasoning_effort: effort, messages: [{ role: "user", content: "hello" }] },
+    expected: { model: "nvidia/nemotron-3.5-super-vl-120b-a12b", messages: [{ role: "user", content: "hello" }], chat_template_kwargs: { enable_thinking: effort !== "none", ...(effort === "low" ? { low_effort: true } : {}) }, max_tokens: 131072 },
+  })),
   {
     name: "nemotron 3 super maps low effort and budget",
     provider: "nvidia-nim",

@@ -19,7 +19,7 @@ assert.equal(requests, 0);
 assert.equal(dry.requests, 0);
 assert.equal(dry.settings.cfg_scale, 0);
 assert.equal(dry.generationVerified, false);
-assert.equal(NIM_IMAGE_MODELS.length, 1);
+assert.equal(NIM_IMAGE_MODELS.length, 2);
 const options = parseImageProbeArgs(["--live", "--prompt=SECRET_PROMPT", "--seed=42"]);
 await assert.rejects(probeNimImage(options, { apiKey: "SECRET_KEY", fetch }), /decoder/);
 assert.equal(requests, 0, "missing decoder fails before consuming quota");

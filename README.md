@@ -395,4 +395,4 @@ npm run compare:pi -- \
 npm run audit:retirements -- --output=tools/output/retirement-audit.json
 ```
 
-The audit makes one tiny request per chat model, without retries. Only an explicit retirement response qualifies a model for removal. HTTP 404/429/5xx and timeouts are inconclusive. After updating the generator's evidence-backed retired-ID list, `npx tsx tools/fetch_nim_metadata.ts --prune-retired` removes those rows from generated metadata without refreshing unrelated entries. Future-dated notices stay documented until effective retirement.
+The audit makes one tiny request per chat model, without retries. Only an explicit retirement response qualifies a model for removal. HTTP 404/429/5xx and timeouts are inconclusive. After updating the generator's evidence-backed retired-ID list, `npx tsx tools/fetch_nim_metadata.ts --prune-retired` removes those rows from generated metadata without refreshing unrelated entries. It rewrites the local file only and needs no NVIDIA credentials. Future-dated notices stay documented until effective retirement.

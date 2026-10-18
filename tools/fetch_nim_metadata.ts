@@ -6,10 +6,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const NVIDIA_API_KEY = process.env.NVIDIA_NIM_API_KEY ?? process.env.NVIDIA_API_KEY;
-if (!NVIDIA_API_KEY) {
-  console.error("Error: NVIDIA_NIM_API_KEY or NVIDIA_API_KEY is required.");
-  process.exit(1);
-}
 
 const NIM_BASE_URL = "https://integrate.api.nvidia.com/v1";
 const BUILD_BASE_URL = "https://build.nvidia.com";
@@ -1021,6 +1017,14 @@ async function main() {
       console.log(`Pruned ${entries.length - kept.length} explicitly retired entries from ${outputFile}.`);
       return;
     }
+
+    // Pruning reads and rewrites the local metadata file only. Every remaining
+    // path calls the hosted API, so the credential check belongs after it.
+    if (!NVIDIA_API_KEY) {
+      console.error("Error: NVIDIA_NIM_API_KEY or NVIDIA_API_KEY is required.");
+      process.exit(1);
+    }
+
     let models: { id: string; owned_by: string }[];
 
     if (singleModel) {

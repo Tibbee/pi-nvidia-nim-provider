@@ -14,6 +14,7 @@ All notable changes to `pi-extension-nvidia-nim` are documented here.
 
 - Both hosted Klein models enforce a **1,062,400-pixel combined area ceiling**, in addition to the 512–1568/16 per-axis grids. Each returned explicit 422 at 1568×1568 and successfully generated fully decoded 800×1328 boundary images. Reject oversized combinations locally, preserving all existing ratio mappings; no silent resizing. Keep unrelated probe candidates from inheriting this newly verified Klein limit.
 - Native and tool requests share layout compilation, validation and error handling. Invalid layouts, unsupported-model layouts, oversized compiled prompts and oversized dimensions fail before dispatch.
+- The metadata generator's `--prune-retired` mode runs without NVIDIA credentials. The credential check moved off module load and onto the hosted-API path, so the local metadata rewrite no longer exits early in an offline maintenance environment. Every network mode still fails with the same message and exit code when the key is absent.
 
 ### Hosted exploration boundary
 
